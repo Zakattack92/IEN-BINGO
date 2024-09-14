@@ -40,6 +40,20 @@
             background-color: #DAA520;
             color: black;
         }
+         /* Styling for the submit button */
+        .submit-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: #edbc00; /* Updated gold */
+            color: black;
+            border: none;
+            cursor: pointer;
+        }
+
+        .submit-button:hover {
+            background-color: #c89700; /* Slightly darker gold when hovered */
+        }
     </style>
 </head>
 <body>
@@ -76,6 +90,10 @@
         <div class="bingo-cell" id="cell-24"></div>
         <div class="bingo-cell" id="cell-25"></div>
     </div>
+
+    <!-- Button to submit a phrase -->
+    <button class="submit-button" onclick="window.location.href='submit.html';">Submit a Phrase</button>
+
 
     <script>
         // Placeholder for dynamic content
