@@ -28,13 +28,17 @@
             border: 2px solid #DAA520; /* Deeper gold */
             padding: 20px;
             font-size: 1.2em;
+            cursor: pointer;
         }
 
-        /* Center the "Free Spot" */
+        /* Free Spot stays uncolored but clickable */
         .free-spot {
+            font-weight: bold;
+        }
+
+        .clicked {
             background-color: #DAA520;
             color: black;
-            font-weight: bold;
         }
     </style>
 </head>
@@ -42,35 +46,45 @@
     <h1>I.E.N. Bingo</h1>
 
     <div class="bingo-grid">
-        <div class="bingo-cell">Phrase 1</div>
-        <div class="bingo-cell">Phrase 2</div>
-        <div class="bingo-cell">Phrase 3</div>
-        <div class="bingo-cell">Phrase 4</div>
-        <div class="bingo-cell">Phrase 5</div>
+        <div class="bingo-cell" id="cell-1"></div>
+        <div class="bingo-cell" id="cell-2"></div>
+        <div class="bingo-cell" id="cell-3"></div>
+        <div class="bingo-cell" id="cell-4"></div>
+        <div class="bingo-cell" id="cell-5"></div>
 
-        <div class="bingo-cell">Phrase 6</div>
-        <div class="bingo-cell">Phrase 7</div>
-        <div class="bingo-cell">Phrase 8</div>
-        <div class="bingo-cell">Phrase 9</div>
-        <div class="bingo-cell">Phrase 10</div>
+        <div class="bingo-cell" id="cell-6"></div>
+        <div class="bingo-cell" id="cell-7"></div>
+        <div class="bingo-cell" id="cell-8"></div>
+        <div class="bingo-cell" id="cell-9"></div>
+        <div class="bingo-cell" id="cell-10"></div>
 
-        <div class="bingo-cell">Phrase 11</div>
-        <div class="bingo-cell">Phrase 12</div>
-        <div class="bingo-cell free-spot">Free Spot</div> <!-- Center spot -->
-        <div class="bingo-cell">Phrase 13</div>
-        <div class="bingo-cell">Phrase 14</div>
+        <div class="bingo-cell" id="cell-11"></div>
+        <div class="bingo-cell" id="cell-12"></div>
+        <div class="bingo-cell free-spot" id="free-spot">Free Spot</div>
+        <div class="bingo-cell" id="cell-14"></div>
+        <div class="bingo-cell" id="cell-15"></div>
 
-        <div class="bingo-cell">Phrase 15</div>
-        <div class="bingo-cell">Phrase 16</div>
-        <div class="bingo-cell">Phrase 17</div>
-        <div class="bingo-cell">Phrase 18</div>
-        <div class="bingo-cell">Phrase 19</div>
+        <div class="bingo-cell" id="cell-16"></div>
+        <div class="bingo-cell" id="cell-17"></div>
+        <div class="bingo-cell" id="cell-18"></div>
+        <div class="bingo-cell" id="cell-19"></div>
+        <div class="bingo-cell" id="cell-20"></div>
 
-        <div class="bingo-cell">Phrase 20</div>
-        <div class="bingo-cell">Phrase 21</div>
-        <div class="bingo-cell">Phrase 22</div>
-        <div class="bingo-cell">Phrase 23</div>
-        <div class="bingo-cell">Phrase 24</div>
+        <div class="bingo-cell" id="cell-21"></div>
+        <div class="bingo-cell" id="cell-22"></div>
+        <div class="bingo-cell" id="cell-23"></div>
+        <div class="bingo-cell" id="cell-24"></div>
+        <div class="bingo-cell" id="cell-25"></div>
     </div>
+
+    <script>
+        // Placeholder for dynamic content
+        const bingoCells = document.querySelectorAll('.bingo-cell');
+        bingoCells.forEach(cell => {
+            cell.addEventListener('click', () => {
+                cell.classList.toggle('clicked');
+            });
+        });
+    </script>
 </body>
 </html>
