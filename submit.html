@@ -20,6 +20,45 @@
             font-size: 1em;
         }
     </style>
+    <!-- Firebase SDK - using modules -->
+    <script type="module">
+      // Import the Firebase SDK
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
+      import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
+
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
+        authDomain: "ien-bingo.firebaseapp.com",
+        projectId: "ien-bingo",
+        storageBucket: "ien-bingo.appspot.com",
+        messagingSenderId: "115041832401",
+        appId: "1:115041832401:web:785da7558648d1ac8124f0"
+      };
+
+      // Initialize Firebase and Firestore
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      // Form submission
+      document.getElementById('phrase-form').addEventListener('submit', async function(e) {
+        e.preventDefault(); // Prevent form from submitting the default way
+
+        var category = document.getElementById('category').value;
+        var phrase = document.getElementById('phrase').value;
+
+        try {
+          await addDoc(collection(db, "bingo_phrases"), {
+            category: category,
+            phrase: phrase
+          });
+          alert("Phrase added successfully!");
+          document.getElementById('phrase-form').reset();
+        } catch (error) {
+          alert("Error adding phrase: " + error);
+        }
+      });
+    </script>
 </head>
 <body>
     <h1>Suggest a New Bingo Phrase</h1>
@@ -27,12 +66,12 @@
     <form id="phrase-form">
         <label for="category">Select a Category:</label>
         <select id="category" name="category">
-               <option value="Al">Al</option>
-<option value="Zak">Zak</option>
+            <option value="Al">Al</option>
+            <option value="Zak">Zak</option>
             <option value="Noah">Noah</option>
-<option value="Mitch">Mitch</option>
-<option value="Hunter">Hunter</option>
-<option value="Matt">Matt</option>
+            <option value="Mitch">Mitch</option>
+            <option value="Hunter">Hunter</option>
+            <option value="Matt">Matt</option>
             <option value="Cassie">Cassie</option>
             <option value="Free Spot">Free Spot</option>
             <option value="Other">Other</option>
@@ -43,40 +82,5 @@
         <br>
         <button type="submit">Submit</button>
     </form>
-
-    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
-    
-    <script>
-        // Initialize Firebase
-        var firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
-        firebase.initializeApp(firebaseConfig);
-        var db = firebase.firestore();
-
-        // Form submission
-        document.getElementById('phrase-form').addEventListener('submit', function(e) {
-            e.preventDefault(); // Prevent form from submitting the default way
-
-            var category = document.getElementById('category').value;
-            var phrase = document.getElementById('phrase').value;
-
-            db.collection("bingo_phrases").add({
-                category: category,
-                phrase: phrase
-            }).then(() => {
-                alert("Phrase added successfully!");
-                document.getElementById('phrase-form').reset();
-            }).catch((error) => {
-                alert("Error adding phrase: " + error);
-            });
-        });
-    </script>
 </body>
 </html>
