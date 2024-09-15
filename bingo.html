@@ -189,6 +189,8 @@
 
             // Save the updated cumulative points to Firestore
             await setDoc(userDocRef, { cumulativePoints: cumulativePoints }, { merge: true });
+             // Clear points for next game
+            localStorage.removeItem('pointsThisGame');
         }
 
         // Check for horizontal bingos
