@@ -166,6 +166,7 @@
             points += fullBoard ? 5 : 0; // Full board = 5 bonus points
 
             updatePointsDisplay(); // Update points display
+        localStorage.setItem('pointsThisGame', points); // Save points to localStorage
         }
 
         // Update points display in the top-right corner
