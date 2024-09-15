@@ -141,6 +141,8 @@
 
             // Save updated clicked cells to Firestore
             await setDoc(userDocRef, { clickedCells: clickedCells }, { merge: true });
+         // Award points based on current clicks
+            awardPoints(clickedCells);
         }
 
         // Populate the bingo grid based on the game state
