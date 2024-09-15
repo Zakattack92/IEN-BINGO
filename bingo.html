@@ -135,8 +135,8 @@
             }
 
             await setDoc(userDocRef, { clickedCells: clickedCells, timestamps: timestamps }, { merge: true });
-
-            checkForBingo(clickedCells);
+const points = await checkForBingo(clickedCells);
+            await updateUserPoints(userDocRef, points);
         }
 
         async function checkForBingo(clickedCells) {
@@ -199,6 +199,26 @@
             }
 
             console.log(`User has ${points} points.`);
+            return points;
+        }
+
+        async function updateUserPoints(userDocRef, points) {
+            const userDocSnap = await getDoc(userDocRef);
+            let overallPoints = 0;
+            let gamePoints = 0;
+
+            if (userDocSnap.exists()) {
+                overallPoints = userDocSnap.data().overallPoints || 0;
+                gamePoints = userDocSnap.data().gamePoints || 0;
+            }
+
+            overallPoints += points; // Update overall points
+            gamePoints += points; // Update points for current game
+
+            await updateDoc(userDocRef, {
+                overallPoints: overallPoints,
+                gamePoints: gamePoints
+            });
         }
 
         async function populateBingoGrid() {
