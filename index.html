@@ -3,100 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>I.E.N. Bingo Login</title>
-    <style>
-        body {
-            background-color: black;
-            color: #edbc00;
-            font-family: Arial, sans-serif;
-            text-align: center;
-        }
+    <title>Login</title>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
 
-        .form-container {
-            margin-top: 50px;
-        }
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
+            authDomain: "ien-bingo.firebaseapp.com",
+            projectId: "ien-bingo",
+            storageBucket: "ien-bingo.appspot.com",
+            messagingSenderId: "115041832401",
+            appId: "1:115041832401:web:785da7558648d1ac8124f0"
+        };
 
-        input {
-            margin-top: 10px;
-            padding: 10px;
-            font-size: 1.2em;
-        }
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-        button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-size: 1.2em;
-            background-color: #edbc00;
-            color: black;
-            border: none;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #c89700;
-        }
-
-        .error {
-            color: red;
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
-    <h1>I.E.N. Bingo Login</h1>
-
-    <div class="form-container">
-        <input type="text" id="name" placeholder="Enter your name" required><br>
-        <input type="password" id="pin" placeholder="Enter 4-digit PIN" required maxlength="4"><br>
-
-        <button onclick="login()">Login</button>
-        <button onclick="register()">Register</button>
-
-        <div class="error" id="error-message"></div>
-    </div>
-
-    <script>
-        // Check if the user is already logged in
-        if (localStorage.getItem('bingoUser')) {
-            window.location.href = 'bingo.html'; // Redirect to Bingo board if logged in
-        }
-
-        function login() {
-            const name = document.getElementById('name').value;
-            const pin = document.getElementById('pin').value;
-            const user = JSON.parse(localStorage.getItem(name));
-
-            if (user && user.pin === pin) {
-                // Save user info to localStorage for session persistence
-                // After the user successfully logs in or registers
-localStorage.setItem('bingoUser', JSON.stringify({ uid }));
-
-                window.location.href = 'bingo.html'; // Redirect to Bingo board
-            } else {
-                document.getElementById('error-message').textContent = "Invalid name or PIN!";
-            }
-        }
-
-        function register() {
+        async function login() {
             const name = document.getElementById('name').value;
             const pin = document.getElementById('pin').value;
 
-            if (name && pin.length === 4) {
-                const user = { name, pin };
+            if (name && pin) {
+                const userRef = doc(db, "users", name);
+                const userSnap = await getDoc(userRef);
 
-                // Check if user already exists
-                if (localStorage.getItem(name)) {
-                    document.getElementById('error-message').textContent = "User already exists!";
+                if (userSnap.exists()) {
+                    const userData = userSnap.data();
+                    if (userData.password === pin) {
+                        // Save user to localStorage
+                        localStorage.setItem('bingoUser', JSON.stringify({ uid: name }));
+                        // Redirect to bingo.html after successful login
+                        window.location.href = 'bingo.html';
+                    } else {
+                        alert("Incorrect password.");
+                    }
                 } else {
-                    // Save new user to localStorage
-                    localStorage.setItem(name, JSON.stringify(user));
-                    localStorage.setItem('bingoUser', JSON.stringify(user)); // Log them in automatically
-                    window.location.href = 'bingo.html'; // Redirect to Bingo board
+                    alert("User not found.");
                 }
             } else {
-                document.getElementById('error-message').textContent = "Please enter a valid name and 4-digit PIN!";
+                alert("Please enter both name and PIN.");
             }
         }
     </script>
+</head>
+<body>
+    <h1>Login</h1>
+    
+    <!-- Input form for Name and PIN -->
+    <label for="name">Name:</label>
+    <input type="text" id="name" placeholder="Enter your name" required>
+
+    <label for="pin">PIN:</label>
+    <input type="password" id="pin" placeholder="Enter your PIN" required>
+
+    <button onclick="login()">Login</button>
 </body>
 </html>
