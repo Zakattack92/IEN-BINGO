@@ -250,8 +250,8 @@ async function saveClickedCell(cellIndex) {
     // Save the updated clicked cells to Firestore
     await setDoc(userDocRef, { clickedCells: clickedCells }, { merge: true });
 
-    // Optionally, if you're handling points or other updates after a click
-    updatePoints(clickedCells);
+    // Award points based on current clicks
+            awardPoints(clickedCells);
 }
 
         // Load the clicked cells for the current user
@@ -275,6 +275,90 @@ async function saveClickedCell(cellIndex) {
                 }
             });
         }
+
+        // Award points based on clicked cells and check for bingos
+        function awardPoints(clickedCells) {
+            const horizontalBingos = checkHorizontalBingo(clickedCells);
+            const verticalBingos = checkVerticalBingo(clickedCells);
+            const letterI = checkLetterI(clickedCells);
+            const letterH = checkLetterH(clickedCells);
+            const fullBoard = checkFullBoard(clickedCells);
+
+            points = clickedCells.length; // Each clicked square = 1 point
+            points += horizontalBingos * 1; // Horizontal bingo = 1 point
+            points += verticalBingos * 3; // Vertical bingo = 3 points
+            points += letterI ? 4 : 0; // Letter I = 4 points
+            points += letterH ? 5 : 0; // Letter H = 5 points
+            points += fullBoard ? 5 : 0; // Full board = 5 bonus points
+
+            updatePointsDisplay(); // Update points display
+            localStorage.setItem('pointsThisGame', points); // Save points to localStorage
+        }
+
+        // Update points display in the top-right corner
+        function updatePointsDisplay() {
+            document.getElementById("points-game").textContent = points;
+        }
+
+        // Save cumulative points to Firestore only when the game ends
+        async function saveCumulativePoints() {
+            const userDocRef = doc(db, "users", currentUser.name);
+            const userDocSnap = await getDoc(userDocRef);
+
+            let cumulativePoints = 0;
+            if (userDocSnap.exists()) {
+                cumulativePoints = userDocSnap.data().cumulativePoints || 0;
+            }
+
+            // Add the current game points to the cumulative total
+            cumulativePoints += points;
+
+            // Save the updated cumulative points to Firestore
+            await setDoc(userDocRef, { cumulativePoints: cumulativePoints }, { merge: true });
+
+            // Clear points for next game
+            localStorage.removeItem('pointsThisGame');
+        }
+
+        // Check for horizontal bingos
+        function checkHorizontalBingo(cells) {
+            const rows = [
+                [0, 1, 2],
+                [3, 4, 5],
+                [6, 7, 8],
+                [9, 10, 11],
+                [12, 13, 14],
+            ];
+            return rows.filter(row => row.every(cell => cells.includes(cell))).length;
+        }
+
+        // Check for vertical bingos
+        function checkVerticalBingo(cells) {
+            const columns = [
+                [0, 3, 6, 9, 12],
+                [1, 4, 7, 10, 13],
+                [2, 5, 8, 11, 14],
+            ];
+            return columns.filter(column => column.every(cell => cells.includes(cell))).length;
+        }
+
+        // Check for "I" pattern
+        function checkLetterI(cells) {
+            const letterI = [0, 7, 14]; // The key parts of an "I"
+            return letterI.every(cell => cells.includes(cell));
+        }
+
+        // Check for "H" pattern
+        function checkLetterH(cells) {
+            const letterH = [0, 2, 7, 9, 11, 14]; // The key parts of an "H"
+            return letterH.every(cell => cells.includes(cell));
+        }
+
+        // Check for a full board
+        function checkFullBoard(cells) {
+            return cells.length === 15;
+        }
+
 
         populateBingoGrid(); // Call the function to populate the grid
 
