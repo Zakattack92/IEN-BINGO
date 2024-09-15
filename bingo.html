@@ -230,6 +230,30 @@
             });
         }
 
+        // Save clicked cells to Firestore
+async function saveClickedCell(cellIndex) {
+    const userDocRef = doc(db, "user_clicks", currentUser.name); // Referencing user's document
+    const userDocSnap = await getDoc(userDocRef);
+
+    let clickedCells = [];
+    if (userDocSnap.exists()) {
+        clickedCells = userDocSnap.data().clickedCells || [];
+    }
+
+    // Toggle clicked state (add/remove clicked cells)
+    if (clickedCells.includes(cellIndex)) {
+        clickedCells = clickedCells.filter(index => index !== cellIndex);
+    } else {
+        clickedCells.push(cellIndex);
+    }
+
+    // Save the updated clicked cells to Firestore
+    await setDoc(userDocRef, { clickedCells: clickedCells }, { merge: true });
+
+    // Optionally, if you're handling points or other updates after a click
+    updatePoints(clickedCells);
+}
+
         // Load the clicked cells for the current user
         async function loadClickedCells() {
             const userDocRef = doc(db, "user_clicks", currentUser.name);
