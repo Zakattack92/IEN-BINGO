@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=.80">
+    <meta charset="viewport" content="width=device-width, initial-scale=.80">
     <title>I.E.N. Bingo</title>
     <style>
         body {
             background-color: black;
-            color: #edbc00; /* Deeper gold color */
+            color: #edbc00;
             font-family: Arial, sans-serif;
             text-align: center;
         }
@@ -18,14 +17,14 @@
 
         .bingo-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr); /* 3 columns wide */
+            grid-template-columns: repeat(3, 1fr);
             grid-gap: 10px;
             margin: 20px auto;
             width: 80%;
         }
 
         .bingo-cell {
-            border: 2px solid #edbc00; /* Deeper gold */
+            border: 2px solid #edbc00;
             padding: 20px;
             font-size: 1.2em;
             cursor: pointer;
@@ -53,33 +52,37 @@
         .submit-button:hover {
             background-color: #c89700;
         }
+
+        .points-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5em;
+        }
     </style>
 </head>
 <body>
     <h1>I.E.N. Bingo</h1>
-
+    <div class="points-display">
+        Points: <span id="points">0</span>
+    </div>
     <div class="bingo-grid">
         <div class="bingo-cell" id="cell-1"></div>
         <div class="bingo-cell" id="cell-2"></div>
         <div class="bingo-cell" id="cell-3"></div>
-
         <div class="bingo-cell" id="cell-4"></div>
         <div class="bingo-cell" id="cell-5"></div>
         <div class="bingo-cell" id="cell-6"></div>
-
         <div class="bingo-cell" id="cell-7"></div>
         <div class="bingo-cell free-spot" id="free-spot">Free Spot</div>
         <div class="bingo-cell" id="cell-9"></div>
-
         <div class="bingo-cell" id="cell-10"></div>
         <div class="bingo-cell" id="cell-11"></div>
         <div class="bingo-cell" id="cell-12"></div>
-
         <div class="bingo-cell" id="cell-13"></div>
         <div class="bingo-cell" id="cell-14"></div>
         <div class="bingo-cell" id="cell-15"></div>
     </div>
-
     <button class="submit-button" onclick="window.location.href='submit.html';">Submit a Phrase</button>
 
     <script>
@@ -89,32 +92,71 @@
         }
 
         const user = JSON.parse(localStorage.getItem('bingoUser')); // Get logged-in user
-    </script>
+        let points = 0; // User's points for this game
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, query, collection, where, getDocs } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
-            authDomain: "ien-bingo.firebaseapp.com",
-            projectId: "ien-bingo",
-            storageBucket: "ien-bingo.appspot.com",
-            messagingSenderId: "115041832401",
-            appId: "1:115041832401:web:785da7558648d1ac8124f0"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        let currentUser = JSON.parse(localStorage.getItem('bingoUser')); // Get logged-in user
-
-        // Ensure user is logged in, otherwise redirect to login
-        if (!currentUser) {
-            window.location.href = 'index.html'; // Redirect to login page if not authenticated
+        // Display points in the top-right corner
+        function updatePointsDisplay() {
+            document.getElementById("points").textContent = points;
         }
 
-        // Function to save clicked cells to Firestore
+        // Award points based on clicks and bingo patterns
+        function awardPoints(cells) {
+            const horizontalBingos = checkHorizontalBingo(cells);
+            const verticalBingos = checkVerticalBingo(cells);
+            const letterI = checkLetterI(cells);
+            const letterH = checkLetterH(cells);
+            const fullBoard = checkFullBoard(cells);
+
+            points += cells.length; // Each clicked square = 1 point
+            points += horizontalBingos * 1; // Horizontal bingo = 1 point
+            points += verticalBingos * 3; // Vertical bingo = 3 points
+            points += letterI ? 4 : 0; // Letter I = 4 points
+            points += letterH ? 5 : 0; // Letter H = 5 points
+            points += fullBoard ? 5 : 0; // Full board = 5 bonus points
+
+            updatePointsDisplay(); // Update points display
+        }
+
+        // Check for horizontal bingos
+        function checkHorizontalBingo(cells) {
+            const rows = [
+                [0, 1, 2],
+                [3, 4, 5],
+                [6, 7, 8],
+                [9, 10, 11],
+                [12, 13, 14],
+            ];
+            return rows.filter(row => row.every(cell => cells.includes(cell))).length;
+        }
+
+        // Check for vertical bingos
+        function checkVerticalBingo(cells) {
+            const columns = [
+                [0, 3, 6, 9, 12],
+                [1, 4, 7, 10, 13],
+                [2, 5, 8, 11, 14],
+            ];
+            return columns.filter(column => column.every(cell => cells.includes(cell))).length;
+        }
+
+        // Check for "I" pattern
+        function checkLetterI(cells) {
+            const letterI = [0, 7, 14]; // The key parts of an "I"
+            return letterI.every(cell => cells.includes(cell));
+        }
+
+        // Check for "H" pattern
+        function checkLetterH(cells) {
+            const letterH = [0, 2, 7, 9, 11, 14]; // The key parts of an "H"
+            return letterH.every(cell => cells.includes(cell));
+        }
+
+        // Check for a full board
+        function checkFullBoard(cells) {
+            return cells.length === 15;
+        }
+
+        // Function to save clicked cells and points to Firestore
         async function saveClickedCell(cellIndex) {
             const userDocRef = doc(db, "user_clicks", currentUser.name); // Assuming `name` is the identifier
             const userDocSnap = await getDoc(userDocRef);
@@ -132,7 +174,38 @@
             }
 
             // Save updated clicked cells to Firestore
-            await setDoc(userDocRef, { clickedCells: clickedCells }, { merge: true });
+            await setDoc(userDocRef, { clickedCells: clickedCells, points: points }, { merge: true });
+
+            // Award points based on current clicks
+            awardPoints(clickedCells);
+        }
+
+        // Load points for the user
+        async function loadPoints() {
+            const userDocRef = doc(db, "users", currentUser.name); // Assuming `name` is the identifier
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                points = userData.cumulativePoints || 0;
+                updatePointsDisplay();
+            }
+        }
+
+        // Update cumulative points for the user
+        async function updateCumulativePoints() {
+            const userDocRef = doc(db, "users", currentUser.name);
+            const userDocSnap = await getDoc(userDocRef);
+
+            let cumulativePoints = 0;
+            if (userDocSnap.exists()) {
+                cumulativePoints = userDocSnap.data().cumulativePoints || 0;
+            }
+
+            // Add the current game points to cumulative total
+            cumulativePoints += points;
+
+            // Save the updated cumulative points to Firestore
+            await setDoc(userDocRef, { cumulativePoints: cumulativePoints }, { merge: true });
         }
 
         // Populate the bingo grid based on the game state
@@ -143,43 +216,6 @@
                 loadClickedCells(); // Load clicked cells for the current user
             } else {
                 await generateAndSaveBingoBoard(); // Generate a new board if no saved one exists
-            }
-        }
-
-        // Load the clicked cells for the current user
-        async function loadClickedCells() {
-            const userDocRef = doc(db, "user_clicks", currentUser.name);
-            const userDocSnap = await getDoc(userDocRef);
-
-            if (userDocSnap.exists()) {
-                const userData = userDocSnap.data();
-                const clickedCells = userData.clickedCells || [];
-                updateClickedCells(clickedCells); // Update UI to reflect clicked cells
-            }
-        }
-
-        // Update the bingo grid to reflect clicked cells
-        function updateClickedCells(clickedCells) {
-            const bingoCells = document.querySelectorAll('.bingo-cell');
-            bingoCells.forEach((cell, index) => {
-                if (clickedCells.includes(index)) {
-                    cell.classList.add('clicked'); // Mark cell as clicked
-                }
-            });
-        }
-
-        // Load the board from Firestore
-        async function fetchSavedBoard() {
-            const boardDocRef = doc(db, "game_state", "current");
-            const boardDocSnap = await getDoc(boardDocRef);
-
-            if (boardDocSnap.exists()) {
-                const gameData = boardDocSnap.data();
-                return gameData.board || null;
-            } else {
-                // Log if no saved game board exists
-                console.error("No saved board found");
-                return null;
             }
         }
 
@@ -204,81 +240,8 @@
             });
         }
 
-        // Fetch Free Spot phrase from Firestore
-        async function fetchFreeSpotPhrase() {
-            const q = query(collection(db, "bingo_phrases"), where("category", "==", "Free Spot"), where("status", "==", "approved"));
-            const querySnapshot = await getDocs(q);
-
-            if (!querySnapshot.empty) {
-                const randomIndex = Math.floor(Math.random() * querySnapshot.docs.length);
-                return querySnapshot.docs[randomIndex].data().phrase;
-            } else {
-                return "Free Spot"; // Fallback if no free spot phrases are found
-            }
-        }
-
-        // Generate a new bingo board and save it to Firestore
-        async function generateAndSaveBingoBoard() {
-            const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
-            const querySnapshot = await getDocs(q);
-            const phrasesByCategory = {};
-
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                if (data.category !== "Free Spot") {
-                    if (!phrasesByCategory[data.category]) {
-                        phrasesByCategory[data.category] = [];
-                    }
-                    phrasesByCategory[data.category].push(data.phrase);
-                }
-            });
-
-            const selectedPhrases = [];
-            const categories = Object.keys(phrasesByCategory);
-
-            // Select phrases from each category, ensuring 14 phrases total
-            while (selectedPhrases.length < 14 && categories.length > 0) {
-                for (const category of categories) {
-                    if (phrasesByCategory[category].length > 0 && selectedPhrases.length < 14) {
-                        const phrase = phrasesByCategory[category].shift();
-                        selectedPhrases.push(phrase);
-                    }
-                }
-            }
-
-            shuffle(selectedPhrases); // Shuffle the phrases for randomness
-
-            const bingoCells = [];
-            let phraseIndex = 0;
-
-            // Fill all cells, with free spot in the middle (cell index 7)
-            for (let i = 0; i < 15; i++) {
-                if (i === 7) {
-                    bingoCells.push("Free Spot"); // Free Spot in the center
-                } else {
-                    bingoCells.push(selectedPhrases[phraseIndex] || '');
-                    phraseIndex++;
-                }
-            }
-
-            // Save the generated board in Firestore
-            await setDoc(doc(db, "game_state", "current"), { board: bingoCells }, { merge: true });
-
-            // Fill the grid with the new board
-            fillBingoGrid(bingoCells);
-        }
-
-        // Shuffle function to randomize phrases
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
-
         populateBingoGrid(); // Call the function to populate the grid
+        loadPoints(); // Load the user's cumulative points
     </script>
-
 </body>
 </html>
