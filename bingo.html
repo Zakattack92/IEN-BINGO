@@ -184,7 +184,7 @@
         function fillBingoGrid(board) {
             const bingoCells = document.querySelectorAll('.bingo-cell');
              // Fetch the free spot phrase asynchronously
-    const freeSpotPhrase = await fetchFreeSpotPhrase();
+   // const freeSpotPhrase = await fetchFreeSpotPhrase();
             bingoCells.forEach((cell, index) => {
                 if (index === 7) {
                     cell.textContent = freeSpotPhrase || "Free Spot"; // Always place free spot in the center
