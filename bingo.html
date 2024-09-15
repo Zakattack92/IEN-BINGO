@@ -110,40 +110,35 @@
     let currentUser = JSON.parse(localStorage.getItem('bingoUser')); // Get logged-in user
 
     // Ensure user is logged in, otherwise redirect to login
-    if (!currentUser) {
-        window.location.href = 'index.html'; // Redirect to login page if not authenticated
-    } else {
-        // User is logged in, set up real-time listener
-        setupRealTimeListener();
+if (!currentUser || !currentUser.uid) {
+    console.error("User is not logged in or does not have a valid UID.");
+    window.location.href = 'index.html'; // Redirect to login page if not authenticated
+} else {
+    console.log("User logged in: ", currentUser.uid);
+    // User is logged in, set up real-time listener
+    setupRealTimeListener();
+}
+
+// Real-time listener for Firestore changes
+function setupRealTimeListener() {
+    if (!currentUser.uid) {
+        console.error("No user UID available for setting up Firestore listener.");
+        return; // Prevent further execution if no UID
     }
 
-    // Fetch the game state to check if the game is started
-    async function fetchGameState() {
-        const gameStateRef = doc(db, "game_state", "current");
-        const gameStateSnap = await getDoc(gameStateRef);
-        if (gameStateSnap.exists()) {
-            const gameState = gameStateSnap.data();
-            console.log("Game State:", gameState);
-            return gameState;
+    const userDocRef = doc(db, "user_clicks", currentUser.uid);
+
+    // Set up real-time listener for changes in user's clicked cells
+    onSnapshot(userDocRef, (docSnapshot) => {
+        if (docSnapshot.exists()) {
+            const userData = docSnapshot.data();
+            const clickedCells = userData.clickedCells || [];
+            updateButtonStates(clickedCells); // Update button states based on data from Firestore
+        } else {
+            console.log("No user data found for UID: ", currentUser.uid);
         }
-        console.log("Game State not found");
-        return null;
-    }
-
-    // Real-time listener for Firestore changes
-    function setupRealTimeListener() {
-        const userDocRef = doc(db, "user_clicks", currentUser.uid);
-
-        // Set up real-time listener for changes in user's clicked cells
-        onSnapshot(userDocRef, (docSnapshot) => {
-            if (docSnapshot.exists()) {
-                const userData = docSnapshot.data();
-                const clickedCells = userData.clickedCells || [];
-                updateButtonStates(clickedCells); // Update button states based on data from Firestore
-            }
-        });
-    }
-
+    });
+}
     // Function to update button states (clicked/un-clicked)
     function updateButtonStates(clickedCells) {
         const bingoCells = document.querySelectorAll('.bingo-cell');
