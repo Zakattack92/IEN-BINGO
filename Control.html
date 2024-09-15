@@ -53,15 +53,15 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
-        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js"; // Fixed import for getDoc
 
         const firebaseConfig = {
             apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
-        authDomain: "ien-bingo.firebaseapp.com",
-        projectId: "ien-bingo",
-        storageBucket: "ien-bingo.appspot.com",
-        messagingSenderId: "115041832401",
-        appId: "1:115041832401:web:785da7558648d1ac8124f0"
+            authDomain: "ien-bingo.firebaseapp.com",
+            projectId: "ien-bingo",
+            storageBucket: "ien-bingo.appspot.com",
+            messagingSenderId: "115041832401",
+            appId: "1:115041832401:web:785da7558648d1ac8124f0"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -69,22 +69,30 @@
 
         // Manually start the game
         async function startGame() {
-            await setDoc(doc(db, "game_state", "current"), {
-                status: "started",
-                timestamp: Date.now(),
-                countdownEnabled: false
-            });
-            alert("Game Started Manually!");
+            try {
+                await setDoc(doc(db, "game_state", "current"), {
+                    status: "started",
+                    timestamp: Date.now(),
+                    countdownEnabled: false
+                });
+                alert("Game Started Manually!");
+            } catch (error) {
+                console.error("Error starting game:", error);
+            }
         }
 
         // Manually end the game
         async function endGame() {
-            await setDoc(doc(db, "game_state", "current"), {
-                status: "ended",
-                timestamp: Date.now(),
-                countdownEnabled: false
-            });
-            alert("Game Ended Manually!");
+            try {
+                await setDoc(doc(db, "game_state", "current"), {
+                    status: "ended",
+                    timestamp: Date.now(),
+                    countdownEnabled: false
+                });
+                alert("Game Ended Manually!");
+            } catch (error) {
+                console.error("Error ending game:", error);
+            }
         }
 
         // Schedule game start and end
@@ -93,13 +101,17 @@
             const endTime = new Date(document.getElementById('end-time').value).getTime();
 
             if (startTime && endTime && startTime < endTime) {
-                await setDoc(doc(db, "game_state", "current"), {
-                    status: "scheduled",
-                    startTime,
-                    endTime,
-                    countdownEnabled: false
-                });
-                alert("Game Scheduled!");
+                try {
+                    await setDoc(doc(db, "game_state", "current"), {
+                        status: "scheduled",
+                        startTime,
+                        endTime,
+                        countdownEnabled: false
+                    });
+                    alert("Game Scheduled!");
+                } catch (error) {
+                    console.error("Error scheduling game:", error);
+                }
             } else {
                 alert("Please select valid start and end times.");
             }
@@ -107,29 +119,35 @@
 
         // Toggle the countdown timer
         async function toggleCountdown() {
-            const gameStateRef = doc(db, "game_state", "current");
-            const gameStateSnap = await getDoc(gameStateRef);
+            try {
+                const gameStateRef = doc(db, "game_state", "current");
+                const gameStateSnap = await getDoc(gameStateRef);
 
-            if (gameStateSnap.exists()) {
-                const currentState = gameStateSnap.data();
-                const newCountdownState = !currentState.countdownEnabled;
+                if (gameStateSnap.exists()) {
+                    const currentState = gameStateSnap.data();
+                    const newCountdownState = !currentState.countdownEnabled;
 
-                await setDoc(gameStateRef, {
-                    ...currentState,
-                    countdownEnabled: newCountdownState
-                });
+                    await setDoc(gameStateRef, {
+                        ...currentState,
+                        countdownEnabled: newCountdownState
+                    });
 
-                alert(`Countdown Timer ${newCountdownState ? 'Enabled' : 'Disabled'}`);
-            } else {
-                alert("Game state not found. Start a game first.");
+                    alert(`Countdown Timer ${newCountdownState ? 'Enabled' : 'Disabled'}`);
+                } else {
+                    alert("Game state not found. Start a game first.");
+                }
+            } catch (error) {
+                console.error("Error toggling countdown:", error);
             }
         }
 
         // Function to handle scheduled game start and stop
-        function checkSchedule() {
-            const now = Date.now();
-            const gameStateRef = doc(db, "game_state", "current");
-            gameStateSnap.get().then((gameStateSnap) => {
+        async function checkSchedule() {
+            try {
+                const now = Date.now();
+                const gameStateRef = doc(db, "game_state", "current");
+                const gameStateSnap = await getDoc(gameStateRef);
+
                 if (gameStateSnap.exists()) {
                     const gameState = gameStateSnap.data();
                     if (gameState.status === "scheduled" && now >= gameState.startTime && now <= gameState.endTime) {
@@ -138,7 +156,9 @@
                         endGame(); // Automatically end the game
                     }
                 }
-            });
+            } catch (error) {
+                console.error("Error checking schedule:", error);
+            }
         }
 
         // Continuously check if it's time to start or stop the game
