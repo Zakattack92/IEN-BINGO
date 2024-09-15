@@ -65,7 +65,7 @@
 <body>
     <h1>I.E.N. Bingo</h1>
     <div class="points-display">
-        Points: <span id="points-game">0</span>
+        Points this game: <span id="points-game">0</span>
     </div>
     <div class="bingo-grid">
         <div class="bingo-cell" id="cell-1"></div>
@@ -99,7 +99,6 @@
 
         const user = JSON.parse(localStorage.getItem('bingoUser')); // Get logged-in user
         let points = parseInt(localStorage.getItem('pointsThisGame')) || 0; // Load points from localStorage
-
 
     </script>
 
@@ -166,7 +165,7 @@
             points += fullBoard ? 5 : 0; // Full board = 5 bonus points
 
             updatePointsDisplay(); // Update points display
-        localStorage.setItem('pointsThisGame', points); // Save points to localStorage
+            localStorage.setItem('pointsThisGame', points); // Save points to localStorage
         }
 
         // Update points display in the top-right corner
@@ -189,7 +188,8 @@
 
             // Save the updated cumulative points to Firestore
             await setDoc(userDocRef, { cumulativePoints: cumulativePoints }, { merge: true });
-             // Clear points for next game
+
+            // Clear points for next game
             localStorage.removeItem('pointsThisGame');
         }
 
@@ -232,7 +232,7 @@
             return cells.length === 15;
         }
 
-        // Populate the bingo grid based on the game state
+        // Populate the bingo grid
         async function populateBingoGrid() {
             const savedBoard = await fetchSavedBoard(); // Fetch saved board from Firestore
             if (savedBoard) {
@@ -243,76 +243,7 @@
             }
         }
 
-        // Fill the bingo grid with phrases or load from saved state
-        async function fillBingoGrid(board) {
-            const bingoCells = document.querySelectorAll('.bingo-cell');
-            const freeSpotPhrase = await fetchFreeSpotPhrase(); // Fetch Free Spot phrase
-            bingoCells.forEach((cell, index) => {
-                if (index === 7) {
-                    cell.textContent = freeSpotPhrase || "Free Spot"; // Always place free spot in the center
-                } else {
-                    cell.textContent = board[index] || '';
-                }
-            });
-
-            // Add event listeners to cells for click actions
-            bingoCells.forEach((cell, index) => {
-                cell.addEventListener('click', () => {
-                    cell.classList.toggle('clicked'); // Toggle clicked state
-                    saveClickedCell(index); // Save clicked state to Firestore
-                });
-            });
-        }
-
-        // Load the clicked cells for the current user
-        async function loadClickedCells() {
-            const userDocRef = doc(db, "user_clicks", currentUser.name);
-            const userDocSnap = await getDoc(userDocRef);
-
-            if (userDocSnap.exists()) {
-                const userData = userDocSnap.data();
-                const clickedCells = userData.clickedCells || [];
-                updateClickedCells(clickedCells); // Update UI to reflect clicked cells
-            }
-        }
-
-        // Update the bingo grid to reflect clicked cells
-        function updateClickedCells(clickedCells) {
-            const bingoCells = document.querySelectorAll('.bingo-cell');
-            bingoCells.forEach((cell, index) => {
-                if (clickedCells.includes(index)) {
-                    cell.classList.add('clicked'); // Mark cell as clicked
-                }
-            });
-        }
-
-        // Load the board from Firestore
-        async function fetchSavedBoard() {
-            const boardDocRef = doc(db, "game_state", "current");
-            const boardDocSnap = await getDoc(boardDocRef);
-
-            if (boardDocSnap.exists()) {
-                const gameData = boardDocSnap.data();
-                return gameData.board || null;
-            }
-            return null;
-        }
-
-        // Fetch Free Spot phrase from Firestore
-        async function fetchFreeSpotPhrase() {
-            const q = query(collection(db, "bingo_phrases"), where("category", "==", "Free Spot"), where("status", "==", "approved"));
-            const querySnapshot = await getDocs(q);
-
-            if (!querySnapshot.empty) {
-                const randomIndex = Math.floor(Math.random() * querySnapshot.docs.length);
-                return querySnapshot.docs[randomIndex].data().phrase;
-            } else {
-                return "Free Spot"; // Fallback if no free spot phrases are found
-            }
-        }
-
         populateBingoGrid(); // Call the function to populate the grid
-
     </script>
 
 </body>
