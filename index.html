@@ -31,10 +31,16 @@
         button:hover {
             background-color: #c89700;
         }
+
+        .form-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
     </style>
 </head>
 <body>
-    <h1>Login to I.E.N. Bingo</h1>
+    <h1>Login or Register</h1>
 
     <form id="login-form">
         <label for="name">Name:</label>
@@ -43,7 +49,10 @@
         <label for="password">PIN:</label>
         <input type="password" id="password" placeholder="Enter 4-digit PIN" required><br>
 
-        <button type="submit">Login</button>
+        <div class="form-buttons">
+            <button type="button" id="login-button">Login</button>
+            <button type="button" id="register-button">Register</button>
+        </div>
     </form>
 
     <script type="module">
@@ -52,7 +61,7 @@
         import { getAuth, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-auth.js";
 
         const firebaseConfig = {
-          apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
+            apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
             authDomain: "ien-bingo.firebaseapp.com",
             projectId: "ien-bingo",
             storageBucket: "ien-bingo.appspot.com",
@@ -64,31 +73,25 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // Check if user is already logged in (persistent session)
+        // Check if user is already logged in
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                window.location.href = 'bingo.html'; // Redirect to bingo board if logged in
+                window.location.href = 'bingo.html'; // Redirect to bingo board if already logged in
             }
         });
 
-        // Login form submission
-        document.getElementById('login-form').addEventListener('submit', async (event) => {
-            event.preventDefault();
-
+        // Login functionality
+        document.getElementById('login-button').addEventListener('click', async () => {
             const name = document.getElementById('name').value;
             const password = document.getElementById('password').value;
 
-            // Check Firestore for the user and password
             const userRef = doc(db, "users", name);
             const userSnap = await getDoc(userRef);
 
             if (userSnap.exists()) {
                 const userData = userSnap.data();
                 if (userData.password === password) {
-                    // Optionally create a custom token for this user
-                    const token = 'your-generated-token'; // In a real app, generate this on your server
-                    
-                    // Sign the user in and persist the session
+                    const token = 'your-generated-token'; // Generate token on server if needed
                     await signInWithCustomToken(auth, token);
                     window.location.href = 'bingo.html'; // Redirect to bingo board
                 } else {
@@ -96,6 +99,29 @@
                 }
             } else {
                 alert("User not found");
+            }
+        });
+
+        // Register functionality
+        document.getElementById('register-button').addEventListener('click', async () => {
+            const name = document.getElementById('name').value;
+            const password = document.getElementById('password').value;
+
+            if (name && password) {
+                const userRef = doc(db, "users", name);
+                const userSnap = await getDoc(userRef);
+
+                if (userSnap.exists()) {
+                    alert("User already exists. Please login.");
+                } else {
+                    await setDoc(userRef, {
+                        name: name,
+                        password: password
+                    });
+                    alert("User registered successfully! Please log in.");
+                }
+            } else {
+                alert("Please enter a valid name and PIN.");
             }
         });
     </script>
