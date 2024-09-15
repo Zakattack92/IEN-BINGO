@@ -118,6 +118,69 @@
         return null;
     }
 
+        let currentUser = JSON.parse(localStorage.getItem('bingoUser')); // Get logged-in user
+
+    // Ensure user is logged in, otherwise redirect to login
+    if (!currentUser) {
+        window.location.href = 'index.html'; // Redirect to login page if not authenticated
+    } else {
+        // User is logged in, set up real-time listener
+        setupRealTimeListener();
+    }
+
+    // Real-time listener for Firestore changes
+    function setupRealTimeListener() {
+        const userDocRef = doc(db, "user_clicks", currentUser.uid);
+
+        // Set up real-time listener for changes in user's clicked cells
+        onSnapshot(userDocRef, (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                const userData = docSnapshot.data();
+                const clickedCells = userData.clickedCells || [];
+                updateButtonStates(clickedCells); // Update button states based on data from Firestore
+            }
+        });
+    }
+
+    // Function to update button states (clicked/un-clicked)
+    function updateButtonStates(clickedCells) {
+        const bingoCells = document.querySelectorAll('.bingo-cell');
+        bingoCells.forEach((cell, index) => {
+            if (clickedCells.includes(index)) {
+                cell.classList.add('clicked'); // Mark as clicked
+            } else {
+                cell.classList.remove('clicked'); // Mark as un-clicked
+            }
+        });
+    }
+
+    // Save clicked cell when user clicks on a button
+    async function saveClickedCell(cellIndex) {
+        const userDocRef = doc(db, "user_clicks", currentUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+
+        let clickedCells = [];
+        if (userDocSnap.exists()) {
+            clickedCells = userDocSnap.data().clickedCells || [];
+        }
+
+        // Add the new clicked cell if not already clicked
+        if (!clickedCells.includes(cellIndex)) {
+            clickedCells.push(cellIndex);
+        }
+
+        // Save the updated clicked cells list back to Firestore
+        await setDoc(userDocRef, { clickedCells: clickedCells }, { merge: true });
+    }
+
+    // Add event listeners to bingo cells for click actions
+    document.querySelectorAll('.bingo-cell').forEach((cell, index) => {
+        cell.addEventListener('click', () => {
+            cell.classList.toggle('clicked');
+            saveClickedCell(index); // Save clicked cell to Firestore
+        });
+    });
+
     // Populate the bingo grid based on the game state
     async function populateBingoGrid() {
         const gameState = await fetchGameState(); // Fetch game state
