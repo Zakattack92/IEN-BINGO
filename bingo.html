@@ -201,7 +201,18 @@
                 });
             });
         }
+/ Fetch a random "Free Spot" phrase from Firestore
+async function fetchFreeSpotPhrase() {
+    const q = query(collection(db, "bingo_phrases"), where("category", "==", "Free Spot"), where("status", "==", "approved"));
+    const querySnapshot = await getDocs(q);
 
+    if (!querySnapshot.empty) {
+        const randomIndex = Math.floor(Math.random() * querySnapshot.docs.length);
+        return querySnapshot.docs[randomIndex].data().phrase;
+    } else {
+        return "Free Spot"; // Fallback if no Free Spot phrases are found
+    }
+}
         populateBingoGrid(); // Call the function to populate the grid
     </script>
 
