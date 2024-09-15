@@ -98,7 +98,8 @@
         }
 
         const user = JSON.parse(localStorage.getItem('bingoUser')); // Get logged-in user
-        let points = 0; // Points for this game
+        let points = parseInt(localStorage.getItem('pointsThisGame')) || 0; // Load points from localStorage
+
 
     </script>
 
