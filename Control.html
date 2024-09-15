@@ -36,8 +36,8 @@
     <h1>Game Control Panel</h1>
 
     <!-- Manual Game Start and Stop -->
-    <button onclick="startGame()">Start Game Manually</button>
-    <button onclick="endGame()">End Game Manually</button>
+    <button id="start-game-btn">Start Game Manually</button>
+    <button id="end-game-btn">End Game Manually</button>
 
     <!-- Schedule Game Start and Stop -->
     <label for="start-time">Schedule Game Start:</label>
@@ -46,14 +46,14 @@
     <label for="end-time">Schedule Game End:</label>
     <input type="datetime-local" id="end-time">
 
-    <button onclick="scheduleGame()">Schedule Game</button>
+    <button id="schedule-game-btn">Schedule Game</button>
 
     <!-- Toggle Countdown Timer -->
-    <button onclick="toggleCountdown()">Toggle Countdown Timer</button>
+    <button id="toggle-countdown-btn">Toggle Countdown Timer</button>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js"; // Fixed import for getDoc
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
@@ -68,13 +68,14 @@
         const db = getFirestore(app);
 
         // Manually start the game
-        async function startGame() {
+        window.startGame = async function() {
             try {
                 await setDoc(doc(db, "game_state", "current"), {
                     status: "started",
                     timestamp: Date.now(),
                     countdownEnabled: false
                 });
+                console.log("Game Started Manually!");
                 alert("Game Started Manually!");
             } catch (error) {
                 console.error("Error starting game:", error);
@@ -82,13 +83,14 @@
         }
 
         // Manually end the game
-        async function endGame() {
+        window.endGame = async function() {
             try {
                 await setDoc(doc(db, "game_state", "current"), {
                     status: "ended",
                     timestamp: Date.now(),
                     countdownEnabled: false
                 });
+                console.log("Game Ended Manually!");
                 alert("Game Ended Manually!");
             } catch (error) {
                 console.error("Error ending game:", error);
@@ -96,7 +98,7 @@
         }
 
         // Schedule game start and end
-        async function scheduleGame() {
+        window.scheduleGame = async function() {
             const startTime = new Date(document.getElementById('start-time').value).getTime();
             const endTime = new Date(document.getElementById('end-time').value).getTime();
 
@@ -108,6 +110,7 @@
                         endTime,
                         countdownEnabled: false
                     });
+                    console.log("Game Scheduled!");
                     alert("Game Scheduled!");
                 } catch (error) {
                     console.error("Error scheduling game:", error);
@@ -118,7 +121,7 @@
         }
 
         // Toggle the countdown timer
-        async function toggleCountdown() {
+        window.toggleCountdown = async function() {
             try {
                 const gameStateRef = doc(db, "game_state", "current");
                 const gameStateSnap = await getDoc(gameStateRef);
@@ -132,6 +135,7 @@
                         countdownEnabled: newCountdownState
                     });
 
+                    console.log(`Countdown Timer ${newCountdownState ? 'Enabled' : 'Disabled'}`);
                     alert(`Countdown Timer ${newCountdownState ? 'Enabled' : 'Disabled'}`);
                 } else {
                     alert("Game state not found. Start a game first.");
