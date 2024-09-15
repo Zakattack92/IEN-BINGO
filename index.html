@@ -18,7 +18,7 @@
 
         .bingo-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(3, 1fr); /* Now 3 columns wide */
             grid-gap: 10px;
             margin: 20px auto;
             width: 80%;
@@ -31,7 +31,6 @@
             cursor: pointer;
         }
 
-        /* Free Spot stays uncolored but clickable */
         .free-spot {
             font-weight: bold;
         }
@@ -40,7 +39,8 @@
             background-color: #DAA520;
             color: black;
         }
-         /* Styling for the submit button */
+
+        /* Styling for the submit button */
         .submit-button {
             margin-top: 20px;
             padding: 10px 20px;
@@ -63,40 +63,28 @@
         <div class="bingo-cell" id="cell-1"></div>
         <div class="bingo-cell" id="cell-2"></div>
         <div class="bingo-cell" id="cell-3"></div>
+
         <div class="bingo-cell" id="cell-4"></div>
         <div class="bingo-cell" id="cell-5"></div>
-
         <div class="bingo-cell" id="cell-6"></div>
+
         <div class="bingo-cell" id="cell-7"></div>
         <div class="bingo-cell" id="cell-8"></div>
+        <div class="bingo-cell free-spot" id="free-spot">Free Spot</div>
+
         <div class="bingo-cell" id="cell-9"></div>
         <div class="bingo-cell" id="cell-10"></div>
-
         <div class="bingo-cell" id="cell-11"></div>
+
         <div class="bingo-cell" id="cell-12"></div>
-        <div class="bingo-cell free-spot" id="free-spot">Free Spot</div>
+        <div class="bingo-cell" id="cell-13"></div>
         <div class="bingo-cell" id="cell-14"></div>
-        <div class="bingo-cell" id="cell-15"></div>
-
-        <div class="bingo-cell" id="cell-16"></div>
-        <div class="bingo-cell" id="cell-17"></div>
-        <div class="bingo-cell" id="cell-18"></div>
-        <div class="bingo-cell" id="cell-19"></div>
-        <div class="bingo-cell" id="cell-20"></div>
-
-        <div class="bingo-cell" id="cell-21"></div>
-        <div class="bingo-cell" id="cell-22"></div>
-        <div class="bingo-cell" id="cell-23"></div>
-        <div class="bingo-cell" id="cell-24"></div>
-        <div class="bingo-cell" id="cell-25"></div>
     </div>
 
     <!-- Button to submit a phrase -->
     <button class="submit-button" onclick="window.location.href='submit.html';">Submit a Phrase</button>
 
-
     <script>
-        // Placeholder for dynamic content
         const bingoCells = document.querySelectorAll('.bingo-cell');
         bingoCells.forEach(cell => {
             cell.addEventListener('click', () => {
@@ -104,30 +92,29 @@
             });
         });
     </script>
-<script type="module">
+    <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
     import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
 
     // Your Firebase config
     const firebaseConfig = {
-        apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
-        authDomain: "ien-bingo.firebaseapp.com",
-        projectId: "ien-bingo",
-        storageBucket: "ien-bingo.appspot.com",
-        messagingSenderId: "115041832401",
-        appId: "1:115041832401:web:785da7558648d1ac8124f0"
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Fetch phrases and populate bingo grid
+    // Fetch and populate the grid with random phrases (like before)
     async function populateBingoGrid() {
         const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
         const querySnapshot = await getDocs(q);
         const phrasesByCategory = {};
 
-        // Group phrases by category (ignoring "Free Spot")
         querySnapshot.forEach((doc) => {
             const data = doc.data();
             if (data.category !== "Free Spot") {
@@ -138,31 +125,26 @@
             }
         });
 
-        // Shuffle and balance phrases across categories
         const selectedPhrases = [];
         const categories = Object.keys(phrasesByCategory);
 
-        // Ensure equal distribution of phrases from each category
-        while (selectedPhrases.length < 24 && categories.length > 0) {
+        while (selectedPhrases.length < 14 && categories.length > 0) {
             for (const category of categories) {
-                if (phrasesByCategory[category].length > 0 && selectedPhrases.length < 24) {
+                if (phrasesByCategory[category].length > 0 && selectedPhrases.length < 14) {
                     const phrase = phrasesByCategory[category].shift();
                     selectedPhrases.push(phrase);
                 }
             }
         }
 
-        // Shuffle selected phrases before adding to grid
         shuffle(selectedPhrases);
-
+        
         const bingoCells = document.querySelectorAll('.bingo-cell');
         let phraseIndex = 0;
 
-        // Fill bingo cells, leaving the center as Free Spot
         bingoCells.forEach((cell, index) => {
-            if (index === 12) {
-                // The Free Spot in the center
-                populateFreeSpot();
+            if (index === 8) {
+                populateFreeSpot(); // Free Spot in the center
             } else {
                 cell.textContent = selectedPhrases[phraseIndex] || '';
                 phraseIndex++;
@@ -170,11 +152,10 @@
         });
     }
 
-    // Populate "Free Spot" with a random phrase from the "Free Spot" category
     async function populateFreeSpot() {
         const q = query(collection(db, "bingo_phrases"), where("category", "==", "Free Spot"), where("status", "==", "approved"));
         const querySnapshot = await getDocs(q);
-        
+
         if (!querySnapshot.empty) {
             const randomIndex = Math.floor(Math.random() * querySnapshot.docs.length);
             const freeSpotPhrase = querySnapshot.docs[randomIndex].data().phrase;
@@ -184,7 +165,6 @@
         }
     }
 
-    // Shuffle function to randomize the phrase order
     function shuffle(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -193,11 +173,7 @@
         return array;
     }
 
-    // Call the function to populate the grid
     populateBingoGrid();
-</script>
-
-</script>
-
+    </script>
 </body>
 </html>
