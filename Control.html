@@ -40,8 +40,27 @@
     <button id="end-game-btn">End Game Manually</button>
 
     <script type="module">
+        // Console log to confirm script is loaded
         console.log("Script loaded successfully.");
-        
+
+        // Firebase initialization
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
+            authDomain: "ien-bingo.firebaseapp.com",
+            projectId: "ien-bingo",
+            storageBucket: "ien-bingo.appspot.com",
+            messagingSenderId: "115041832401",
+            appId: "1:115041832401:web:785da7558648d1ac8124f0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        console.log("Firebase initialized successfully.");
+
         // Test functions to check if buttons are working
         window.startGame = function() {
             console.log("Start Game button clicked");
