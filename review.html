@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Phrases</title>
+    <style>
+        body {
+            background-color: black;
+            color: #DAA520;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .phrase-list {
+            margin: 20px auto;
+            width: 80%;
+        }
+        .phrase-item {
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Review Submitted Phrases</h1>
+    <div class="phrase-list" id="phrase-list"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+
+    <script>
+        // Initialize Firebase (use your config here)
+        var firebaseConfig = {
+           apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
+        authDomain: "ien-bingo.firebaseapp.com",
+        projectId: "ien-bingo",
+        storageBucket: "ien-bingo.appspot.com",
+        messagingSenderId: "115041832401",
+        appId: "1:115041832401:web:785da7558648d1ac8124f0"
+        };
+        firebase.initializeApp(firebaseConfig);
+        var db = firebase.firestore();
+
+        // Fetch pending phrases
+        db.collection("bingo_phrases").where("status", "==", "pending").get().then((querySnapshot) => {
+            var phraseList = document.getElementById('phrase-list');
+            querySnapshot.forEach((doc) => {
+                var phraseData = doc.data();
+                var div = document.createElement('div');
+                div.classList.add('phrase-item');
+                div.innerHTML = `
+                    <span>${phraseData.category}: ${phraseData.phrase}</span>
+                    <button onclick="approvePhrase('${doc.id}')">Approve</button>
+                    <button onclick="rejectPhrase('${doc.id}')">Reject</button>
+                `;
+                phraseList.appendChild(div);
+            });
+        });
+
+        // Approve phrase
+        function approvePhrase(id) {
+            db.collection("bingo_phrases").doc(id).update({
+                status: "approved"
+            }).then(() => {
+                alert("Phrase approved!");
+                location.reload(); // Reload the page to update the list
+            });
+        }
+
+        // Reject phrase
+        function rejectPhrase(id) {
+            db.collection("bingo_phrases").doc(id).delete().then(() => {
+                alert("Phrase rejected!");
+                location.reload(); // Reload the page to update the list
+            });
+        }
+    </script>
+</body>
+</html>
