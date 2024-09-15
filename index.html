@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login to I.E.N. Bingo</title>
+    <title>I.E.N. Bingo Login</title>
     <style>
         body {
             background-color: black;
@@ -12,8 +12,12 @@
             text-align: center;
         }
 
+        .form-container {
+            margin-top: 50px;
+        }
+
         input {
-            margin: 10px;
+            margin-top: 10px;
             padding: 10px;
             font-size: 1.2em;
         }
@@ -32,98 +36,65 @@
             background-color: #c89700;
         }
 
-        .form-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
+        .error {
+            color: red;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <h1>Login or Register</h1>
+    <h1>I.E.N. Bingo Login</h1>
 
-    <form id="login-form">
-        <label for="name">Name:</label>
+    <div class="form-container">
         <input type="text" id="name" placeholder="Enter your name" required><br>
+        <input type="password" id="pin" placeholder="Enter 4-digit PIN" required maxlength="4"><br>
 
-        <label for="password">PIN:</label>
-        <input type="password" id="password" placeholder="Enter 4-digit PIN" required><br>
+        <button onclick="login()">Login</button>
+        <button onclick="register()">Register</button>
 
-        <div class="form-buttons">
-            <button type="button" id="login-button">Login</button>
-            <button type="button" id="register-button">Register</button>
-        </div>
-    </form>
+        <div class="error" id="error-message"></div>
+    </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
-        import { getAuth, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-auth.js";
+    <script>
+        // Check if the user is already logged in
+        if (localStorage.getItem('bingoUser')) {
+            window.location.href = 'bingo.html'; // Redirect to Bingo board if logged in
+        }
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
-            authDomain: "ien-bingo.firebaseapp.com",
-            projectId: "ien-bingo",
-            storageBucket: "ien-bingo.appspot.com",
-            messagingSenderId: "115041832401",
-            appId: "1:115041832401:web:785da7558648d1ac8124f0"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-
-        // Check if user is already logged in
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                window.location.href = 'bingo.html'; // Redirect to bingo board if already logged in
-            }
-        });
-
-        // Login functionality
-        document.getElementById('login-button').addEventListener('click', async () => {
+        function login() {
             const name = document.getElementById('name').value;
-            const password = document.getElementById('password').value;
+            const pin = document.getElementById('pin').value;
+            const user = JSON.parse(localStorage.getItem(name));
 
-            const userRef = doc(db, "users", name);
-            const userSnap = await getDoc(userRef);
+            if (user && user.pin === pin) {
+                // Save user info to localStorage for session persistence
+                localStorage.setItem('bingoUser', JSON.stringify(user));
+                window.location.href = 'bingo.html'; // Redirect to Bingo board
+            } else {
+                document.getElementById('error-message').textContent = "Invalid name or PIN!";
+            }
+        }
 
-            if (userSnap.exists()) {
-                const userData = userSnap.data();
-                if (userData.password === password) {
-                    const token = 'your-generated-token'; // Generate token on server if needed
-                    await signInWithCustomToken(auth, token);
-                    window.location.href = 'bingo.html'; // Redirect to bingo board
+        function register() {
+            const name = document.getElementById('name').value;
+            const pin = document.getElementById('pin').value;
+
+            if (name && pin.length === 4) {
+                const user = { name, pin };
+
+                // Check if user already exists
+                if (localStorage.getItem(name)) {
+                    document.getElementById('error-message').textContent = "User already exists!";
                 } else {
-                    alert("Incorrect PIN");
+                    // Save new user to localStorage
+                    localStorage.setItem(name, JSON.stringify(user));
+                    localStorage.setItem('bingoUser', JSON.stringify(user)); // Log them in automatically
+                    window.location.href = 'bingo.html'; // Redirect to Bingo board
                 }
             } else {
-                alert("User not found");
+                document.getElementById('error-message').textContent = "Please enter a valid name and 4-digit PIN!";
             }
-        });
-
-        // Register functionality
-        document.getElementById('register-button').addEventListener('click', async () => {
-            const name = document.getElementById('name').value;
-            const password = document.getElementById('password').value;
-
-            if (name && password) {
-                const userRef = doc(db, "users", name);
-                const userSnap = await getDoc(userRef);
-
-                if (userSnap.exists()) {
-                    alert("User already exists. Please login.");
-                } else {
-                    await setDoc(userRef, {
-                        name: name,
-                        password: password
-                    });
-                    alert("User registered successfully! Please log in.");
-                }
-            } else {
-                alert("Please enter a valid name and PIN.");
-            }
-        });
+        }
     </script>
 </body>
 </html>
