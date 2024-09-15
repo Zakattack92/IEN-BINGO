@@ -81,6 +81,37 @@
     </div>
 
     <button class="submit-button" onclick="window.location.href='submit.html';">Submit a Phrase</button>
+<script>
+    // Check if user is logged in based on the `bingoUser` in localStorage
+    const bingoUser = localStorage.getItem('bingoUser');
+
+    if (!bingoUser) {
+        // If `bingoUser` is missing, redirect to login page (index.html)
+        window.location.href = 'index.html';
+    } else {
+        // If `bingoUser` exists, try to parse it and check for `uid`
+        try {
+            const user = JSON.parse(bingoUser);
+            
+            if (user && user.uid) {
+                console.log("User logged in: ", user.uid);
+                // Call any function needed for the logged-in user, e.g., setupRealTimeListener();
+                setupRealTimeListener(user.uid);
+            } else {
+                console.error("Invalid user data. Redirecting to login...");
+                window.location.href = 'index.html';
+            }
+        } catch (error) {
+            console.error("Error parsing bingoUser from localStorage. Redirecting to login...");
+            window.location.href = 'index.html';
+        }
+    }
+
+    function setupRealTimeListener(uid) {
+        console.log("Setting up real-time listener for user:", uid);
+        // Add your logic here to set up real-time Firestore listeners
+    }
+</script>
 
     <script>
         // Redirect to login if not authenticated
