@@ -65,7 +65,8 @@
 <body>
     <h1>I.E.N. Bingo</h1>
     <div class="points-display">
-        Points: <span id="points">0</span>
+        Points this game: <span id="points-game">0</span><br>
+        Cumulative points: <span id="points-total">0</span>
     </div>
     <div class="bingo-grid">
         <div class="bingo-cell" id="cell-1"></div>
@@ -98,7 +99,8 @@
         }
 
         const user = JSON.parse(localStorage.getItem('bingoUser')); // Get logged-in user
-        let points = 0; // Declare points globally for access across functions
+        let points = 0; // Points for this game
+        let cumulativePoints = 0; // Cumulative points
 
     </script>
 
@@ -125,9 +127,25 @@
             window.location.href = 'index.html'; // Redirect to login page if not authenticated
         }
 
-        // Function to save clicked cells to Firestore
+        // Load the user's cumulative points when the game starts
+        async function loadCumulativePoints() {
+            const userDocRef = doc(db, "users", currentUser.name);
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists()) {
+                cumulativePoints = userDocSnap.data().cumulativePoints || 0;
+                updatePointsDisplay();
+            }
+        }
+
+        // Update points display
+        function updatePointsDisplay() {
+            document.getElementById("points-game").textContent = points;
+            document.getElementById("points-total").textContent = cumulativePoints;
+        }
+
+        // Save clicked cells and update points
         async function saveClickedCell(cellIndex) {
-            const userDocRef = doc(db, "user_clicks", currentUser.name); // Assuming `name` is the identifier
+            const userDocRef = doc(db, "user_clicks", currentUser.name);
             const userDocSnap = await getDoc(userDocRef);
 
             let clickedCells = [];
@@ -135,7 +153,7 @@
                 clickedCells = userDocSnap.data().clickedCells || [];
             }
 
-            // Add or remove clicked cell
+            // Toggle clicked state
             if (clickedCells.includes(cellIndex)) {
                 clickedCells = clickedCells.filter(index => index !== cellIndex);
             } else {
@@ -144,164 +162,20 @@
 
             // Save updated clicked cells to Firestore
             await setDoc(userDocRef, { clickedCells: clickedCells }, { merge: true });
-         // Award points based on current clicks
+
+            // Award points based on current clicks
             awardPoints(clickedCells);
         }
 
-        // Populate the bingo grid based on the game state
-        async function populateBingoGrid() {
-            const savedBoard = await fetchSavedBoard(); // Fetch saved board from Firestore
-            if (savedBoard) {
-                fillBingoGrid(savedBoard); // Load saved board
-                loadClickedCells(); // Load clicked cells for the current user
-            } else {
-                await generateAndSaveBingoBoard(); // Generate a new board if no saved one exists
-            }
-        }
+        // Award points based on clicked cells and check for bingos
+        function awardPoints(clickedCells) {
+            const horizontalBingos = checkHorizontalBingo(clickedCells);
+            const verticalBingos = checkVerticalBingo(clickedCells);
+            const letterI = checkLetterI(clickedCells);
+            const letterH = checkLetterH(clickedCells);
+            const fullBoard = checkFullBoard(clickedCells);
 
-        // Load the clicked cells for the current user
-        async function loadClickedCells() {
-            const userDocRef = doc(db, "user_clicks", currentUser.name);
-            const userDocSnap = await getDoc(userDocRef);
-
-            if (userDocSnap.exists()) {
-                const userData = userDocSnap.data();
-                const clickedCells = userData.clickedCells || [];
-                updateClickedCells(clickedCells); // Update UI to reflect clicked cells
-            }
-        }
-
-        // Update the bingo grid to reflect clicked cells
-        function updateClickedCells(clickedCells) {
-            const bingoCells = document.querySelectorAll('.bingo-cell');
-            bingoCells.forEach((cell, index) => {
-                if (clickedCells.includes(index)) {
-                    cell.classList.add('clicked'); // Mark cell as clicked
-                }
-            });
-        }
-
-        // Load the board from Firestore
-        async function fetchSavedBoard() {
-            const boardDocRef = doc(db, "game_state", "current");
-            const boardDocSnap = await getDoc(boardDocRef);
-
-            if (boardDocSnap.exists()) {
-                const gameData = boardDocSnap.data();
-                return gameData.board || null;
-            }
-            return null;
-        }
-
-        // Fill the bingo grid with phrases or load from saved state
-        async function fillBingoGrid(board) {
-            const bingoCells = document.querySelectorAll('.bingo-cell');
-            const freeSpotPhrase = await fetchFreeSpotPhrase(); // Fetch Free Spot phrase
-            bingoCells.forEach((cell, index) => {
-                if (index === 7) {
-                    cell.textContent = freeSpotPhrase || "Free Spot"; // Always place free spot in the center
-                } else {
-                    cell.textContent = board[index] || '';
-                }
-            });
-
-            // Add event listeners to cells for click actions
-            bingoCells.forEach((cell, index) => {
-                cell.addEventListener('click', () => {
-                    cell.classList.toggle('clicked'); // Toggle clicked state
-                    saveClickedCell(index); // Save clicked state to Firestore
-                });
-            });
-        }
-
-        // Fetch Free Spot phrase from Firestore
-        async function fetchFreeSpotPhrase() {
-            const q = query(collection(db, "bingo_phrases"), where("category", "==", "Free Spot"), where("status", "==", "approved"));
-            const querySnapshot = await getDocs(q);
-
-            if (!querySnapshot.empty) {
-                const randomIndex = Math.floor(Math.random() * querySnapshot.docs.length);
-                return querySnapshot.docs[randomIndex].data().phrase;
-            } else {
-                return "Free Spot"; // Fallback if no free spot phrases are found
-            }
-        }
-
-        // Generate a new bingo board and save it to Firestore
-        async function generateAndSaveBingoBoard() {
-            const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
-            const querySnapshot = await getDocs(q);
-            const phrasesByCategory = {};
-
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                if (data.category !== "Free Spot") {
-                    if (!phrasesByCategory[data.category]) {
-                        phrasesByCategory[data.category] = [];
-                    }
-                    phrasesByCategory[data.category].push(data.phrase);
-                }
-            });
-
-            const selectedPhrases = [];
-            const categories = Object.keys(phrasesByCategory);
-
-            // Select phrases from each category, ensuring 14 phrases total
-            while (selectedPhrases.length < 14 && categories.length > 0) {
-                for (const category of categories) {
-                    if (phrasesByCategory[category].length > 0 && selectedPhrases.length < 14) {
-                        const phrase = phrasesByCategory[category].shift();
-                        selectedPhrases.push(phrase);
-                    }
-                }
-            }
-
-            shuffle(selectedPhrases); // Shuffle the phrases for randomness
-
-            const bingoCells = [];
-            let phraseIndex = 0;
-
-            // Fill all cells, with free spot in the middle (cell index 7)
-            for (let i = 0; i < 15; i++) {
-                if (i === 7) {
-                    bingoCells.push("Free Spot"); // Free Spot in the center
-                } else {
-                    bingoCells.push(selectedPhrases[phraseIndex] || '');
-                    phraseIndex++;
-                }
-            }
-
-            // Save the generated board in Firestore
-            await setDoc(doc(db, "game_state", "current"), { board: bingoCells }, { merge: true });
-
-            // Fill the grid with the new board
-            fillBingoGrid(bingoCells);
-        }
-
-        // Shuffle function to randomize phrases
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
-
-        populateBingoGrid(); // Call the function to populate the grid
-        // Display points in the top-right corner
-        function updatePointsDisplay() {
-            document.getElementById("points").textContent = points;
-        }
-
-        // Award points based on clicks and bingo patterns
-        function awardPoints(cells) {
-            const horizontalBingos = checkHorizontalBingo(cells);
-            const verticalBingos = checkVerticalBingo(cells);
-            const letterI = checkLetterI(cells);
-            const letterH = checkLetterH(cells);
-            const fullBoard = checkFullBoard(cells);
-
-            points += cells.length; // Each clicked square = 1 point
+            points = clickedCells.length; // Each clicked square = 1 point
             points += horizontalBingos * 1; // Horizontal bingo = 1 point
             points += verticalBingos * 3; // Vertical bingo = 3 points
             points += letterI ? 4 : 0; // Letter I = 4 points
@@ -309,6 +183,15 @@
             points += fullBoard ? 5 : 0; // Full board = 5 bonus points
 
             updatePointsDisplay(); // Update points display
+            savePointsToFirestore(); // Save points to Firestore
+        }
+
+        // Save cumulative points to Firestore
+        async function savePointsToFirestore() {
+            const userDocRef = doc(db, "users", currentUser.name);
+            cumulativePoints += points;
+
+            await setDoc(userDocRef, { cumulativePoints: cumulativePoints }, { merge: true });
         }
 
         // Check for horizontal bingos
@@ -350,35 +233,65 @@
             return cells.length === 15;
         }
 
-        // Load points for the user
-        async function loadPoints() {
-            const userDocRef = doc(db, "users", currentUser.name); // Assuming `name` is the identifier
-            const userDocSnap = await getDoc(userDocRef);
-            if (userDocSnap.exists()) {
-                const userData = userDocSnap.data();
-                points = userData.cumulativePoints || 0;
-                updatePointsDisplay();
+        // Populate the bingo grid based on the game state
+        async function populateBingoGrid() {
+            const savedBoard = await fetchSavedBoard(); // Fetch saved board from Firestore
+            if (savedBoard) {
+                fillBingoGrid(savedBoard); // Load saved board
+                loadClickedCells(); // Load clicked cells for the current user
+            } else {
+                await generateAndSaveBingoBoard(); // Generate a new board if no saved one exists
             }
         }
 
-        // Update cumulative points for the user
-        async function updateCumulativePoints() {
-            const userDocRef = doc(db, "users", currentUser.name);
-            const userDocSnap = await getDoc(userDocRef);
+        // Fill the bingo grid with phrases or load from saved state
+        async function fillBingoGrid(board) {
+            const bingoCells = document.querySelectorAll('.bingo-cell');
+            const freeSpotPhrase = await fetchFreeSpotPhrase(); // Fetch Free Spot phrase
+            bingoCells.forEach((cell, index) => {
+                if (index === 7) {
+                    cell.textContent = freeSpotPhrase || "Free Spot"; // Always place free spot in the center
+                } else {
+                    cell.textContent = board[index] || '';
+                }
+            });
 
-            let cumulativePoints = 0;
-            if (userDocSnap.exists()) {
-                cumulativePoints = userDocSnap.data().cumulativePoints || 0;
-            }
-
-            // Add the current game points to cumulative total
-            cumulativePoints += points;
-
-            // Save the updated cumulative points to Firestore
-            await setDoc(userDocRef, { cumulativePoints: cumulativePoints }, { merge: true });
+            // Add event listeners to cells for click actions
+            bingoCells.forEach((cell, index) => {
+                cell.addEventListener('click', () => {
+                    cell.classList.toggle('clicked'); // Toggle clicked state
+                    saveClickedCell(index); // Save clicked state to Firestore
+                });
+            });
         }
 
-        loadPoints(); // Call the function to load the user's points
+        // Load the board from Firestore
+        async function fetchSavedBoard() {
+            const boardDocRef = doc(db, "game_state", "current");
+            const boardDocSnap = await getDoc(boardDocRef);
+
+            if (boardDocSnap.exists()) {
+                const gameData = boardDocSnap.data();
+                return gameData.board || null;
+            }
+            return null;
+        }
+
+        // Fetch Free Spot phrase from Firestore
+        async function fetchFreeSpotPhrase() {
+            const q = query(collection(db, "bingo_phrases"), where("category", "==", "Free Spot"), where("status", "==", "approved"));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const randomIndex = Math.floor(Math.random() * querySnapshot.docs.length);
+                return querySnapshot.docs[randomIndex].data().phrase;
+            } else {
+                return "Free Spot"; // Fallback if no free spot phrases are found
+            }
+        }
+
+        loadCumulativePoints(); // Load cumulative points when the page loads
+        populateBingoGrid(); // Call the function to populate the grid
     </script>
 
 </body>
