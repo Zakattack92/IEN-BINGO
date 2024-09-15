@@ -36,8 +36,8 @@
     <h1>Game Control Panel</h1>
 
     <!-- Manual Game Start and Stop -->
-    <button id="start-game-btn">Start Game Manually</button>
-    <button id="end-game-btn">End Game Manually</button>
+    <button onclick="startGame()">Start Game Manually</button>
+    <button onclick="endGame()">End Game Manually</button>
 
     <!-- Schedule Game Start and Stop -->
     <label for="start-time">Schedule Game Start:</label>
@@ -46,17 +46,14 @@
     <label for="end-time">Schedule Game End:</label>
     <input type="datetime-local" id="end-time">
 
-    <button id="schedule-game-btn">Schedule Game</button>
+    <button onclick="scheduleGame()">Schedule Game</button>
 
     <!-- Toggle Countdown Timer -->
-    <button id="toggle-countdown-btn">Toggle Countdown Timer</button>
+    <button onclick="toggleCountdown()">Toggle Countdown Timer</button>
 
     <script type="module">
-        console.log("Script loaded successfully.");
-
-        // Firebase initialization
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";  // Added updateDoc
 
         const firebaseConfig = {
             apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
@@ -70,17 +67,14 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        console.log("Firebase initialized successfully.");
-
         // Manually start the game
-        window.startGame = async function() {
+        async function startGame() {
             try {
-                await updateDoc(doc(db, "game_state", "current"), {
+                await setDoc(doc(db, "game_state", "current"), {
                     status: "started",
                     timestamp: Date.now(),
                     countdownEnabled: false
                 });
-                console.log("Game Started: status set to 'started' in Firestore.");
                 alert("Game Started Manually!");
             } catch (error) {
                 console.error("Error starting game:", error);
@@ -88,14 +82,13 @@
         }
 
         // Manually end the game
-        window.endGame = async function() {
+        async function endGame() {
             try {
-                await setDoc(doc(db, "game_state", "current"), {
+                await updateDoc(doc(db, "game_state", "current"), {  // Using updateDoc to change the status
                     status: "ended",
                     timestamp: Date.now(),
                     countdownEnabled: false
                 });
-                console.log("Game Ended: status set to 'ended' in Firestore.");
                 alert("Game Ended Manually!");
             } catch (error) {
                 console.error("Error ending game:", error);
@@ -103,7 +96,7 @@
         }
 
         // Schedule game start and end
-        window.scheduleGame = async function() {
+        async function scheduleGame() {
             const startTime = new Date(document.getElementById('start-time').value).getTime();
             const endTime = new Date(document.getElementById('end-time').value).getTime();
 
@@ -115,7 +108,6 @@
                         endTime,
                         countdownEnabled: false
                     });
-                    console.log(`Game scheduled to start at ${new Date(startTime)} and end at ${new Date(endTime)}`);
                     alert("Game Scheduled!");
                 } catch (error) {
                     console.error("Error scheduling game:", error);
@@ -126,7 +118,7 @@
         }
 
         // Toggle the countdown timer
-        window.toggleCountdown = async function() {
+        async function toggleCountdown() {
             try {
                 const gameStateRef = doc(db, "game_state", "current");
                 const gameStateSnap = await getDoc(gameStateRef);
@@ -135,12 +127,8 @@
                     const currentState = gameStateSnap.data();
                     const newCountdownState = !currentState.countdownEnabled;
 
-                    await setDoc(gameStateRef, {
-                        ...currentState,
-                        countdownEnabled: newCountdownState
-                    });
+                    await updateDoc(gameStateRef, { countdownEnabled: newCountdownState });
 
-                    console.log(`Countdown Timer ${newCountdownState ? 'Enabled' : 'Disabled'}`);
                     alert(`Countdown Timer ${newCountdownState ? 'Enabled' : 'Disabled'}`);
                 } else {
                     alert("Game state not found. Start a game first.");
@@ -150,7 +138,7 @@
             }
         }
 
-        // Continuously check if it's time to start or stop the game
+        // Function to handle scheduled game start and stop
         async function checkSchedule() {
             try {
                 const now = Date.now();
@@ -160,9 +148,9 @@
                 if (gameStateSnap.exists()) {
                     const gameState = gameStateSnap.data();
                     if (gameState.status === "scheduled" && now >= gameState.startTime && now <= gameState.endTime) {
-                        window.startGame(); // Automatically start the game
+                        startGame(); // Automatically start the game
                     } else if (gameState.status === "started" && now >= gameState.endTime) {
-                        window.endGame(); // Automatically end the game
+                        endGame(); // Automatically end the game
                     }
                 }
             } catch (error) {
@@ -170,14 +158,8 @@
             }
         }
 
-        // Continuously check every minute if it's time to start or stop the game
+        // Continuously check if it's time to start or stop the game
         setInterval(checkSchedule, 60000); // Check every 60 seconds
-
-        // Attach event listeners
-        document.getElementById('start-game-btn').addEventListener('click', window.startGame);
-        document.getElementById('end-game-btn').addEventListener('click', window.endGame);
-        document.getElementById('schedule-game-btn').addEventListener('click', window.scheduleGame);
-        document.getElementById('toggle-countdown-btn').addEventListener('click', window.toggleCountdown);
     </script>
 </body>
 </html>
