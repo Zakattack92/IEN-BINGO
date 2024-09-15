@@ -69,7 +69,7 @@
             if (user && user.pin === pin) {
                 // Save user info to localStorage for session persistence
                 // After the user successfully logs in or registers
-localStorage.setItem('bingoUser', JSON.stringify({ uid: 'user_unique_id_here' }));
+localStorage.setItem('bingoUser', JSON.stringify({ uid }));
 
                 window.location.href = 'bingo.html'; // Redirect to Bingo board
             } else {
