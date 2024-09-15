@@ -160,6 +160,12 @@
 
         // Continuously check if it's time to start or stop the game
         setInterval(checkSchedule, 60000); // Check every 60 seconds
+
+        // Expose functions to global window object
+        window.startGame = startGame;
+        window.endGame = endGame;
+        window.scheduleGame = scheduleGame;
+        window.toggleCountdown = toggleCountdown;
     </script>
 </body>
 </html>
