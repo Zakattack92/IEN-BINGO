@@ -18,7 +18,7 @@
 
         .bingo-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr); /* Now 3 columns wide */
+            grid-template-columns: repeat(3, 1fr); /* 3 columns wide */
             grid-gap: 10px;
             margin: 20px auto;
             width: 80%;
@@ -40,19 +40,18 @@
             color: black;
         }
 
-        /* Styling for the submit button */
         .submit-button {
             margin-top: 20px;
             padding: 10px 20px;
             font-size: 1.2em;
-            background-color: #edbc00; /* Updated gold */
+            background-color: #edbc00;
             color: black;
             border: none;
             cursor: pointer;
         }
 
         .submit-button:hover {
-            background-color: #c89700; /* Slightly darker gold when hovered */
+            background-color: #c89700;
         }
     </style>
 </head>
@@ -81,7 +80,6 @@
         <div class="bingo-cell" id="cell-15"></div>
     </div>
 
-    <!-- Button to submit a phrase -->
     <button class="submit-button" onclick="window.location.href='submit.html';">Submit a Phrase</button>
 
     <script>
@@ -138,13 +136,14 @@
         }
 
         shuffle(selectedPhrases);
-        
+
         const bingoCells = document.querySelectorAll('.bingo-cell');
         let phraseIndex = 0;
 
         bingoCells.forEach((cell, index) => {
-            if (index === 8) {
-                populateFreeSpot(); // Free Spot in the center
+            if (index === 7) {
+                // Populate Free Spot in the middle
+                populateFreeSpot();
             } else {
                 cell.textContent = selectedPhrases[phraseIndex] || '';
                 phraseIndex++;
