@@ -107,48 +107,66 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Fetch and populate the grid with random phrases (like before)
-    async function populateBingoGrid() {
-        const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
-        const querySnapshot = await getDocs(q);
-        const phrasesByCategory = {};
+    // Fetch game state to check if the board should be locked
+    async function fetchGameState() {
+        const gameStateRef = doc(db, "game_state", "current");
+        const gameStateSnap = await getDoc(gameStateRef);
 
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            if (data.category !== "Free Spot") {
-                if (!phrasesByCategory[data.category]) {
-                    phrasesByCategory[data.category] = [];
-                }
-                phrasesByCategory[data.category].push(data.phrase);
-            }
-        });
-
-        const selectedPhrases = [];
-        const categories = Object.keys(phrasesByCategory);
-
-        while (selectedPhrases.length < 14 && categories.length > 0) {
-            for (const category of categories) {
-                if (phrasesByCategory[category].length > 0 && selectedPhrases.length < 14) {
-                    const phrase = phrasesByCategory[category].shift();
-                    selectedPhrases.push(phrase);
-                }
-            }
+        if (gameStateSnap.exists()) {
+            const gameState = gameStateSnap.data();
+            return gameState;
         }
+        return null;
+    }
 
-        shuffle(selectedPhrases);
+    // Populate the bingo grid based on the game state
+    async function populateBingoGrid() {
+        const gameState = await fetchGameState();
+        if (gameState && gameState.status === "started") {
+            const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
+            const querySnapshot = await getDocs(q);
+            const phrasesByCategory = {};
 
-        const bingoCells = document.querySelectorAll('.bingo-cell');
-        let phraseIndex = 0;
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                if (data.category !== "Free Spot") {
+                    if (!phrasesByCategory[data.category]) {
+                        phrasesByCategory[data.category] = [];
+                    }
+                    phrasesByCategory[data.category].push(data.phrase);
+                }
+            });
 
-        bingoCells.forEach((cell, index) => {
-            if (index === 7) {
-                // Populate Free Spot in the middle
-                populateFreeSpot();
-            } else {
-                cell.textContent = selectedPhrases[phraseIndex] || '';
-                phraseIndex++;
+            const selectedPhrases = [];
+            const categories = Object.keys(phrasesByCategory);
+
+            while (selectedPhrases.length < 14 && categories.length > 0) {
+                for (const category of categories) {
+                    if (phrasesByCategory[category].length > 0 && selectedPhrases.length < 14) {
+                        const phrase = phrasesByCategory[category].shift();
+                        selectedPhrases.push(phrase);
+                    }
+                }
             }
-        });
+
+            shuffle(selectedPhrases);
+
+            const bingoCells = document.querySelectorAll('.bingo-cell');
+            let phraseIndex = 0;
+
+            bingoCells.forEach((cell, index) => {
+                if (index === 7) {
+                    populateFreeSpot(); // Free Spot in the center
+                } else {
+                    cell.textContent = selectedPhrases[phraseIndex] || '';
+                    phraseIndex++;
+                }
+            });
+        } else if (gameState && gameState.status === "ended") {
+            alert("Game has ended. Please wait for the next game.");
+        } else {
+            alert("Game is not currently running.");
+        }
     }
 
     async function populateFreeSpot() {
@@ -172,7 +190,9 @@
         return array;
     }
 
+    // Call the function to populate the grid only if game is running
     populateBingoGrid();
-    </script>
+</script>
+    
 </body>
 </html>
