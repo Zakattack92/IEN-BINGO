@@ -81,37 +81,6 @@
     </div>
 
     <button class="submit-button" onclick="window.location.href='submit.html';">Submit a Phrase</button>
-<script>
-    // Check if user is logged in based on the `bingoUser` in localStorage
-    const bingoUser = localStorage.getItem('bingoUser');
-
-    if (!bingoUser) {
-        // If `bingoUser` is missing, redirect to login page (index.html)
-        window.location.href = 'index.html';
-    } else {
-        // If `bingoUser` exists, try to parse it and check for `uid`
-        try {
-            const user = JSON.parse(bingoUser);
-            
-            if (user && user.uid) {
-                console.log("User logged in: ", user.uid);
-                // Call any function needed for the logged-in user, e.g., setupRealTimeListener();
-                setupRealTimeListener(user.uid);
-            } else {
-                console.error("Invalid user data. Redirecting to login...");
-                window.location.href = 'index.html';
-            }
-        } catch (error) {
-            console.error("Error parsing bingoUser from localStorage. Redirecting to login...");
-            window.location.href = 'index.html';
-        }
-    }
-
-    function setupRealTimeListener(uid) {
-        console.log("Setting up real-time listener for user:", uid);
-        // Add your logic here to set up real-time Firestore listeners
-    }
-</script>
 
     <script>
         // Redirect to login if not authenticated
@@ -123,214 +92,71 @@
     </script>
 
     <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc, query, collection, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
-        authDomain: "ien-bingo.firebaseapp.com",
-        projectId: "ien-bingo",
-        storageBucket: "ien-bingo.appspot.com",
-        messagingSenderId: "115041832401",
-        appId: "1:115041832401:web:785da7558648d1ac8124f0"
-    };
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
+            authDomain: "ien-bingo.firebaseapp.com",
+            projectId: "ien-bingo",
+            storageBucket: "ien-bingo.appspot.com",
+            messagingSenderId: "115041832401",
+            appId: "1:115041832401:web:785da7558648d1ac8124f0"
+        };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-    let currentUser = JSON.parse(localStorage.getItem('bingoUser')); // Get logged-in user
+        let currentUser = JSON.parse(localStorage.getItem('bingoUser')); // Get logged-in user
 
-    // Ensure user is logged in, otherwise redirect to login
-if (!currentUser || !currentUser.uid) {
-    console.error("User is not logged in or does not have a valid UID.");
-    window.location.href = 'index.html'; // Redirect to login page if not authenticated
-} else {
-    console.log("User logged in: ", currentUser.uid);
-    // User is logged in, set up real-time listener
-    setupRealTimeListener();
-}
-
-// Real-time listener for Firestore changes
-function setupRealTimeListener() {
-    if (!currentUser.uid) {
-        console.error("No user UID available for setting up Firestore listener.");
-        return; // Prevent further execution if no UID
-    }
-
-    const userDocRef = doc(db, "user_clicks", currentUser.uid);
-
-    // Set up real-time listener for changes in user's clicked cells
-    onSnapshot(userDocRef, (docSnapshot) => {
-        if (docSnapshot.exists()) {
-            const userData = docSnapshot.data();
-            const clickedCells = userData.clickedCells || [];
-            updateButtonStates(clickedCells); // Update button states based on data from Firestore
-        } else {
-            console.log("No user data found for UID: ", currentUser.uid);
-        }
-    });
-}
-    // Function to update button states (clicked/un-clicked)
-    function updateButtonStates(clickedCells) {
-        const bingoCells = document.querySelectorAll('.bingo-cell');
-        bingoCells.forEach((cell, index) => {
-            if (clickedCells.includes(index)) {
-                cell.classList.add('clicked'); // Mark as clicked
-            } else {
-                cell.classList.remove('clicked'); // Mark as un-clicked
-            }
-        });
-    }
-
-    // Save clicked cell when user clicks on a button
-    async function saveClickedCell(cellIndex) {
-        const userDocRef = doc(db, "user_clicks", currentUser.uid);
-        const userDocSnap = await getDoc(userDocRef);
-
-        let clickedCells = [];
-        if (userDocSnap.exists()) {
-            clickedCells = userDocSnap.data().clickedCells || [];
+        // Ensure user is logged in, otherwise redirect to login
+        if (!currentUser) {
+            window.location.href = 'index.html'; // Redirect to login page if not authenticated
         }
 
-        // Add the new clicked cell if not already clicked
-        if (!clickedCells.includes(cellIndex)) {
-            clickedCells.push(cellIndex);
-        }
+        // Populate the bingo grid based on the game state
+        async function populateBingoGrid() {
+            const gameState = await fetchGameState(); // Fetch game state
 
-        // Save the updated clicked cells list back to Firestore
-        await setDoc(userDocRef, { clickedCells: clickedCells }, { merge: true });
-    }
-
-    // Add event listeners to bingo cells for click actions
-    document.querySelectorAll('.bingo-cell').forEach((cell, index) => {
-        cell.addEventListener('click', () => {
-            cell.classList.toggle('clicked');
-            saveClickedCell(index); // Save clicked cell to Firestore
-        });
-    });
-
-    // Populate the bingo grid based on the game state
-    async function populateBingoGrid() {
-        const gameState = await fetchGameState(); // Fetch game state
-
-        if (gameState && gameState.status === "started") {
-            console.log("Game is active");
-            const savedBoard = await fetchSavedBoard(); // Fetch saved board from Firestore
-
-            if (savedBoard) {
-                fillBingoGrid(savedBoard); // Load saved board
-            } else {
-                generateAndSaveBingoBoard(); // Generate new board if no saved board exists
-            }
-
-        } else if (gameState && gameState.status === "ended") {
-            alert("The game has ended.");
-        } else {
-            alert("The game is not currently active.");
-        }
-    }
-
-    // Load the board from Firestore or generate a new one
-    async function fetchSavedBoard() {
-        const boardDocRef = doc(db, "game_state", "current");
-        const boardDocSnap = await getDoc(boardDocRef);
-
-        if (boardDocSnap.exists()) {
-            const gameData = boardDocSnap.data();
-            return gameData.board || null;
-        }
-        return null;
-    }
-
-    // Fill the bingo grid with phrases or load from saved state
-    async function fillBingoGrid(board) {
-        const bingoCells = document.querySelectorAll('.bingo-cell');
-        bingoCells.forEach(async (cell, index) => {
-            if (index === 7) {
-                // Fetch a random Free Spot phrase from Firestore
-                const freeSpotPhrase = await fetchFreeSpotPhrase();
-                cell.textContent = freeSpotPhrase || "Free Spot"; // Use Free Spot phrase or fallback to "Free Spot"
-            } else {
-                cell.textContent = board[index] || '';
-            }
-        });
-    }
-
-    // Fetch a random "Free Spot" phrase from Firestore
-    async function fetchFreeSpotPhrase() {
-        const q = query(collection(db, "bingo_phrases"), where("category", "==", "Free Spot"), where("status", "==", "approved"));
-        const querySnapshot = await getDocs(q);
-
-        if (!querySnapshot.empty) {
-            const randomIndex = Math.floor(Math.random() * querySnapshot.docs.length);
-            return querySnapshot.docs[randomIndex].data().phrase;
-        } else {
-            return "Free Spot"; // Fallback if no free spot phrases are found
-        }
-    }
-
-    // Generate a new bingo board and save it
-    async function generateAndSaveBingoBoard() {
-        const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
-        const querySnapshot = await getDocs(q);
-        const phrasesByCategory = {};
-
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            if (data.category !== "Free Spot") {
-                if (!phrasesByCategory[data.category]) {
-                    phrasesByCategory[data.category] = [];
+            if (gameState && gameState.status === "started") {
+                const savedBoard = await fetchSavedBoard(); // Fetch saved board from Firestore
+                if (savedBoard) {
+                    fillBingoGrid(savedBoard); // Load saved board
+                } else {
+                    generateAndSaveBingoBoard(); // Generate new board if no saved board exists
                 }
-                phrasesByCategory[data.category].push(data.phrase);
-            }
-        });
-
-        const selectedPhrases = [];
-        const categories = Object.keys(phrasesByCategory);
-
-        while (selectedPhrases.length < 14 && categories.length > 0) {
-            for (const category of categories) {
-                if (phrasesByCategory[category].length > 0 && selectedPhrases.length < 14) {
-                    const phrase = phrasesByCategory[category].shift();
-                    selectedPhrases.push(phrase);
-                }
-            }
-        }
-
-        shuffle(selectedPhrases);
-
-        const bingoCells = [];
-        let phraseIndex = 0;
-
-        // Fill all cells, including free spot in the middle
-        for (let i = 0; i < 15; i++) {
-            if (i === 7) {
-                bingoCells.push("Free Spot"); // Free Spot in the center
+            } else if (gameState && gameState.status === "ended") {
+                alert("The game has ended.");
             } else {
-                bingoCells.push(selectedPhrases[phraseIndex] || '');
-                phraseIndex++;
+                alert("The game is not currently active.");
             }
         }
 
-        // Save the generated board in Firestore
-        await setDoc(doc(db, "game_state", "current"), { board: bingoCells }, { merge: true });
+        // Load the board from Firestore or generate a new one
+        async function fetchSavedBoard() {
+            const boardDocRef = doc(db, "game_state", "current");
+            const boardDocSnap = await getDoc(boardDocRef);
 
-        // Fill the grid with the new board
-        fillBingoGrid(bingoCells);
-    }
-
-    // Shuffle function to randomize phrases
-    function shuffle(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
+            if (boardDocSnap.exists()) {
+                const gameData = boardDocSnap.data();
+                return gameData.board || null;
+            }
+            return null;
         }
-        return array;
-    }
 
-    // Call the function to populate the grid
-    populateBingoGrid();
+        // Fill the bingo grid with phrases or load from saved state
+        function fillBingoGrid(board) {
+            const bingoCells = document.querySelectorAll('.bingo-cell');
+            bingoCells.forEach((cell, index) => {
+                if (index === 7) {
+                    cell.textContent = "Free Spot"; // Always place free spot in the center
+                } else {
+                    cell.textContent = board[index] || '';
+                }
+            });
+        }
+
+        populateBingoGrid(); // Call the function to populate the grid
     </script>
-
 </body>
 </html>
