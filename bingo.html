@@ -53,7 +53,8 @@
         .submit-button:hover {
             background-color: #c89700;
         }
-     .points-display {
+
+        .points-display {
             position: absolute;
             top: 20px;
             right: 20px;
@@ -97,6 +98,8 @@
         }
 
         const user = JSON.parse(localStorage.getItem('bingoUser')); // Get logged-in user
+        let points = 0; // Declare points globally for access across functions
+
     </script>
 
     <script type="module">
@@ -346,6 +349,7 @@
         function checkFullBoard(cells) {
             return cells.length === 15;
         }
+
         // Load points for the user
         async function loadPoints() {
             const userDocRef = doc(db, "users", currentUser.name); // Assuming `name` is the identifier
@@ -373,6 +377,8 @@
             // Save the updated cumulative points to Firestore
             await setDoc(userDocRef, { cumulativePoints: cumulativePoints }, { merge: true });
         }
+
+        loadPoints(); // Call the function to load the user's points
     </script>
 
 </body>
