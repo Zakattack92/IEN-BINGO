@@ -83,8 +83,7 @@
     <button class="submit-button" onclick="window.location.href='submit.html';">Submit a Phrase</button>
 
     <script>
-
-           // Redirect to login if not authenticated
+        // Redirect to login if not authenticated
         if (!localStorage.getItem('bingoUser')) {
             window.location.href = 'index.html'; // Redirect to login
         }
@@ -98,38 +97,21 @@
             });
         });
     </script>
-  <script type="module">
+    <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, query, collection, where, getDocs } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
-            authDomain: "ien-bingo.firebaseapp.com",
-            projectId: "ien-bingo",
-            storageBucket: "ien-bingo.appspot.com",
-            messagingSenderId: "115041832401",
-            appId: "1:115041832401:web:785da7558648d1ac8124f0"
+        authDomain: "ien-bingo.firebaseapp.com",
+        projectId: "ien-bingo",
+        storageBucket: "ien-bingo.appspot.com",
+        messagingSenderId: "115041832401",
+        appId: "1:115041832401:web:785da7558648d1ac8124f0"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const auth = getAuth(app);
-
-    let currentUser = null;
-    let savedBoard = null;
-
-    // Track the authenticated user
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            currentUser = user;
-            loadUserClickedCells(user.uid);
-        } else {
-            currentUser = null;
-            alert('Please log in to play the game.');
-            window.location.href = 'login.html';  // Redirect to login if not logged in
-        }
-    });
 
     // Load the clicked cells for the current user
     async function loadUserClickedCells(userId) {
@@ -152,9 +134,8 @@
 
     // Save the clicked cell to Firestore
     async function saveClickedCell(cellIndex) {
-        if (!currentUser) return;
-
-        const userDocRef = doc(db, "user_clicks", currentUser.uid);
+        const userId = user.name; // Using the name as user ID
+        const userDocRef = doc(db, "user_clicks", userId);
         const userDocSnap = await getDoc(userDocRef);
 
         let clickedCells = [];
@@ -185,7 +166,7 @@
 
     // Populate the bingo grid based on the game state
     async function populateBingoGrid() {
-        savedBoard = await fetchSavedBoard(); // Fetch saved board from Firestore
+        const savedBoard = await fetchSavedBoard(); // Fetch saved board from Firestore
 
         if (savedBoard) {
             fillBingoGrid(savedBoard); // Load saved board
