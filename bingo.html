@@ -73,7 +73,7 @@
     <div class="points-display">
         Points: <span id="points-game">0</span>
     </div>
- <div id="countdown" class="countdown-display"></div>
+    <div id="countdown" class="countdown-display"></div>
     <div class="bingo-grid" id="bingo-grid" style="display: none;">
         <div class="bingo-cell" id="cell-1"></div>
         <div class="bingo-cell" id="cell-2"></div>
@@ -107,7 +107,6 @@
         const user = JSON.parse(localStorage.getItem('bingoUser')); // Get logged-in user
         let points = parseInt(localStorage.getItem('pointsThisGame')) || 0; // Load points from localStorage
 
-
     </script>
 
     <script type="module">
@@ -132,7 +131,8 @@
         if (!currentUser) {
             window.location.href = 'index.html'; // Redirect to login page if not authenticated
         }
-             // Function to show countdown
+
+        // Function to show countdown
         function showCountdown(remainingTime) {
             const countdownElement = document.getElementById("countdown");
 
@@ -297,16 +297,19 @@
         // Populate the bingo grid based on the game state
         async function populateBingoGrid() {
             const savedBoard = await fetchSavedBoard(); // Fetch saved board from Firestore
+            console.log('Saved board:', savedBoard); // Log saved board for debugging
             if (savedBoard) {
                 fillBingoGrid(savedBoard); // Load saved board
                 loadClickedCells(); // Load clicked cells for the current user
             } else {
+                console.log('No saved board found, generating new one...');
                 await generateAndSaveBingoBoard(); // Generate a new board if no saved one exists
             }
         }
 
         // Fill the bingo grid with phrases or load from saved state
         async function fillBingoGrid(board) {
+            console.log('Filling bingo grid with:', board); // Debugging log
             const bingoCells = document.querySelectorAll('.bingo-cell');
             const freeSpotPhrase = await fetchFreeSpotPhrase(); // Fetch Free Spot phrase
             bingoCells.forEach((cell, index) => {
