@@ -93,7 +93,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
@@ -139,7 +139,7 @@
         async function populateBingoGrid() {
             const savedBoard = await fetchSavedBoard(); // Fetch saved board from Firestore
             if (savedBoard) {
-                fillBingoGrid(savedBoard); // Load saved board
+                await fillBingoGrid(savedBoard); // Load saved board
                 loadClickedCells(); // Load clicked cells for the current user
             } else {
                 alert("No saved board found.");
@@ -180,14 +180,28 @@
             return null;
         }
 
+        // Fetch a random "Free Spot" phrase from Firestore
+        async function fetchFreeSpotPhrase() {
+            const q = query(collection(db, "bingo_phrases"), where("category", "==", "Free Spot"), where("status", "==", "approved"));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const randomIndex = Math.floor(Math.random() * querySnapshot.docs.length);
+                return querySnapshot.docs[randomIndex].data().phrase;
+            } else {
+                return "Free Spot"; // Fallback if no free spot phrases are found
+            }
+        }
+
         // Fill the bingo grid with phrases or load from saved state
-        function fillBingoGrid(board) {
+        async function fillBingoGrid(board) {
             const bingoCells = document.querySelectorAll('.bingo-cell');
-             // Fetch the free spot phrase asynchronously
-   // const freeSpotPhrase = await fetchFreeSpotPhrase();
+            // Fetch the free spot phrase asynchronously
+            const freeSpotPhrase = await fetchFreeSpotPhrase();
+
             bingoCells.forEach((cell, index) => {
                 if (index === 7) {
-                    cell.textContent = freeSpotPhrase || "Free Spot"; // Always place free spot in the center
+                    cell.textContent = freeSpotPhrase || "Free Spot"; // Use Free Spot phrase or fallback
                 } else {
                     cell.textContent = board[index] || '';
                 }
