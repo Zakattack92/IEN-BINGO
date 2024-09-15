@@ -83,6 +83,14 @@
     <button class="submit-button" onclick="window.location.href='submit.html';">Submit a Phrase</button>
 
     <script>
+
+           // Redirect to login if not authenticated
+        if (!localStorage.getItem('bingoUser')) {
+            window.location.href = 'index.html'; // Redirect to login
+        }
+
+        const user = JSON.parse(localStorage.getItem('bingoUser')); // Get logged-in user
+
         const bingoCells = document.querySelectorAll('.bingo-cell');
         bingoCells.forEach(cell => {
             cell.addEventListener('click', () => {
