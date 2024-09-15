@@ -68,7 +68,9 @@
 
             if (user && user.pin === pin) {
                 // Save user info to localStorage for session persistence
-                localStorage.setItem('bingoUser', JSON.stringify(user));
+                // After the user successfully logs in or registers
+localStorage.setItem('bingoUser', JSON.stringify({ uid: 'user_unique_id_here' }));
+
                 window.location.href = 'bingo.html'; // Redirect to Bingo board
             } else {
                 document.getElementById('error-message').textContent = "Invalid name or PIN!";
