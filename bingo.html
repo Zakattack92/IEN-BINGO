@@ -214,16 +214,32 @@
     }
 
     // Fill the bingo grid with phrases or load from saved state
-    function fillBingoGrid(board) {
-        const bingoCells = document.querySelectorAll('.bingo-cell');
-        bingoCells.forEach((cell, index) => {
-            if (index === 7) {
-                cell.textContent = "Free Spot"; // Always place free spot in the center
-            } else {
-                cell.textContent = board[index] || '';
-            }
-        });
+async function fillBingoGrid(board) {
+    const bingoCells = document.querySelectorAll('.bingo-cell');
+    bingoCells.forEach((cell, index) => {
+        if (index === 7) {
+            // Fetch a random Free Spot phrase from Firestore
+            const freeSpotPhrase = await fetchFreeSpotPhrase();
+            cell.textContent = freeSpotPhrase || "Free Spot"; // Use Free Spot phrase or fallback to "Free Spot"
+        } else {
+            cell.textContent = board[index] || '';
+        }
+    });
+}
+
+// Fetch a random "Free Spot" phrase from Firestore
+async function fetchFreeSpotPhrase() {
+    const q = query(collection(db, "bingo_phrases"), where("category", "==", "Free Spot"), where("status", "==", "approved"));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+        const randomIndex = Math.floor(Math.random() * querySnapshot.docs.length);
+        return querySnapshot.docs[randomIndex].data().phrase;
+    } else {
+        return "Free Spot"; // Fallback if no free spot phrases are found
     }
+}
+
 
     // Generate a new bingo board and save it
     async function generateAndSaveBingoBoard() {
