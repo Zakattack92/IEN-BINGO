@@ -57,12 +57,12 @@
     </style>
 </head>
 <body>
-    <h1>I.E.N Bingo Login</h1>
+    <h1>Login</h1>
     <form id="loginForm">
         <input type="text" id="username" placeholder="Enter your username" required>
         <input type="password" id="password" placeholder="Enter your password" required>
-        <button type="button" class="submit-button" onclick="login()">Login</button>
-        <button type="button" class="register-button" onclick="register()">Register</button>
+        <button type="button" id="loginBtn" class="submit-button">Login</button>
+        <button type="button" id="registerBtn" class="register-button">Register</button>
     </form>
 
     <script type="module">
@@ -81,6 +81,9 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        document.getElementById('loginBtn').addEventListener('click', login);
+        document.getElementById('registerBtn').addEventListener('click', register);
+
         // Login function
         async function login() {
             const username = document.getElementById('username').value.trim();
@@ -91,17 +94,22 @@
                 return;
             }
 
-            const q = query(collection(db, "users"), where("name", "==", username), where("password", "==", password));
-            const querySnapshot = await getDocs(q);
+            try {
+                const q = query(collection(db, "users"), where("name", "==", username), where("password", "==", password));
+                const querySnapshot = await getDocs(q);
 
-            if (querySnapshot.empty) {
-                alert("Invalid username or password");
-            } else {
-                // Store user info in localStorage
-                localStorage.setItem('bingoUser', JSON.stringify({ name: username }));
+                if (querySnapshot.empty) {
+                    alert("Invalid username or password");
+                } else {
+                    // Store user info in localStorage
+                    localStorage.setItem('bingoUser', JSON.stringify({ name: username }));
 
-                // Redirect to bingo page
-                window.location.href = 'bingo.html';
+                    // Redirect to bingo page
+                    window.location.href = 'bingo.html';
+                }
+            } catch (error) {
+                console.error("Error logging in:", error);
+                alert("Login failed. Please try again.");
             }
         }
 
@@ -115,20 +123,25 @@
                 return;
             }
 
-            const userDocRef = doc(db, "users", username);
-            const userDocSnap = await getDoc(userDocRef);
+            try {
+                const userDocRef = doc(db, "users", username);
+                const userDocSnap = await getDoc(userDocRef);
 
-            if (userDocSnap.exists()) {
-                alert("Username already exists");
-            } else {
-                // Register new user in Firestore
-                await setDoc(userDocRef, { name: username, password: password });
+                if (userDocSnap.exists()) {
+                    alert("Username already exists");
+                } else {
+                    // Register new user in Firestore
+                    await setDoc(userDocRef, { name: username, password: password });
 
-                // Store user info in localStorage
-                localStorage.setItem('bingoUser', JSON.stringify({ name: username }));
+                    // Store user info in localStorage
+                    localStorage.setItem('bingoUser', JSON.stringify({ name: username }));
 
-                // Redirect to bingo page after successful registration
-                window.location.href = 'bingo.html';
+                    // Redirect to bingo page after successful registration
+                    window.location.href = 'bingo.html';
+                }
+            } catch (error) {
+                console.error("Error registering:", error);
+                alert("Registration failed. Please try again.");
             }
         }
     </script>
