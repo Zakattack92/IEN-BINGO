@@ -93,7 +93,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc, query, collection, where, getDocs } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
@@ -114,36 +114,61 @@
             window.location.href = 'index.html'; // Redirect to login page if not authenticated
         }
 
-        // Fetch the game state to check if the game is started
-        async function fetchGameState() {
-            const gameStateRef = doc(db, "game_state", "current");
-            const gameStateSnap = await getDoc(gameStateRef);
-            if (gameStateSnap.exists()) {
-                const gameState = gameStateSnap.data();
-                return gameState;
+        // Function to save clicked cells to Firestore
+        async function saveClickedCell(cellIndex) {
+            const userDocRef = doc(db, "user_clicks", currentUser.name); // Assuming `name` is the identifier
+            const userDocSnap = await getDoc(userDocRef);
+
+            let clickedCells = [];
+            if (userDocSnap.exists()) {
+                clickedCells = userDocSnap.data().clickedCells || [];
             }
-            return null;
+
+            // Add or remove clicked cell
+            if (clickedCells.includes(cellIndex)) {
+                clickedCells = clickedCells.filter(index => index !== cellIndex);
+            } else {
+                clickedCells.push(cellIndex);
+            }
+
+            // Save updated clicked cells to Firestore
+            await setDoc(userDocRef, { clickedCells: clickedCells }, { merge: true });
         }
 
         // Populate the bingo grid based on the game state
         async function populateBingoGrid() {
-            const gameState = await fetchGameState(); // Fetch game state
-
-            if (gameState && gameState.status === "started") {
-                const savedBoard = await fetchSavedBoard(); // Fetch saved board from Firestore
-                if (savedBoard) {
-                    fillBingoGrid(savedBoard); // Load saved board
-                } else {
-                    generateAndSaveBingoBoard(); // Generate new board if no saved board exists
-                }
-            } else if (gameState && gameState.status === "ended") {
-                alert("The game has ended.");
+            const savedBoard = await fetchSavedBoard(); // Fetch saved board from Firestore
+            if (savedBoard) {
+                fillBingoGrid(savedBoard); // Load saved board
+                loadClickedCells(); // Load clicked cells for the current user
             } else {
-                alert("The game is not currently active.");
+                alert("No saved board found.");
             }
         }
 
-        // Load the board from Firestore or generate a new one
+        // Load the clicked cells for the current user
+        async function loadClickedCells() {
+            const userDocRef = doc(db, "user_clicks", currentUser.name);
+            const userDocSnap = await getDoc(userDocRef);
+
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                const clickedCells = userData.clickedCells || [];
+                updateClickedCells(clickedCells); // Update UI to reflect clicked cells
+            }
+        }
+
+        // Update the bingo grid to reflect clicked cells
+        function updateClickedCells(clickedCells) {
+            const bingoCells = document.querySelectorAll('.bingo-cell');
+            bingoCells.forEach((cell, index) => {
+                if (clickedCells.includes(index)) {
+                    cell.classList.add('clicked'); // Mark cell as clicked
+                }
+            });
+        }
+
+        // Load the board from Firestore
         async function fetchSavedBoard() {
             const boardDocRef = doc(db, "game_state", "current");
             const boardDocSnap = await getDoc(boardDocRef);
@@ -153,66 +178,6 @@
                 return gameData.board || null;
             }
             return null;
-        }
-
-        // Generate a new bingo board and save it to Firestore
-        async function generateAndSaveBingoBoard() {
-            const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
-            const querySnapshot = await getDocs(q);
-            const phrasesByCategory = {};
-
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                if (data.category !== "Free Spot") {
-                    if (!phrasesByCategory[data.category]) {
-                        phrasesByCategory[data.category] = [];
-                    }
-                    phrasesByCategory[data.category].push(data.phrase);
-                }
-            });
-
-            const selectedPhrases = [];
-            const categories = Object.keys(phrasesByCategory);
-
-            // Select phrases from each category, ensuring 14 phrases total
-            while (selectedPhrases.length < 14 && categories.length > 0) {
-                for (const category of categories) {
-                    if (phrasesByCategory[category].length > 0 && selectedPhrases.length < 14) {
-                        const phrase = phrasesByCategory[category].shift();
-                        selectedPhrases.push(phrase);
-                    }
-                }
-            }
-
-            shuffle(selectedPhrases); // Shuffle the phrases for randomness
-
-            const bingoCells = [];
-            let phraseIndex = 0;
-
-            // Fill all cells, with free spot in the middle (cell index 7)
-            for (let i = 0; i < 15; i++) {
-                if (i === 7) {
-                    bingoCells.push("Free Spot"); // Free Spot in the center
-                } else {
-                    bingoCells.push(selectedPhrases[phraseIndex] || '');
-                    phraseIndex++;
-                }
-            }
-
-            // Save the generated board in Firestore
-            await setDoc(doc(db, "game_state", "current"), { board: bingoCells }, { merge: true });
-
-            // Fill the grid with the new board
-            fillBingoGrid(bingoCells);
-        }
-
-        // Shuffle function to randomize phrases
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
         }
 
         // Fill the bingo grid with phrases or load from saved state
@@ -225,9 +190,18 @@
                     cell.textContent = board[index] || '';
                 }
             });
+
+            // Add event listeners to cells for click actions
+            bingoCells.forEach((cell, index) => {
+                cell.addEventListener('click', () => {
+                    cell.classList.toggle('clicked'); // Toggle clicked state
+                    saveClickedCell(index); // Save clicked state to Firestore
+                });
+            });
         }
 
         populateBingoGrid(); // Call the function to populate the grid
     </script>
+
 </body>
 </html>
