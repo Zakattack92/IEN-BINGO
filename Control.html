@@ -75,7 +75,7 @@
         // Manually start the game
         window.startGame = async function() {
             try {
-                await setDoc(doc(db, "game_state", "current"), {
+                await updateDoc(doc(db, "game_state", "current"), {
                     status: "started",
                     timestamp: Date.now(),
                     countdownEnabled: false
@@ -90,7 +90,7 @@
         // Manually end the game
         window.endGame = async function() {
             try {
-                await setDoc(doc(db, "game_state", "current"), {
+                await updateDoc(doc(db, "game_state", "current"), {
                     status: "ended",
                     timestamp: Date.now(),
                     countdownEnabled: false
@@ -109,7 +109,7 @@
 
             if (startTime && endTime && startTime < endTime) {
                 try {
-                    await setDoc(doc(db, "game_state", "current"), {
+                    await updateDoc(doc(db, "game_state", "current"), {
                         status: "scheduled",
                         startTime,
                         endTime,
