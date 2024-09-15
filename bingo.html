@@ -7,7 +7,7 @@
     <style>
         body {
             background-color: black;
-            color: #edbc00;
+            color: #edbc00; /* Deeper gold color */
             font-family: Arial, sans-serif;
             text-align: center;
         }
@@ -18,14 +18,14 @@
 
         .bingo-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(3, 1fr); /* 3 columns wide */
             grid-gap: 10px;
             margin: 20px auto;
             width: 80%;
         }
 
         .bingo-cell {
-            border: 2px solid #edbc00;
+            border: 2px solid #edbc00; /* Deeper gold */
             padding: 20px;
             font-size: 1.2em;
             cursor: pointer;
@@ -93,7 +93,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, query, collection, where, getDocs } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
@@ -113,16 +113,18 @@
         if (!currentUser) {
             window.location.href = 'index.html'; // Redirect to login page if not authenticated
         }
-// Fetch the game state to check if the game is started
-async function fetchGameState() {
-    const gameStateRef = doc(db, "game_state", "current");
-    const gameStateSnap = await getDoc(gameStateRef);
-    if (gameStateSnap.exists()) {
-        const gameState = gameStateSnap.data();
-        return gameState;
-    }
-    return null;
-}
+
+        // Fetch the game state to check if the game is started
+        async function fetchGameState() {
+            const gameStateRef = doc(db, "game_state", "current");
+            const gameStateSnap = await getDoc(gameStateRef);
+            if (gameStateSnap.exists()) {
+                const gameState = gameStateSnap.data();
+                return gameState;
+            }
+            return null;
+        }
+
         // Populate the bingo grid based on the game state
         async function populateBingoGrid() {
             const gameState = await fetchGameState(); // Fetch game state
@@ -154,84 +156,64 @@ async function fetchGameState() {
         }
 
         // Generate a new bingo board and save it to Firestore
-async function generateAndSaveBingoBoard() {
-    const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
-    const querySnapshot = await getDocs(q);
-    const phrasesByCategory = {};
+        async function generateAndSaveBingoBoard() {
+            const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
+            const querySnapshot = await getDocs(q);
+            const phrasesByCategory = {};
 
-    querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        if (data.category !== "Free Spot") {
-            if (!phrasesByCategory[data.category]) {
-                phrasesByCategory[data.category] = [];
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                if (data.category !== "Free Spot") {
+                    if (!phrasesByCategory[data.category]) {
+                        phrasesByCategory[data.category] = [];
+                    }
+                    phrasesByCategory[data.category].push(data.phrase);
+                }
+            });
+
+            const selectedPhrases = [];
+            const categories = Object.keys(phrasesByCategory);
+
+            // Select phrases from each category, ensuring 14 phrases total
+            while (selectedPhrases.length < 14 && categories.length > 0) {
+                for (const category of categories) {
+                    if (phrasesByCategory[category].length > 0 && selectedPhrases.length < 14) {
+                        const phrase = phrasesByCategory[category].shift();
+                        selectedPhrases.push(phrase);
+                    }
+                }
             }
-            phrasesByCategory[data.category].push(data.phrase);
-        }
-    });
 
-    const selectedPhrases = [];
-    const categories = Object.keys(phrasesByCategory);
+            shuffle(selectedPhrases); // Shuffle the phrases for randomness
 
-    // Select phrases from each category, ensuring 14 phrases total
-    while (selectedPhrases.length < 14 && categories.length > 0) {
-        for (const category of categories) {
-            if (phrasesByCategory[category].length > 0 && selectedPhrases.length < 14) {
-                const phrase = phrasesByCategory[category].shift();
-                selectedPhrases.push(phrase);
+            const bingoCells = [];
+            let phraseIndex = 0;
+
+            // Fill all cells, with free spot in the middle (cell index 7)
+            for (let i = 0; i < 15; i++) {
+                if (i === 7) {
+                    bingoCells.push("Free Spot"); // Free Spot in the center
+                } else {
+                    bingoCells.push(selectedPhrases[phraseIndex] || '');
+                    phraseIndex++;
+                }
             }
+
+            // Save the generated board in Firestore
+            await setDoc(doc(db, "game_state", "current"), { board: bingoCells }, { merge: true });
+
+            // Fill the grid with the new board
+            fillBingoGrid(bingoCells);
         }
-    }
 
-    shuffle(selectedPhrases); // Shuffle the phrases for randomness
-
-    const bingoCells = [];
-    let phraseIndex = 0;
-
-    // Fill all cells, with free spot in the middle (cell index 7)
-    for (let i = 0; i < 15; i++) {
-        if (i === 7) {
-            bingoCells.push("Free Spot"); // Free Spot in the center
-        } else {
-            bingoCells.push(selectedPhrases[phraseIndex] || '');
-            phraseIndex++;
+        // Shuffle function to randomize phrases
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
         }
-    }
-
-    // Save the generated board in Firestore
-    await setDoc(doc(db, "game_state", "current"), { board: bingoCells }, { merge: true });
-
-    // Fill the grid with the new board
-    fillBingoGrid(bingoCells);
-}
-
-// Shuffle function to randomize phrases
-function shuffle(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-}
-
-        // Populate the bingo grid based on the game state
-async function populateBingoGrid() {
-    const gameState = await fetchGameState(); // Fetch game state
-
-    if (gameState && gameState.status === "started") {
-        const savedBoard = await fetchSavedBoard(); // Fetch saved board from Firestore
-
-        if (savedBoard) {
-            fillBingoGrid(savedBoard); // Load saved board
-        } else {
-            generateAndSaveBingoBoard(); // Generate new board if no saved board exists
-        }
-    } else if (gameState && gameState.status === "ended") {
-        alert("The game has ended.");
-    } else {
-        alert("The game is not currently active.");
-    }
-}
-
 
         // Fill the bingo grid with phrases or load from saved state
         function fillBingoGrid(board) {
