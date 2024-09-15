@@ -50,9 +50,10 @@
         try {
           await addDoc(collection(db, "bingo_phrases"), {
             category: category,
-            phrase: phrase
+            phrase: phrase,
+            status: "pending"  // New field to mark as pending
           });
-          alert("Phrase added successfully!");
+          alert("Phrase submitted for review!");
           document.getElementById('phrase-form').reset();
         } catch (error) {
           alert("Error adding phrase: " + error);
