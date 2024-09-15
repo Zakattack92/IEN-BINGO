@@ -306,75 +306,109 @@
                 await generateAndSaveBingoBoard(); // Generate a new board if no saved one exists
             }
         }
+        
+// Generate a new bingo board and save it to Firestore
+async function generateAndSaveBingoBoard() {
+    const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
+    const querySnapshot = await getDocs(q);
+    const phrasesByCategory = {};
 
-        // Fill the bingo grid with phrases or load from saved state
-        async function fillBingoGrid(board) {
-            console.log('Filling bingo grid with:', board); // Debugging log
-            const bingoCells = document.querySelectorAll('.bingo-cell');
-            const freeSpotPhrase = await fetchFreeSpotPhrase(); // Fetch Free Spot phrase
-            bingoCells.forEach((cell, index) => {
-                if (index === 7) {
-                    cell.textContent = freeSpotPhrase || "Free Spot"; // Always place free spot in the center
-                } else {
-                    cell.textContent = board[index] || '';
-                }
-            });
-
-            // Add event listeners to cells for click actions
-            bingoCells.forEach((cell, index) => {
-                cell.addEventListener('click', () => {
-                    cell.classList.toggle('clicked'); // Toggle clicked state
-                    saveClickedCell(index); // Save clicked state to Firestore
-                });
-            });
+    querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.category !== "Free Spot") {
+            if (!phrasesByCategory[data.category]) {
+                phrasesByCategory[data.category] = [];
+            }
+            phrasesByCategory[data.category].push(data.phrase);
         }
+    });
 
-        // Load the clicked cells for the current user
-        async function loadClickedCells() {
-            const userDocRef = doc(db, "user_clicks", currentUser.name);
-            const userDocSnap = await getDoc(userDocRef);
+    const selectedPhrases = [];
+    const categories = Object.keys(phrasesByCategory);
 
-            if (userDocSnap.exists()) {
-                const userData = userDocSnap.data();
-                const clickedCells = userData.clickedCells || [];
-                updateClickedCells(clickedCells); // Update UI to reflect clicked cells
+    // Select phrases from each category, ensuring 14 phrases total
+    while (selectedPhrases.length < 14 && categories.length > 0) {
+        for (const category of categories) {
+            if (phrasesByCategory[category].length > 0 && selectedPhrases.length < 14) {
+                const phrase = phrasesByCategory[category].shift();
+                selectedPhrases.push(phrase);
             }
         }
+    }
 
-        // Update the bingo grid to reflect clicked cells
-        function updateClickedCells(clickedCells) {
-            const bingoCells = document.querySelectorAll('.bingo-cell');
-            bingoCells.forEach((cell, index) => {
-                if (clickedCells.includes(index)) {
-                    cell.classList.add('clicked'); // Mark cell as clicked
-                }
-            });
+    shuffle(selectedPhrases); // Shuffle the phrases for randomness
+
+    const bingoCells = [];
+    let phraseIndex = 0;
+
+    // Fill all cells, with free spot in the middle (cell index 7)
+    for (let i = 0; i < 15; i++) {
+        if (i === 7) {
+            bingoCells.push("Free Spot"); // Free Spot in the center
+        } else {
+            bingoCells.push(selectedPhrases[phraseIndex] || '');
+            phraseIndex++;
         }
+    }
 
-        // Load the board from Firestore
-        async function fetchSavedBoard() {
-            const boardDocRef = doc(db, "game_state", "current");
-            const boardDocSnap = await getDoc(boardDocRef);
+    console.log("Generated Bingo Board: ", bingoCells); // Debugging log
 
-            if (boardDocSnap.exists()) {
-                const gameData = boardDocSnap.data();
-                return gameData.board || null;
-            }
-            return null;
+    // Save the generated board in Firestore
+    await setDoc(doc(db, "game_state", "current"), { board: bingoCells }, { merge: true });
+
+    // Fill the grid with the new board
+    fillBingoGrid(bingoCells);
+}
+        
+     // Fill the bingo grid with phrases or load from saved state
+async function fillBingoGrid(board) {
+    const bingoCells = document.querySelectorAll('.bingo-cell');
+    const freeSpotPhrase = await fetchFreeSpotPhrase(); // Fetch Free Spot phrase
+    bingoCells.forEach((cell, index) => {
+        if (index === 7) {
+            cell.textContent = freeSpotPhrase || "Free Spot"; // Always place free spot in the center
+        } else {
+            // Fill cells with phrases from the board
+            cell.textContent = board[index] || '';
         }
+    });
 
-        // Fetch Free Spot phrase from Firestore
-        async function fetchFreeSpotPhrase() {
-            const q = query(collection(db, "bingo_phrases"), where("category", "==", "Free Spot"), where("status", "==", "approved"));
-            const querySnapshot = await getDocs(q);
+    // Add event listeners to cells for click actions
+    bingoCells.forEach((cell, index) => {
+        cell.addEventListener('click', () => {
+            cell.classList.toggle('clicked'); // Toggle clicked state
+            saveClickedCell(index); // Save clicked state to Firestore
+        });
+    });
+}
+// Load the board from Firestore
+async function fetchSavedBoard() {
+    const boardDocRef = doc(db, "game_state", "current");
+    const boardDocSnap = await getDoc(boardDocRef);
 
-            if (!querySnapshot.empty) {
-                const randomIndex = Math.floor(Math.random() * querySnapshot.docs.length);
-                return querySnapshot.docs[randomIndex].data().phrase;
-            } else {
-                return "Free Spot"; // Fallback if no free spot phrases are found
-            }
-        }
+    if (boardDocSnap.exists()) {
+        const gameData = boardDocSnap.data();
+        console.log("Board data from Firestore: ", gameData); // Debugging log
+        return gameData.board || null;
+    }
+    console.log("No board data found in Firestore."); // Debugging log
+    return null;
+}
+      // Fetch Free Spot phrase from Firestore
+async function fetchFreeSpotPhrase() {
+    const q = query(collection(db, "bingo_phrases"), where("category", "==", "Free Spot"), where("status", "==", "approved"));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+        const randomIndex = Math.floor(Math.random() * querySnapshot.docs.length);
+        const phrase = querySnapshot.docs[randomIndex].data().phrase;
+        console.log("Free Spot Phrase: ", phrase); // Debugging log
+        return phrase;
+    } else {
+        console.log("No approved Free Spot phrases found."); // Debugging log
+        return "Free Spot"; // Fallback if no free spot phrases are found
+    }
+}
 
         // Initialize by handling game state (no initial grid population until needed)
         handleGameState(); // Call the function to handle game state
