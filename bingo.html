@@ -219,6 +219,18 @@
             }
         }
 
+        // Load the board from Firestore
+        async function fetchSavedBoard() {
+            const boardDocRef = doc(db, "game_state", "current");
+            const boardDocSnap = await getDoc(boardDocRef);
+
+            if (boardDocSnap.exists()) {
+                const gameData = boardDocSnap.data();
+                return gameData.board || null;
+            }
+            return null;
+        }
+
         // Fill the bingo grid with phrases or load from saved state
         async function fillBingoGrid(board) {
             const bingoCells = document.querySelectorAll('.bingo-cell');
@@ -238,6 +250,19 @@
                     saveClickedCell(index); // Save clicked state to Firestore
                 });
             });
+        }
+
+        // Fetch Free Spot phrase from Firestore
+        async function fetchFreeSpotPhrase() {
+            const q = query(collection(db, "bingo_phrases"), where("category", "==", "Free Spot"), where("status", "==", "approved"));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const randomIndex = Math.floor(Math.random() * querySnapshot.docs.length);
+                return querySnapshot.docs[randomIndex].data().phrase;
+            } else {
+                return "Free Spot"; // Fallback if no free spot phrases are found
+            }
         }
 
         populateBingoGrid(); // Call the function to populate the grid
