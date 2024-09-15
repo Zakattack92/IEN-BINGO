@@ -104,7 +104,7 @@
             });
         });
     </script>
-   <script type="module">
+<script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
     import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
 
@@ -121,14 +121,15 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Fetch "Free Spot" phrase and populate the center spot
+    // Fetch random "Free Spot" phrase and populate the center spot
     async function populateFreeSpot() {
         const q = query(collection(db, "bingo_phrases"), where("category", "==", "Free Spot"), where("status", "==", "approved"));
         const querySnapshot = await getDocs(q);
         
         if (!querySnapshot.empty) {
-            // Assuming we only need one phrase for the Free Spot
-            const freeSpotPhrase = querySnapshot.docs[0].data().phrase;
+            // Randomly select a phrase from the "Free Spot" category
+            const randomIndex = Math.floor(Math.random() * querySnapshot.docs.length);
+            const freeSpotPhrase = querySnapshot.docs[randomIndex].data().phrase;
             document.getElementById('free-spot').textContent = freeSpotPhrase;
         } else {
             // Fallback text if no approved Free Spot phrase is available
@@ -136,8 +137,10 @@
         }
     }
 
-    // Call the function to populate the free spot
+    // Call the function to populate the free spot with a random phrase
     populateFreeSpot();
+</script>
+
 </script>
 
 </body>
