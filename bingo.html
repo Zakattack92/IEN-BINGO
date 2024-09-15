@@ -116,7 +116,16 @@
         // User is logged in, set up real-time listener
         setupRealTimeListener();
     }
-
+    // Fetch the game state to check if the game is started
+    async function fetchGameState() {
+        const gameStateRef = doc(db, "game_state", "current");
+        const gameStateSnap = await getDoc(gameStateRef);
+        if (gameStateSnap.exists()) {
+            const gameState = gameStateSnap.data();
+            return gameState;
+        }
+        return null;
+    }
     // Real-time listener for Firestore changes
     function setupRealTimeListener() {
         const userDocRef = doc(db, "user_clicks", currentUser.uid);
@@ -170,16 +179,7 @@
         });
     });
 
-    // Fetch the game state to check if the game is started
-    async function fetchGameState() {
-        const gameStateRef = doc(db, "game_state", "current");
-        const gameStateSnap = await getDoc(gameStateRef);
-        if (gameStateSnap.exists()) {
-            const gameState = gameStateSnap.data();
-            return gameState;
-        }
-        return null;
-    }
+
 
     // Populate the bingo grid based on the game state
     async function populateBingoGrid() {
