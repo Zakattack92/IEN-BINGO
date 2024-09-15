@@ -3,10 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Login - I.E.N. Bingo</title>
+    <style>
+        body {
+            background-color: black;
+            color: #edbc00;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        h1 {
+            margin-top: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 40px;
+        }
+
+        input[type="text"], input[type="password"] {
+            padding: 10px;
+            margin: 10px;
+            font-size: 1.2em;
+            width: 80%; /* Take up more space on mobile */
+            max-width: 400px; /* Limit the width on large screens */
+        }
+
+        .submit-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: #edbc00;
+            color: black;
+            border: none;
+            cursor: pointer;
+        }
+
+        .submit-button:hover {
+            background-color: #c89700;
+        }
+
+        @media (max-width: 768px) {
+            input[type="text"], input[type="password"] {
+                width: 90%; /* Increase input width on small screens */
+            }
+
+            .submit-button {
+                width: 90%; /* Ensure the button is responsive */
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Login</h1>
+    <form id="loginForm">
+        <input type="text" id="username" placeholder="Enter your username" required>
+        <input type="password" id="password" placeholder="Enter your password" required>
+        <button type="button" class="submit-button" onclick="login()">Login</button>
+    </form>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
+        import { getFirestore, query, where, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
@@ -21,42 +81,27 @@
         const db = getFirestore(app);
 
         async function login() {
-            const name = document.getElementById('name').value;
-            const pin = document.getElementById('pin').value;
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
 
-            if (name && pin) {
-                const userRef = doc(db, "users", name);
-                const userSnap = await getDoc(userRef);
+            if (!username || !password) {
+                alert("Please enter both username and password");
+                return;
+            }
 
-                if (userSnap.exists()) {
-                    const userData = userSnap.data();
-                    if (userData.password === pin) {
-                        // Save user to localStorage
-                        localStorage.setItem('bingoUser', JSON.stringify({ uid: name }));
-                        // Redirect to bingo.html after successful login
-                        window.location.href = 'bingo.html';
-                    } else {
-                        alert("Incorrect password.");
-                    }
-                } else {
-                    alert("User not found.");
-                }
+            const q = query(collection(db, "users"), where("name", "==", username), where("password", "==", password));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                alert("Invalid username or password");
             } else {
-                alert("Please enter both name and PIN.");
+                // Store user info in localStorage
+                localStorage.setItem('bingoUser', JSON.stringify({ name: username }));
+
+                // Redirect to bingo page
+                window.location.href = 'bingo.html';
             }
         }
     </script>
-</head>
-<body>
-    <h1>Login</h1>
-    
-    <!-- Input form for Name and PIN -->
-    <label for="name">Name:</label>
-    <input type="text" id="name" placeholder="Enter your name" required>
-
-    <label for="pin">PIN:</label>
-    <input type="password" id="pin" placeholder="Enter your PIN" required>
-
-    <button onclick="login()">Login</button>
 </body>
 </html>
