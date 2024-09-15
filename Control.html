@@ -40,12 +40,11 @@
     <button id="end-game-btn">End Game Manually</button>
 
     <script type="module">
-        // Console log to confirm script is loaded
         console.log("Script loaded successfully.");
 
         // Firebase initialization
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
-        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
@@ -61,18 +60,37 @@
 
         console.log("Firebase initialized successfully.");
 
-        // Test functions to check if buttons are working
-        window.startGame = function() {
-            console.log("Start Game button clicked");
-            alert("Game Started Manually!");
+        // Manually start the game by writing to Firestore
+        window.startGame = async function() {
+            try {
+                await setDoc(doc(db, "game_state", "current"), {
+                    status: "started",
+                    timestamp: Date.now(),
+                    countdownEnabled: false
+                });
+                console.log("Game Started: status set to 'started' in Firestore.");
+                alert("Game Started Manually!");
+            } catch (error) {
+                console.error("Error starting game:", error);
+            }
         }
 
-        window.endGame = function() {
-            console.log("End Game button clicked");
-            alert("Game Ended Manually!");
+        // Manually end the game by writing to Firestore
+        window.endGame = async function() {
+            try {
+                await setDoc(doc(db, "game_state", "current"), {
+                    status: "ended",
+                    timestamp: Date.now(),
+                    countdownEnabled: false
+                });
+                console.log("Game Ended: status set to 'ended' in Firestore.");
+                alert("Game Ended Manually!");
+            } catch (error) {
+                console.error("Error ending game:", error);
+            }
         }
 
-        // Attach event listeners for testing
+        // Attach event listeners
         document.getElementById('start-game-btn').addEventListener('click', window.startGame);
         document.getElementById('end-game-btn').addEventListener('click', window.endGame);
     </script>
