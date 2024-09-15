@@ -121,24 +121,80 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Fetch random "Free Spot" phrase and populate the center spot
+    // Fetch phrases and populate bingo grid
+    async function populateBingoGrid() {
+        const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
+        const querySnapshot = await getDocs(q);
+        const phrasesByCategory = {};
+
+        // Group phrases by category (ignoring "Free Spot")
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            if (data.category !== "Free Spot") {
+                if (!phrasesByCategory[data.category]) {
+                    phrasesByCategory[data.category] = [];
+                }
+                phrasesByCategory[data.category].push(data.phrase);
+            }
+        });
+
+        // Shuffle and balance phrases across categories
+        const selectedPhrases = [];
+        const categories = Object.keys(phrasesByCategory);
+
+        // Ensure equal distribution of phrases from each category
+        while (selectedPhrases.length < 24 && categories.length > 0) {
+            for (const category of categories) {
+                if (phrasesByCategory[category].length > 0 && selectedPhrases.length < 24) {
+                    const phrase = phrasesByCategory[category].shift();
+                    selectedPhrases.push(phrase);
+                }
+            }
+        }
+
+        // Shuffle selected phrases before adding to grid
+        shuffle(selectedPhrases);
+
+        const bingoCells = document.querySelectorAll('.bingo-cell');
+        let phraseIndex = 0;
+
+        // Fill bingo cells, leaving the center as Free Spot
+        bingoCells.forEach((cell, index) => {
+            if (index === 12) {
+                // The Free Spot in the center
+                populateFreeSpot();
+            } else {
+                cell.textContent = selectedPhrases[phraseIndex] || '';
+                phraseIndex++;
+            }
+        });
+    }
+
+    // Populate "Free Spot" with a random phrase from the "Free Spot" category
     async function populateFreeSpot() {
         const q = query(collection(db, "bingo_phrases"), where("category", "==", "Free Spot"), where("status", "==", "approved"));
         const querySnapshot = await getDocs(q);
         
         if (!querySnapshot.empty) {
-            // Randomly select a phrase from the "Free Spot" category
             const randomIndex = Math.floor(Math.random() * querySnapshot.docs.length);
             const freeSpotPhrase = querySnapshot.docs[randomIndex].data().phrase;
             document.getElementById('free-spot').textContent = freeSpotPhrase;
         } else {
-            // Fallback text if no approved Free Spot phrase is available
             document.getElementById('free-spot').textContent = "Free Spot";
         }
     }
 
-    // Call the function to populate the free spot with a random phrase
-    populateFreeSpot();
+    // Shuffle function to randomize the phrase order
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    // Call the function to populate the grid
+    populateBingoGrid();
 </script>
 
 </script>
