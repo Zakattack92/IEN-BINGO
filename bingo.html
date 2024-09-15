@@ -67,7 +67,8 @@
     <div class="points-display">
         Points: <span id="points-game">0</span>
     </div>
-    <div class="bingo-grid">
+ <div id="countdown" class="countdown-display"></div>
+    <div class="bingo-grid" id="bingo-grid" style="display: none;">
         <div class="bingo-cell" id="cell-1"></div>
         <div class="bingo-cell" id="cell-2"></div>
         <div class="bingo-cell" id="cell-3"></div>
@@ -124,6 +125,62 @@
         // Ensure user is logged in, otherwise redirect to login
         if (!currentUser) {
             window.location.href = 'index.html'; // Redirect to login page if not authenticated
+        }
+// Function to show countdown
+        function showCountdown(remainingTime) {
+            const countdownElement = document.getElementById("countdown");
+
+            const interval = setInterval(() => {
+                const now = new Date().getTime();
+                const distance = remainingTime - now;
+
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                countdownElement.textContent = `The game will begin in ${hours}h ${minutes}m ${seconds}s`;
+
+                // If the countdown is finished, hide countdown and show the bingo grid
+                if (distance < 0) {
+                    clearInterval(interval);
+                    countdownElement.style.display = 'none';
+                    document.getElementById("bingo-grid").style.display = 'grid'; // Show bingo grid
+                    populateBingoGrid(); // Call the function to populate the grid
+                }
+            }, 1000);
+        }
+
+        // Fetch game state and handle based on status
+        async function fetchGameState() {
+            const gameStateRef = doc(db, "game_state", "current");
+            const gameStateSnap = await getDoc(gameStateRef);
+            if (gameStateSnap.exists()) {
+                const gameState = gameStateSnap.data();
+                return gameState;
+            }
+            return null;
+        }
+
+        // Handle game state
+        async function handleGameState() {
+            const gameState = await fetchGameState();
+            if (gameState && gameState.status === "started") {
+                document.getElementById("bingo-grid").style.display = 'grid'; // Show the bingo grid
+                populateBingoGrid(); // Call the function to populate the grid
+            } else if (gameState && gameState.status === "scheduled") {
+                const startTime = new Date(gameState.startTime.seconds * 1000); // Assuming Firestore stores startTime as a timestamp
+                const now = new Date().getTime();
+                const timeRemaining = startTime - now;
+
+                if (timeRemaining > 0) {
+                    showCountdown(startTime); // Show countdown if the game is scheduled
+                } else {
+                    document.getElementById("bingo-grid").style.display = 'grid'; // Show bingo grid
+                    populateBingoGrid();
+                }
+            } else {
+                document.getElementById("countdown").textContent = "No game is scheduled.";
+            }
         }
 
         // Save clicked cells and update points
