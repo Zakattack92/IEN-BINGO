@@ -113,7 +113,16 @@
         if (!currentUser) {
             window.location.href = 'index.html'; // Redirect to login page if not authenticated
         }
-
+// Fetch the game state to check if the game is started
+async function fetchGameState() {
+    const gameStateRef = doc(db, "game_state", "current");
+    const gameStateSnap = await getDoc(gameStateRef);
+    if (gameStateSnap.exists()) {
+        const gameState = gameStateSnap.data();
+        return gameState;
+    }
+    return null;
+}
         // Populate the bingo grid based on the game state
         async function populateBingoGrid() {
             const gameState = await fetchGameState(); // Fetch game state
