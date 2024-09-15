@@ -125,111 +125,76 @@
             window.location.href = 'index.html'; // Redirect to login page if not authenticated
         }
 
-        // Save clicked cells and update points
-        async function saveClickedCell(cellIndex) {
-            const userDocRef = doc(db, "user_clicks", currentUser.name);
-            const userDocSnap = await getDoc(userDocRef);
+        // Fetch the saved bingo board from Firestore
+        async function fetchSavedBoard() {
+            const boardDocRef = doc(db, "game_state", "current");
+            const boardDocSnap = await getDoc(boardDocRef);
 
-            let clickedCells = [];
-            if (userDocSnap.exists()) {
-                clickedCells = userDocSnap.data().clickedCells || [];
+            if (boardDocSnap.exists()) {
+                const gameData = boardDocSnap.data();
+                return gameData.board || null;
+            }
+            return null;
+        }
+
+        // Generate a new bingo board and save it to Firestore
+        async function generateAndSaveBingoBoard() {
+            const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
+            const querySnapshot = await getDocs(q);
+            const phrasesByCategory = {};
+
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                if (data.category !== "Free Spot") {
+                    if (!phrasesByCategory[data.category]) {
+                        phrasesByCategory[data.category] = [];
+                    }
+                    phrasesByCategory[data.category].push(data.phrase);
+                }
+            });
+
+            const selectedPhrases = [];
+            const categories = Object.keys(phrasesByCategory);
+
+            // Select phrases from each category, ensuring 14 phrases total
+            while (selectedPhrases.length < 14 && categories.length > 0) {
+                for (const category of categories) {
+                    if (phrasesByCategory[category].length > 0 && selectedPhrases.length < 14) {
+                        const phrase = phrasesByCategory[category].shift();
+                        selectedPhrases.push(phrase);
+                    }
+                }
             }
 
-            // Toggle clicked state
-            if (clickedCells.includes(cellIndex)) {
-                clickedCells = clickedCells.filter(index => index !== cellIndex);
-            } else {
-                clickedCells.push(cellIndex);
+            shuffle(selectedPhrases); // Shuffle the phrases for randomness
+
+            const bingoCells = [];
+            let phraseIndex = 0;
+
+            // Fill all cells, with free spot in the middle (cell index 7)
+            for (let i = 0; i < 15; i++) {
+                if (i === 7) {
+                    bingoCells.push("Free Spot"); // Free Spot in the center
+                } else {
+                    bingoCells.push(selectedPhrases[phraseIndex] || '');
+                    phraseIndex++;
+                }
             }
 
-            // Save updated clicked cells to Firestore
-            await setDoc(userDocRef, { clickedCells: clickedCells }, { merge: true });
+            // Save the generated board in Firestore
+            await setDoc(doc(db, "game_state", "current"), { board: bingoCells }, { merge: true });
 
-            // Award points based on current clicks
-            awardPoints(clickedCells);
+            // Fill the grid with the new board
+            fillBingoGrid(bingoCells);
         }
 
-        // Award points based on clicked cells and check for bingos
-        function awardPoints(clickedCells) {
-            const horizontalBingos = checkHorizontalBingo(clickedCells);
-            const verticalBingos = checkVerticalBingo(clickedCells);
-            const letterI = checkLetterI(clickedCells);
-            const letterH = checkLetterH(clickedCells);
-            const fullBoard = checkFullBoard(clickedCells);
-
-            points = clickedCells.length; // Each clicked square = 1 point
-            points += horizontalBingos * 1; // Horizontal bingo = 1 point
-            points += verticalBingos * 3; // Vertical bingo = 3 points
-            points += letterI ? 4 : 0; // Letter I = 4 points
-            points += letterH ? 5 : 0; // Letter H = 5 points
-            points += fullBoard ? 5 : 0; // Full board = 5 bonus points
-
-            updatePointsDisplay(); // Update points display
-            localStorage.setItem('pointsThisGame', points); // Save points to localStorage
-        }
-
-        // Update points display in the top-right corner
-        function updatePointsDisplay() {
-            document.getElementById("points-game").textContent = points;
-        }
-
-        // Save cumulative points to Firestore only when the game ends
-        async function saveCumulativePoints() {
-            const userDocRef = doc(db, "users", currentUser.name);
-            const userDocSnap = await getDoc(userDocRef);
-
-            let cumulativePoints = 0;
-            if (userDocSnap.exists()) {
-                cumulativePoints = userDocSnap.data().cumulativePoints || 0;
+        // Shuffle function to randomize phrases
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
             }
-
-            // Add the current game points to the cumulative total
-            cumulativePoints += points;
-
-            // Save the updated cumulative points to Firestore
-            await setDoc(userDocRef, { cumulativePoints: cumulativePoints }, { merge: true });
-
-            // Clear points for next game
-            localStorage.removeItem('pointsThisGame');
-        }
-
-        // Check for horizontal bingos
-        function checkHorizontalBingo(cells) {
-            const rows = [
-                [0, 1, 2],
-                [3, 4, 5],
-                [6, 7, 8],
-                [9, 10, 11],
-                [12, 13, 14],
-            ];
-            return rows.filter(row => row.every(cell => cells.includes(cell))).length;
-        }
-
-        // Check for vertical bingos
-        function checkVerticalBingo(cells) {
-            const columns = [
-                [0, 3, 6, 9, 12],
-                [1, 4, 7, 10, 13],
-                [2, 5, 8, 11, 14],
-            ];
-            return columns.filter(column => column.every(cell => cells.includes(cell))).length;
-        }
-
-        // Check for "I" pattern
-        function checkLetterI(cells) {
-            const letterI = [0, 7, 14]; // The key parts of an "I"
-            return letterI.every(cell => cells.includes(cell));
-        }
-
-        // Check for "H" pattern
-        function checkLetterH(cells) {
-            const letterH = [0, 2, 7, 9, 11, 14]; // The key parts of an "H"
-            return letterH.every(cell => cells.includes(cell));
-        }
-
-        // Check for a full board
-        function checkFullBoard(cells) {
-            return cells.length === 15;
+            return array;
         }
 
         // Populate the bingo grid
@@ -243,7 +208,52 @@
             }
         }
 
+        // Fill the bingo grid with phrases or load from saved state
+        async function fillBingoGrid(board) {
+            const bingoCells = document.querySelectorAll('.bingo-cell');
+            const freeSpotPhrase = "Free Spot"; // Always set the free spot text
+
+            bingoCells.forEach((cell, index) => {
+                if (index === 7) {
+                    cell.textContent = freeSpotPhrase || "Free Spot"; // Always place free spot in the center
+                } else {
+                    cell.textContent = board[index] || '';
+                }
+            });
+
+            // Add event listeners to cells for click actions
+            bingoCells.forEach((cell, index) => {
+                cell.addEventListener('click', () => {
+                    cell.classList.toggle('clicked'); // Toggle clicked state
+                    saveClickedCell(index); // Save clicked state to Firestore
+                });
+            });
+        }
+
+        // Load the clicked cells for the current user
+        async function loadClickedCells() {
+            const userDocRef = doc(db, "user_clicks", currentUser.name);
+            const userDocSnap = await getDoc(userDocRef);
+
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                const clickedCells = userData.clickedCells || [];
+                updateClickedCells(clickedCells); // Update UI to reflect clicked cells
+            }
+        }
+
+        // Update the bingo grid to reflect clicked cells
+        function updateClickedCells(clickedCells) {
+            const bingoCells = document.querySelectorAll('.bingo-cell');
+            bingoCells.forEach((cell, index) => {
+                if (clickedCells.includes(index)) {
+                    cell.classList.add('clicked'); // Mark cell as clicked
+                }
+            });
+        }
+
         populateBingoGrid(); // Call the function to populate the grid
+
     </script>
 
 </body>
