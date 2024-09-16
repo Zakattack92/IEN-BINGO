@@ -359,6 +359,51 @@ async function saveClickedCell(cellIndex) {
             return cells.length === 15;
         }
 
+        // Function to listen to game status changes
+async function checkGameStatus() {
+    const gameStateRef = doc(db, "game_state", "current");
+    
+    // Continuously listen for changes in the game state document
+    const unsubscribe = onSnapshot(gameStateRef, (doc) => {
+        if (doc.exists()) {
+            const gameState = doc.data();
+            if (gameState.status === "ended") {
+                endGame(); // If the game status is "ended," trigger the endGame function
+            }
+        }
+    });
+}
+
+// Function to save points and end the game
+function endGame() {
+    saveCumulativePoints(); // Save cumulative points to Firestore
+    alert("Game over! Your score has been saved.");
+    // Optionally, redirect or refresh the page
+}
+
+// Function to save cumulative points to Firestore
+async function saveCumulativePoints() {
+    const userDocRef = doc(db, "users", currentUser.name);
+    const userDocSnap = await getDoc(userDocRef);
+
+    let cumulativePoints = 0;
+    if (userDocSnap.exists()) {
+        cumulativePoints = userDocSnap.data().cumulativePoints || 0;
+    }
+
+    // Add current game points to the cumulative total
+    cumulativePoints += points;
+
+    // Save the updated cumulative points to Firestore
+    await setDoc(userDocRef, { cumulativePoints: cumulativePoints }, { merge: true });
+
+    // Clear points for the next game
+    localStorage.removeItem('pointsThisGame');
+}
+
+// Call the function to start checking for status changes
+checkGameStatus();
+
 
         populateBingoGrid(); // Call the function to populate the grid
 
