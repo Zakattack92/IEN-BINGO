@@ -325,15 +325,15 @@ async function loadClickedCells() {
 }
 
 
-        // Check for vertical bingos
-        function checkVerticalBingo(cells) {
-            const columns = [
-                [0, 3, 6, 9, 12],
-                [1, 4, 7, 10, 13],
-                [2, 5, 8, 11, 14],
-            ];
-            return columns.filter(column => column.every(cell => cells.includes(cell))).length;
-        }
+       function checkVerticalBingo(cells) {
+    if (!cells || !Array.isArray(cells)) return 0; // Ensure cells is a defined array
+    const columns = [
+        [0, 3, 6, 9, 12],
+        [1, 4, 7, 10, 13],
+        [2, 5, 8, 11, 14],
+    ];
+    return columns.filter(column => column.every(cell => cells.includes(cell))).length;
+}
 
         // Check for "I" pattern
         function checkLetterI(cells) {
