@@ -137,56 +137,67 @@
             return null;
         }
 
-        // Generate a new bingo board and save it to Firestore
-        async function generateAndSaveBingoBoard() {
-            const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
-            const querySnapshot = await getDocs(q);
-            const phrasesByCategory = {};
+       // Generate a new bingo board and save it to Firestore
+async function generateAndSaveBingoBoard() {
+    const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
+    const querySnapshot = await getDocs(q);
+    const phrasesByCategory = {};
 
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
-                if (data.category !== "Free Spot") {
-                    if (!phrasesByCategory[data.category]) {
-                        phrasesByCategory[data.category] = [];
-                    }
-                    phrasesByCategory[data.category].push(data.phrase);
-                }
-            });
+    querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const lastUsed = data.lastUsed || 0; // Fallback to 0 if not set
+        const cooldownPeriod = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+        const now = Date.now();
 
-            const selectedPhrases = [];
-            const categories = Object.keys(phrasesByCategory);
-
-            // Select phrases from each category, ensuring 14 phrases total
-            while (selectedPhrases.length < 14 && categories.length > 0) {
-                for (const category of categories) {
-                    if (phrasesByCategory[category].length > 0 && selectedPhrases.length < 14) {
-                        const phrase = phrasesByCategory[category].shift();
-                        selectedPhrases.push(phrase);
-                    }
-                }
+        // Check if phrase was used within the last 7 days
+        if (now - lastUsed > cooldownPeriod && data.category !== "Free Spot") {
+            if (!phrasesByCategory[data.category]) {
+                phrasesByCategory[data.category] = [];
             }
-
-            shuffle(selectedPhrases); // Shuffle the phrases for randomness
-
-            const bingoCells = [];
-            let phraseIndex = 0;
-
-            // Fill all cells, with free spot in the middle (cell index 7)
-            for (let i = 0; i < 15; i++) {
-                if (i === 7) {
-                    bingoCells.push("Free Spot"); // Free Spot in the center
-                } else {
-                    bingoCells.push(selectedPhrases[phraseIndex] || '');
-                    phraseIndex++;
-                }
-            }
-
-            // Save the generated board in Firestore
-            await setDoc(doc(db, "game_state", "current"), { board: bingoCells }, { merge: true });
-
-            // Fill the grid with the new board
-            fillBingoGrid(bingoCells);
+            phrasesByCategory[data.category].push(data.phrase);
         }
+    });
+
+    const selectedPhrases = [];
+    const categories = Object.keys(phrasesByCategory);
+
+    // Select phrases from each category, ensuring 14 phrases total
+    while (selectedPhrases.length < 14 && categories.length > 0) {
+        for (const category of categories) {
+            if (phrasesByCategory[category].length > 0 && selectedPhrases.length < 14) {
+                const phrase = phrasesByCategory[category].shift();
+                selectedPhrases.push(phrase);
+            }
+        }
+    }
+
+    shuffle(selectedPhrases); // Shuffle the phrases for randomness
+
+    const bingoCells = [];
+    let phraseIndex = 0;
+
+    // Fill all cells, with free spot in the middle (cell index 7)
+    for (let i = 0; i < 15; i++) {
+        if (i === 7) {
+            bingoCells.push("Free Spot"); // Free Spot in the center
+        } else {
+            bingoCells.push(selectedPhrases[phraseIndex] || '');
+            phraseIndex++;
+        }
+    }
+
+    // Save the generated board in Firestore
+    await setDoc(doc(db, "game_state", "current"), { board: bingoCells }, { merge: true });
+
+    // Update phrase usage in Firestore
+    selectedPhrases.forEach(async (phrase) => {
+        const phraseDocRef = doc(db, "bingo_phrases", phrase);
+        await setDoc(phraseDocRef, { lastUsed: Date.now() }, { merge: true });
+    });
+
+    // Fill the grid with the new board
+    fillBingoGrid(bingoCells);
+}
 
         // Shuffle function to randomize phrases
         function shuffle(array) {
@@ -198,15 +209,16 @@
         }
 
         // Populate the bingo grid
-        async function populateBingoGrid() {
-            const savedBoard = await fetchSavedBoard(); // Fetch saved board from Firestore
-            if (savedBoard) {
-                fillBingoGrid(savedBoard); // Load saved board
-                loadClickedCells(); // Load clicked cells for the current user
-            } else {
-                await generateAndSaveBingoBoard(); // Generate a new board if no saved one exists
-            }
-        }
+async function populateBingoGrid() {
+    const savedBoard = await fetchSavedBoard(); // Fetch saved board from Firestore
+    if (savedBoard) {
+        fillBingoGrid(savedBoard); // Load saved board
+        loadClickedCells(); // Load clicked cells for the current user
+        awardPoints(); // Award points after grid is populated and clicked cells are loaded
+    } else {
+        await generateAndSaveBingoBoard(); // Generate a new board if no saved one exists
+    }
+}
 
         // Fill the bingo grid with phrases or load from saved state
         async function fillBingoGrid(board) {
@@ -359,10 +371,10 @@ async function saveClickedCell(cellIndex) {
             return cells.length === 15;
         }
 
-        // Function to listen to game status changes
+       // Function to listen to game status changes
 async function checkGameStatus() {
     const gameStateRef = doc(db, "game_state", "current");
-    
+
     // Continuously listen for changes in the game state document
     const unsubscribe = onSnapshot(gameStateRef, (doc) => {
         if (doc.exists()) {
@@ -378,8 +390,21 @@ async function checkGameStatus() {
 function endGame() {
     saveCumulativePoints(); // Save cumulative points to Firestore
     alert("Game over! Your score has been saved.");
-    // Optionally, redirect or refresh the page
+    clearBoard(); // Clear the bingo board after the game ends
 }
+
+// Function to clear the bingo board and show no active game message
+function clearBoard() {
+    const bingoCells = document.querySelectorAll('.bingo-cell');
+    bingoCells.forEach(cell => {
+        cell.textContent = ''; // Clear text in each cell
+        cell.classList.remove('clicked'); // Remove the clicked class
+    });
+    document.querySelector('.bingo-grid').innerHTML = `<h3>No active game</h3>`;
+}
+
+// Call the function to start checking for status changes
+checkGameStatus();
 
 // Function to save cumulative points to Firestore
 async function saveCumulativePoints() {
