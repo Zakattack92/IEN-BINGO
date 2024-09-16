@@ -312,17 +312,18 @@ async function saveClickedCell(cellIndex) {
             document.getElementById("points-game").textContent = points;
         }
 
-        // Check for horizontal bingos
         function checkHorizontalBingo(cells) {
-            const rows = [
-                [0, 1, 2],
-                [3, 4, 5],
-                [6, 7, 8],
-                [9, 10, 11],
-                [12, 13, 14],
-            ];
-            return rows.filter(row => row.every(cell => cells.includes(cell))).length;
-        }
+    if (!cells || cells.length === 0) return 0; // Check if cells is defined
+    const rows = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [9, 10, 11],
+        [12, 13, 14],
+    ];
+    return rows.filter(row => row.every(cell => cells.includes(cell))).length;
+}
+
 
         // Check for vertical bingos
         function checkVerticalBingo(cells) {
