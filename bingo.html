@@ -266,17 +266,17 @@ async function saveClickedCell(cellIndex) {
             awardPoints(clickedCells);
 }
 
-        // Load the clicked cells for the current user
-        async function loadClickedCells() {
-            const userDocRef = doc(db, "user_clicks", currentUser.name);
-            const userDocSnap = await getDoc(userDocRef);
+async function loadClickedCells() {
+    const userDocRef = doc(db, "user_clicks", currentUser.name);
+    const userDocSnap = await getDoc(userDocRef);
 
-            if (userDocSnap.exists()) {
-                const userData = userDocSnap.data();
-                const clickedCells = userData.clickedCells || [];
-                updateClickedCells(clickedCells); // Update UI to reflect clicked cells
-            }
-        }
+    if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        const clickedCells = userData.clickedCells || []; // Initialize clickedCells as an empty array if undefined
+        updateClickedCells(clickedCells); // Update UI to reflect clicked cells
+    }
+}
+
 
         // Update the bingo grid to reflect clicked cells
         function updateClickedCells(clickedCells) {
