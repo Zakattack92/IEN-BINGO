@@ -312,26 +312,6 @@ async function saveClickedCell(cellIndex) {
             document.getElementById("points-game").textContent = points;
         }
 
-        // Save cumulative points to Firestore only when the game ends
-        async function saveCumulativePoints() {
-            const userDocRef = doc(db, "users", currentUser.name);
-            const userDocSnap = await getDoc(userDocRef);
-
-            let cumulativePoints = 0;
-            if (userDocSnap.exists()) {
-                cumulativePoints = userDocSnap.data().cumulativePoints || 0;
-            }
-
-            // Add the current game points to the cumulative total
-            cumulativePoints += points;
-
-            // Save the updated cumulative points to Firestore
-            await setDoc(userDocRef, { cumulativePoints: cumulativePoints }, { merge: true });
-
-            // Clear points for next game
-            localStorage.removeItem('pointsThisGame');
-        }
-
         // Check for horizontal bingos
         function checkHorizontalBingo(cells) {
             const rows = [
