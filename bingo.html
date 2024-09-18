@@ -314,7 +314,8 @@ async function loadClickedCells() {
         }
 
         function checkHorizontalBingo(cells) {
-    if (!cells || cells.length === 0) return 0; // Check if cells is defined
+    if (!Array.isArray(cells)) return false;
+
     const rows = [
         [0, 1, 2],
         [3, 4, 5],
@@ -324,6 +325,7 @@ async function loadClickedCells() {
     ];
     return rows.filter(row => row.every(cell => cells.includes(cell))).length;
 }
+
 
 
        function checkVerticalBingo(cells) {
@@ -338,9 +340,13 @@ async function loadClickedCells() {
 
         // Check for "I" pattern
         function checkLetterI(cells) {
-            const letterI = [0, 1, 2, 4, 7, 10, 12, 13, 14]; // The parts of an "I"
-            return letterI.every(cell => cells.includes(cell));
-        }
+    // Ensure cells is an array before proceeding
+    if (!Array.isArray(cells)) return false;
+
+    const letterI = [0, 7, 14]; // The key parts of an "I"
+    return letterI.every(cell => cells.includes(cell)); // Check if all parts of "I" are included
+}
+
 
         // Check for "H" pattern
         function checkLetterH(cells) {
