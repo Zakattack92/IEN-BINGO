@@ -173,7 +173,7 @@ async function generateAndSaveBingoBoard() {
     const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
     const querySnapshot = await getDocs(q);
     const phrasesByCategory = {};
-    const cooldownPeriod = 3 * 24 * 60 * 60 * 1000; // Cooldown period of 3 days (or games)
+    const cooldownPeriod = 21 * 24 * 60 * 60 * 1000; // Cooldown period of 3 days (or games)
 
     const now = new Date().getTime(); // Current time
 
