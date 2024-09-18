@@ -11,7 +11,7 @@
             font-family: Arial, sans-serif;
             text-align: center;
         }
-        .phrase-list, .user-list {
+        .list-container {
             margin: 20px auto;
             width: 80%;
         }
@@ -23,18 +23,21 @@
             margin-left: 10px;
             cursor: pointer;
         }
+        h2 {
+            margin-top: 40px;
+        }
     </style>
 </head>
 <body>
     <h1>Review Submitted Phrases & Pending Users</h1>
 
     <!-- List for phrases -->
-    <div class="phrase-list" id="phrase-list">
+    <div class="list-container" id="phrase-list">
         <h2>Pending Phrases</h2>
     </div>
 
     <!-- List for users -->
-    <div class="user-list" id="userList">
+    <div class="list-container" id="userList">
         <h2>Pending Users</h2>
     </div>
 
@@ -44,12 +47,12 @@
     <script>
         // Initialize Firebase (use your config here)
         var firebaseConfig = {
-           apiKey: "YOUR_API_KEY",
-           authDomain: "ien-bingo.firebaseapp.com",
-           projectId: "ien-bingo",
-           storageBucket: "ien-bingo.appspot.com",
-           messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-           appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
+            authDomain: "ien-bingo.firebaseapp.com",
+            projectId: "ien-bingo",
+            storageBucket: "ien-bingo.appspot.com",
+            messagingSenderId: "115041832401",
+            appId: "1:115041832401:web:785da7558648d1ac8124f0"
         };
         firebase.initializeApp(firebaseConfig);
         var db = firebase.firestore();
