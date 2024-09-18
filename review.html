@@ -78,6 +78,58 @@
                 location.reload(); // Reload the page to update the list
             });
         }
+
+          // Fetch all users awaiting approval
+        async function fetchPendingUsers() {
+            const q = query(collection(db, "users"), where("approved", "==", false));
+            const querySnapshot = await getDocs(q);
+
+            const userList = document.getElementById('userList');
+            userList.innerHTML = '';  // Clear the user list
+
+            querySnapshot.forEach((doc) => {
+                const userData = doc.data();
+                const userItem = document.createElement('div');
+                userItem.classList.add('user-item');
+                userItem.innerHTML = `
+                    <span>${userData.name}</span>
+                    <button onclick="approveUser('${doc.id}')">Approve</button>
+                    <button onclick="rejectUser('${doc.id}')">Reject</button>
+                `;
+                userList.appendChild(userItem);
+            });
+        }
+
+        // Approve user function
+        async function approveUser(userId) {
+            try {
+                const userDocRef = doc(db, "users", userId);
+                await updateDoc(userDocRef, { approved: true });
+                alert("User approved!");
+                fetchPendingUsers();  // Refresh the list
+            } catch (error) {
+                console.error("Error approving user:", error);
+            }
+        }
+
+        // Reject user function
+        async function rejectUser(userId) {
+            try {
+                const userDocRef = doc(db, "users", userId);
+                await updateDoc(userDocRef, { approved: false });
+                alert("User rejected.");
+                fetchPendingUsers();  // Refresh the list
+            } catch (error) {
+                console.error("Error rejecting user:", error);
+            }
+        }
+
+        // Initial fetch of pending users
+        fetchPendingUsers();
+
+        // Expose functions globally
+        window.approveUser = approveUser;
+        window.rejectUser = rejectUser;
     </script>
 </body>
 </html>
