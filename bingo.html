@@ -176,38 +176,55 @@ import { getFirestore, doc, setDoc, getDoc, query, collection, where, getDocs, o
     }
 
     // Function to start the countdown timer
-    function startCountdown(endTime) {
-        const timerElement = document.getElementById("countdown-timer");
-        timerElement.style.display = "block";  // Show the timer
+function startCountdown(endTime) {
+    const countdownDisplay = document.getElementById("countdown-timer");
 
-        const endTimestamp = new Date(endTime).getTime();
+    // Update the timer every second
+    countdownTimer = setInterval(() => {
+        const now = new Date().getTime();
+        const distance = endTime - now;
 
-        countdownTimer = setInterval(() => {
-            const now = Date.now();
-            const distance = endTimestamp - now;
+        // Time calculations for hours, minutes, and seconds
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000)) / 1000);
 
-            if (distance <= 0) {
-                clearInterval(countdownTimer);
-                timerElement.innerHTML = "Game Over!";
+        // Display the result in HH:MM:SS format
+        countdownDisplay.innerHTML = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+
+        // If the countdown is over, clear the interval
+        if (distance < 0) {
+            clearInterval(countdownTimer);
+            countdownDisplay.innerHTML = "00:00:00";
+        }
+    }, 1000);
+}
+
+// Utility function to pad numbers with leading zeros
+function pad(num) {
+    return num.toString().padStart(2, '0');
+}
+
+// Function to check if the countdown timer should be displayed
+async function listenForCountdown() {
+    const gameStateRef = doc(db, "game_state", "current");
+    
+    const unsubscribe = onSnapshot(gameStateRef, (doc) => {
+        if (doc.exists()) {
+            const gameState = doc.data();
+            if (gameState.countdownEnabled) {
+                const endTime = gameState.endTime; // Assuming endTime is set in Firestore
+                startCountdown(endTime);
             } else {
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                // Display the time in the format MM:SS
-                timerElement.innerHTML = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                clearInterval(countdownTimer);
+                document.getElementById("countdown-timer").innerHTML = ""; // Clear display if countdown is disabled
             }
-        }, 1000);
-    }
+        }
+    });
+}
 
-    // Function to clear the countdown timer
-    function clearCountdown() {
-        clearInterval(countdownTimer);  // Stop the interval
-        const timerElement = document.getElementById("countdown-timer");
-        timerElement.style.display = "none";  // Hide the timer
-    }
-
-    // Call this function when the page loads to listen for countdown changes
-    listenForCountdownChanges();
+// Call this function to start listening for countdown changes
+listenForCountdown();
 
         // Fetch the saved bingo board from Firestore
         async function fetchSavedBoard() {
