@@ -101,11 +101,19 @@
                 if (querySnapshot.empty) {
                     alert("Invalid username or password");
                 } else {
-                    // Store user info in localStorage
-                    localStorage.setItem('bingoUser', JSON.stringify({ name: username }));
+                    const userDoc = querySnapshot.docs[0];
+                    const userData = userDoc.data();
 
-                    // Redirect to bingo page
-                    window.location.href = 'bingo.html';
+                    // Check if the account is approved
+                    if (userData.approved) {
+                        // Store user info in localStorage
+                        localStorage.setItem('bingoUser', JSON.stringify({ name: username }));
+
+                        // Redirect to bingo page
+                        window.location.href = 'bingo.html';
+                    } else {
+                        alert("Your account is pending approval.");
+                    }
                 }
             } catch (error) {
                 console.error("Error logging in:", error);
@@ -130,14 +138,10 @@
                 if (userDocSnap.exists()) {
                     alert("Username already exists");
                 } else {
-                    // Register new user in Firestore
-                    await setDoc(userDocRef, { name: username, password: password });
+                    // Register new user in Firestore with approved flag set to false
+                    await setDoc(userDocRef, { name: username, password: password, approved: false });
 
-                    // Store user info in localStorage
-                    localStorage.setItem('bingoUser', JSON.stringify({ name: username }));
-
-                    // Redirect to bingo page after successful registration
-                    window.location.href = 'bingo.html';
+                    alert("Your account has been submitted for approval.");
                 }
             } catch (error) {
                 console.error("Error registering:", error);
