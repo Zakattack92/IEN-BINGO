@@ -39,6 +39,7 @@
     <!-- List for users -->
     <div class="list-container" id="userList">
         <h2>Pending Users</h2>
+        <div id="userItems"></div> <!-- Ensure a container for users exists -->
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
@@ -94,8 +95,12 @@
         // Fetch all users awaiting approval
         function fetchPendingUsers() {
             db.collection("users").where("approved", "==", false).get().then((querySnapshot) => {
-                const userList = document.getElementById('userList');
-                userList.innerHTML = '';  // Clear the user list
+                const userItems = document.getElementById('userItems'); // Get the user items container
+                userItems.innerHTML = '';  // Clear the user list
+
+                if (querySnapshot.empty) {
+                    userItems.innerHTML = '<p>No pending users</p>';  // Display a message if no users are pending
+                }
 
                 querySnapshot.forEach((doc) => {
                     const userData = doc.data();
@@ -106,7 +111,7 @@
                         <button onclick="approveUser('${doc.id}')">Approve</button>
                         <button onclick="rejectUser('${doc.id}')">Reject</button>
                     `;
-                    userList.appendChild(userItem);
+                    userItems.appendChild(userItem);
                 });
             });
         }
