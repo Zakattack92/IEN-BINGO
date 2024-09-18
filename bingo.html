@@ -158,6 +158,57 @@ import { getFirestore, doc, setDoc, getDoc, query, collection, where, getDocs, o
             window.location.href = 'index.html'; // Redirect to login page if not authenticated
         }
 
+        // Function to listen for game state changes
+    function listenForCountdownChanges() {
+        const gameStateRef = doc(db, "game_state", "current");
+
+        // Listen for real-time changes in the game state
+        onSnapshot(gameStateRef, (doc) => {
+            if (doc.exists()) {
+                const gameState = doc.data();
+                if (gameState.countdownEnabled) {
+                    startCountdown(gameState.endTime);  // Start countdown when enabled
+                } else {
+                    clearCountdown();  // Clear the countdown when disabled
+                }
+            }
+        });
+    }
+
+    // Function to start the countdown timer
+    function startCountdown(endTime) {
+        const timerElement = document.getElementById("countdown-timer");
+        timerElement.style.display = "block";  // Show the timer
+
+        const endTimestamp = new Date(endTime).getTime();
+
+        countdownTimer = setInterval(() => {
+            const now = Date.now();
+            const distance = endTimestamp - now;
+
+            if (distance <= 0) {
+                clearInterval(countdownTimer);
+                timerElement.innerHTML = "Game Over!";
+            } else {
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                // Display the time in the format MM:SS
+                timerElement.innerHTML = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }, 1000);
+    }
+
+    // Function to clear the countdown timer
+    function clearCountdown() {
+        clearInterval(countdownTimer);  // Stop the interval
+        const timerElement = document.getElementById("countdown-timer");
+        timerElement.style.display = "none";  // Hide the timer
+    }
+
+    // Call this function when the page loads to listen for countdown changes
+    listenForCountdownChanges();
+
         // Fetch the saved bingo board from Firestore
         async function fetchSavedBoard() {
             const boardDocRef = doc(db, "game_state", "current");
@@ -309,57 +360,6 @@ async function loadClickedCells() {
         updateClickedCells(clickedCells); // Update UI to reflect clicked cells
     }
 }
-
-// Function to listen for game state changes
-    function listenForCountdownChanges() {
-        const gameStateRef = doc(db, "game_state", "current");
-
-        // Listen for real-time changes in the game state
-        onSnapshot(gameStateRef, (doc) => {
-            if (doc.exists()) {
-                const gameState = doc.data();
-                if (gameState.countdownEnabled) {
-                    startCountdown(gameState.endTime);  // Start countdown when enabled
-                } else {
-                    clearCountdown();  // Clear the countdown when disabled
-                }
-            }
-        });
-    }
-
-    // Function to start the countdown timer
-    function startCountdown(endTime) {
-        const timerElement = document.getElementById("countdown-timer");
-        timerElement.style.display = "block";  // Show the timer
-
-        const endTimestamp = new Date(endTime).getTime();
-
-        countdownTimer = setInterval(() => {
-            const now = Date.now();
-            const distance = endTimestamp - now;
-
-            if (distance <= 0) {
-                clearInterval(countdownTimer);
-                timerElement.innerHTML = "Game Over!";
-            } else {
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                // Display the time in the format MM:SS
-                timerElement.innerHTML = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            }
-        }, 1000);
-    }
-
-    // Function to clear the countdown timer
-    function clearCountdown() {
-        clearInterval(countdownTimer);  // Stop the interval
-        const timerElement = document.getElementById("countdown-timer");
-        timerElement.style.display = "none";  // Hide the timer
-    }
-
-    // Call this function when the page loads to listen for countdown changes
-    listenForCountdownChanges();
         // Update the bingo grid to reflect clicked cells
         function updateClickedCells(clickedCells) {
             const bingoCells = document.querySelectorAll('.bingo-cell');
