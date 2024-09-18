@@ -60,6 +60,23 @@
             right: 20px;
             font-size: 1.5em;
         }
+        /* Add some CSS for layout adjustments */
+        .rules-section {
+            margin: 20px 0;
+            color: #edbc00;
+            text-align: left;
+        }
+
+        .button-section {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .submit-button {
+            flex: 1;
+            margin: 0 10px;
+        }
     </style>
 </head>
 <body>
@@ -88,9 +105,22 @@
         <div class="bingo-cell" id="cell-14"></div>
         <div class="bingo-cell" id="cell-15"></div>
     </div>
+    
+<!-- Rules Section -->
+    <div class="rules-section">
+        <h2>Game Rules</h2>
+        <p>1. Each box is 1 point.</p>
+        <p>2. Each row is 1 point.</p>
+        <p>3. Each column is 3 points.</p>
+        <p>4. Winner announced upon game end.</p>
+    </div>
 
-    <button class="submit-button" onclick="window.location.href='submit.html';">Submit a Phrase</button>
-
+    <!-- Buttons Section -->
+    <div class="button-section">
+        <button class="submit-button" onclick="window.location.href='submit.html';">Submit a Phrase</button>
+        <button class="submit-button" onclick="window.location.href='leaderboard.html';">Leaderboards</button>
+    </div>
+    
     <script>
         // Redirect to login if not authenticated
         if (!localStorage.getItem('bingoUser')) {
