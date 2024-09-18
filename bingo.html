@@ -60,6 +60,7 @@
             right: 20px;
             font-size: 1.5em;
         }
+
         /* Add some CSS for layout adjustments */
         .rules-section {
             margin: 20px 0;
@@ -77,6 +78,12 @@
             flex: 1;
             margin: 0 10px;
         }
+        
+        #countdown-timer {
+            color: red;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -84,7 +91,7 @@
     <div class="points-display">
         Points: <span id="points-game">0</span>
     </div>
-    <div id="countdown-timer" style="color: red; font-size: 1.5em; font-weight: bold;"></div>
+    <div id="countdown-timer"></div>
     <div class="bingo-grid">
         <div class="bingo-cell" id="cell-1"></div>
         <div class="bingo-cell" id="cell-2"></div>
@@ -107,7 +114,7 @@
         <div class="bingo-cell" id="cell-15"></div>
     </div>
     
-<!-- Rules Section -->
+    <!-- Rules Section -->
     <div class="rules-section">
         <h2>Game Rules</h2>
         <p>1. Each box is 1 point.</p>
@@ -118,9 +125,8 @@
 
     <!-- Buttons Section -->
     <div class="button-section">
-       <button class="submit-button" onclick="window.location.href='leaderboard.html';">Leaderboards</button> 
-       <button class="submit-button" onclick="window.location.href='submit.html';">Submit a Phrase</button>
-        
+        <button class="submit-button" onclick="window.location.href='leaderboard.html';">Leaderboards</button> 
+        <button class="submit-button" onclick="window.location.href='submit.html';">Submit a Phrase</button>
     </div>
     
     <script>
@@ -136,7 +142,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, query, collection, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, query, collection, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
@@ -152,78 +158,59 @@ import { getFirestore, doc, setDoc, getDoc, query, collection, where, getDocs, o
 
         let currentUser = JSON.parse(localStorage.getItem('bingoUser')); // Get logged-in user
 
-        // Ensure user is logged in, otherwise redirect to login
         if (!currentUser) {
             window.location.href = 'index.html'; // Redirect to login page if not authenticated
         }
 
-        // Function to listen for game state changes
-    function listenForCountdownChanges() {
-        const gameStateRef = doc(db, "game_state", "current");
+        // Countdown Timer
+        let countdownTimer;
+        
+        // Function to start the countdown timer
+        function startCountdown(endTime) {
+            clearInterval(countdownTimer); // Clear previous timer if it's running
+            const countdownDisplay = document.getElementById("countdown-timer");
 
-        // Listen for real-time changes in the game state
-        onSnapshot(gameStateRef, (doc) => {
-            if (doc.exists()) {
-                const gameState = doc.data();
-                if (gameState.countdownEnabled) {
-                    startCountdown(gameState.endTime);  // Start countdown when enabled
-                } else {
-                    clearCountdown();  // Clear the countdown when disabled
+            countdownTimer = setInterval(() => {
+                const now = new Date().getTime();
+                const distance = endTime - now;
+
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % 60000) / 1000);
+
+                countdownDisplay.innerHTML = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+
+                if (distance < 0) {
+                    clearInterval(countdownTimer);
+                    countdownDisplay.innerHTML = "00:00:00";
                 }
-            }
-        });
-    }
-
-    // Function to start the countdown timer
-function startCountdown(endTime) {
-    const countdownDisplay = document.getElementById("countdown-timer");
-
-    // Update the timer every second
-    countdownTimer = setInterval(() => {
-        const now = new Date().getTime();
-        const distance = endTime - now;
-
-        // Time calculations for hours, minutes, and seconds
-        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((distance % (1000)) / 1000);
-
-        // Display the result in HH:MM:SS format
-        countdownDisplay.innerHTML = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-
-        // If the countdown is over, clear the interval
-        if (distance < 0) {
-            clearInterval(countdownTimer);
-            countdownDisplay.innerHTML = "00:00:00";
+            }, 1000);
         }
-    }, 1000);
-}
 
-// Utility function to pad numbers with leading zeros
-function pad(num) {
-    return num.toString().padStart(2, '0');
-}
-
-// Function to check if the countdown timer should be displayed
-async function listenForCountdown() {
-    const gameStateRef = doc(db, "game_state", "current");
-    
-    const unsubscribe = onSnapshot(gameStateRef, (doc) => {
-        if (doc.exists()) {
-            const gameState = doc.data();
-            if (gameState.countdownEnabled) {
-                const endTime = gameState.endTime; // Assuming endTime is set in Firestore
-                startCountdown(endTime);
-            } else {
-                clearInterval(countdownTimer);
-                document.getElementById("countdown-timer").innerHTML = ""; // Clear display if countdown is disabled
-            }
+        // Utility function to pad numbers with leading zeros
+        function pad(num) {
+            return num.toString().padStart(2, '0');
         }
-    });
-}
 
-// Call this function to start listening for countdown changes
-listenForCountdown();
+        // Listen for countdown timer changes from Firestore
+        function listenForCountdownChanges() {
+            const gameStateRef = doc(db, "game_state", "current");
+
+            onSnapshot(gameStateRef, (doc) => {
+                if (doc.exists()) {
+                    const gameState = doc.data();
+                    if (gameState.countdownEnabled) {
+                        startCountdown(gameState.endTime);  // Start countdown when enabled
+                    } else {
+                        clearInterval(countdownTimer);
+                        document.getElementById("countdown-timer").innerHTML = "";
+                    }
+                }
+            });
+        }
+
+        // Call this to start listening for countdown changes
+        listenForCountdownChanges();
 
         // Fetch the saved bingo board from Firestore
         async function fetchSavedBoard() {
@@ -237,66 +224,65 @@ listenForCountdown();
             return null;
         }
 
-       // Generate a new bingo board and save it to Firestore
-async function generateAndSaveBingoBoard() {
-    const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
-    const querySnapshot = await getDocs(q);
-    const phrasesByCategory = {};
-    const cooldownPeriod = 21 * 24 * 60 * 60 * 1000; // Cooldown period of 3 days (or games)
+        // Generate a new bingo board and save it to Firestore
+        async function generateAndSaveBingoBoard() {
+            const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
+            const querySnapshot = await getDocs(q);
+            const phrasesByCategory = {};
+            const cooldownPeriod = 3 * 24 * 60 * 60 * 1000; // Cooldown period of 3 days (or games)
 
-    const now = new Date().getTime(); // Current time
+            const now = new Date().getTime(); // Current time
 
-    querySnapshot.forEach((doc) => {
-        const data = doc.data();
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
 
-        // Ensure phrase hasn't been used recently based on the cooldown period
-        const lastUsed = data.lastUsed || 0; // Default to 0 if lastUsed doesn't exist
-        if (now - lastUsed > cooldownPeriod && data.category !== "Free Spot") {
-            if (!phrasesByCategory[data.category]) {
-                phrasesByCategory[data.category] = [];
+                // Ensure phrase hasn't been used recently based on the cooldown period
+                const lastUsed = data.lastUsed || 0; // Default to 0 if lastUsed doesn't exist
+                if (now - lastUsed > cooldownPeriod && data.category !== "Free Spot") {
+                    if (!phrasesByCategory[data.category]) {
+                        phrasesByCategory[data.category] = [];
+                    }
+                    phrasesByCategory[data.category].push({ id: doc.id, phrase: data.phrase });
+                }
+            });
+
+            const selectedPhrases = [];
+            const categories = Object.keys(phrasesByCategory);
+
+            // Select phrases from each category, ensuring 14 phrases total
+            while (selectedPhrases.length < 14 && categories.length > 0) {
+                for (const category of categories) {
+                    if (phrasesByCategory[category].length > 0 && selectedPhrases.length < 14) {
+                        const phraseObj = phrasesByCategory[category].shift();
+                        selectedPhrases.push(phraseObj.phrase);
+
+                        // Update Firestore with the current timestamp as lastUsed
+                        await setDoc(doc(db, "bingo_phrases", phraseObj.id), { lastUsed: now }, { merge: true });
+                    }
+                }
             }
-            phrasesByCategory[data.category].push({ id: doc.id, phrase: data.phrase });
-        }
-    });
 
-    const selectedPhrases = [];
-    const categories = Object.keys(phrasesByCategory);
+            shuffle(selectedPhrases); // Shuffle the phrases for randomness
 
-    // Select phrases from each category, ensuring 14 phrases total
-    while (selectedPhrases.length < 14 && categories.length > 0) {
-        for (const category of categories) {
-            if (phrasesByCategory[category].length > 0 && selectedPhrases.length < 14) {
-                const phraseObj = phrasesByCategory[category].shift();
-                selectedPhrases.push(phraseObj.phrase);
+            const bingoCells = [];
+            let phraseIndex = 0;
 
-                // Update Firestore with the current timestamp as lastUsed
-                await setDoc(doc(db, "bingo_phrases", phraseObj.id), { lastUsed: now }, { merge: true });
+            // Fill all cells, with free spot in the middle (cell index 7)
+            for (let i = 0; i < 15; i++) {
+                if (i === 7) {
+                    bingoCells.push("Free Spot"); // Free Spot in the center
+                } else {
+                    bingoCells.push(selectedPhrases[phraseIndex] || '');
+                    phraseIndex++;
+                }
             }
+
+            // Save the generated board in Firestore
+            await setDoc(doc(db, "game_state", "current"), { board: bingoCells }, { merge: true });
+
+            // Fill the grid with the new board
+            fillBingoGrid(bingoCells);
         }
-    }
-
-    shuffle(selectedPhrases); // Shuffle the phrases for randomness
-
-    const bingoCells = [];
-    let phraseIndex = 0;
-
-    // Fill all cells, with free spot in the middle (cell index 7)
-    for (let i = 0; i < 15; i++) {
-        if (i === 7) {
-            bingoCells.push("Free Spot"); // Free Spot in the center
-        } else {
-            bingoCells.push(selectedPhrases[phraseIndex] || '');
-            phraseIndex++;
-        }
-    }
-
-    // Save the generated board in Firestore
-    await setDoc(doc(db, "game_state", "current"), { board: bingoCells }, { merge: true });
-
-    // Fill the grid with the new board
-    fillBingoGrid(bingoCells);
-}
-
 
         // Shuffle function to randomize phrases
         function shuffle(array) {
@@ -308,16 +294,16 @@ async function generateAndSaveBingoBoard() {
         }
 
         // Populate the bingo grid
-async function populateBingoGrid() {
-    const savedBoard = await fetchSavedBoard(); // Fetch saved board from Firestore
-    if (savedBoard) {
-        fillBingoGrid(savedBoard); // Load saved board
-        loadClickedCells(); // Load clicked cells for the current user
-        awardPoints(); // Award points after grid is populated and clicked cells are loaded
-    } else {
-        await generateAndSaveBingoBoard(); // Generate a new board if no saved one exists
-    }
-}
+        async function populateBingoGrid() {
+            const savedBoard = await fetchSavedBoard(); // Fetch saved board from Firestore
+            if (savedBoard) {
+                fillBingoGrid(savedBoard); // Load saved board
+                loadClickedCells(); // Load clicked cells for the current user
+                awardPoints(); // Award points after grid is populated and clicked cells are loaded
+            } else {
+                await generateAndSaveBingoBoard(); // Generate a new board if no saved one exists
+            }
+        }
 
         // Fill the bingo grid with phrases or load from saved state
         async function fillBingoGrid(board) {
@@ -342,40 +328,40 @@ async function populateBingoGrid() {
         }
 
         // Save clicked cells to Firestore
-async function saveClickedCell(cellIndex) {
-    const userDocRef = doc(db, "user_clicks", currentUser.name);
-const userDocSnap = await getDoc(userDocRef);
+        async function saveClickedCell(cellIndex) {
+            const userDocRef = doc(db, "user_clicks", currentUser.name);
+            const userDocSnap = await getDoc(userDocRef);
 
-let clickedCells = [];
-if (userDocSnap.exists()) {
-    clickedCells = userDocSnap.data().clickedCells || []; // Ensure it's always initialized as an array.
-}
+            let clickedCells = [];
+            if (userDocSnap.exists()) {
+                clickedCells = userDocSnap.data().clickedCells || []; // Ensure it's always initialized as an array.
+            }
 
+            // Toggle clicked state (add/remove clicked cells)
+            if (clickedCells.includes(cellIndex)) {
+                clickedCells = clickedCells.filter(index => index !== cellIndex);
+            } else {
+                clickedCells.push(cellIndex);
+            }
 
-    // Toggle clicked state (add/remove clicked cells)
-    if (clickedCells.includes(cellIndex)) {
-        clickedCells = clickedCells.filter(index => index !== cellIndex);
-    } else {
-        clickedCells.push(cellIndex);
-    }
+            // Save the updated clicked cells to Firestore
+            await setDoc(userDocRef, { clickedCells: clickedCells }, { merge: true });
 
-    // Save the updated clicked cells to Firestore
-    await setDoc(userDocRef, { clickedCells: clickedCells }, { merge: true });
-
-    // Award points based on current clicks
+            // Award points based on current clicks
             awardPoints(clickedCells);
-}
+        }
 
-async function loadClickedCells() {
-    const userDocRef = doc(db, "user_clicks", currentUser.name);
-    const userDocSnap = await getDoc(userDocRef);
+        async function loadClickedCells() {
+            const userDocRef = doc(db, "user_clicks", currentUser.name);
+            const userDocSnap = await getDoc(userDocRef);
 
-    if (userDocSnap.exists()) {
-        const userData = userDocSnap.data();
-        const clickedCells = userData.clickedCells || []; // Initialize clickedCells as an empty array if undefined
-        updateClickedCells(clickedCells); // Update UI to reflect clicked cells
-    }
-}
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                const clickedCells = userData.clickedCells || []; // Initialize clickedCells as an empty array if undefined
+                updateClickedCells(clickedCells); // Update UI to reflect clicked cells
+            }
+        }
+
         // Update the bingo grid to reflect clicked cells
         function updateClickedCells(clickedCells) {
             const bingoCells = document.querySelectorAll('.bingo-cell');
@@ -411,43 +397,39 @@ async function loadClickedCells() {
         }
 
         function checkHorizontalBingo(cells) {
-    if (!Array.isArray(cells)) return false;
+            if (!Array.isArray(cells)) return false;
 
-    const rows = [
-        [0, 1, 2],
-        [3, 4, 5],
-        [6, 7, 8],
-        [9, 10, 11],
-        [12, 13, 14],
-    ];
-    return rows.filter(row => row.every(cell => cells.includes(cell))).length;
-}
+            const rows = [
+                [0, 1, 2],
+                [3, 4, 5],
+                [6, 7, 8],
+                [9, 10, 11],
+                [12, 13, 14],
+            ];
+            return rows.filter(row => row.every(cell => cells.includes(cell))).length;
+        }
 
-
-
-       function checkVerticalBingo(cells) {
-    if (!cells || !Array.isArray(cells)) return 0; // Ensure cells is a defined array
-    const columns = [
-        [0, 3, 6, 9, 12],
-        [1, 4, 7, 10, 13],
-        [2, 5, 8, 11, 14],
-    ];
-    return columns.filter(column => column.every(cell => cells.includes(cell))).length;
-}
+        function checkVerticalBingo(cells) {
+            if (!cells || !Array.isArray(cells)) return 0; // Ensure cells is a defined array
+            const columns = [
+                [0, 3, 6, 9, 12],
+                [1, 4, 7, 10, 13],
+                [2, 5, 8, 11, 14],
+            ];
+            return columns.filter(column => column.every(cell => cells.includes(cell))).length;
+        }
 
         // Check for "I" pattern
         function checkLetterI(cells) {
-    // Ensure cells is an array before proceeding
-    if (!Array.isArray(cells)) return false;
+            if (!Array.isArray(cells)) return false;
 
-    const letterI = [0, 7, 14]; // The key parts of an "I"
-    return letterI.every(cell => cells.includes(cell)); // Check if all parts of "I" are included
-}
-
+            const letterI = [0, 7, 14]; // The key parts of an "I"
+            return letterI.every(cell => cells.includes(cell)); // Check if all parts of "I" are included
+        }
 
         // Check for "H" pattern
         function checkLetterH(cells) {
-            const letterH = [0, 2, 3, 5, 6, 7, 8, 9, 11, 12, 14]; // The  parts of an "H"
+            const letterH = [0, 2, 3, 5, 6, 7, 8, 9, 11, 12, 14]; // The parts of an "H"
             return letterH.every(cell => cells.includes(cell));
         }
 
@@ -456,66 +438,64 @@ async function loadClickedCells() {
             return cells.length === 15;
         }
 
-       // Function to listen to game status changes
-async function checkGameStatus() {
-    const gameStateRef = doc(db, "game_state", "current");
+        // Function to listen to game status changes
+        async function checkGameStatus() {
+            const gameStateRef = doc(db, "game_state", "current");
 
-    // Continuously listen for changes in the game state document
-    const unsubscribe = onSnapshot(gameStateRef, (doc) => {
-        if (doc.exists()) {
-            const gameState = doc.data();
-            if (gameState.status === "ended") {
-                endGame(); // If the game status is "ended," trigger the endGame function
-            }
+            onSnapshot(gameStateRef, (doc) => {
+                if (doc.exists()) {
+                    const gameState = doc.data();
+                    if (gameState.status === "ended") {
+                        endGame(); // If the game status is "ended," trigger the endGame function
+                    }
+                }
+            });
         }
-    });
-}
 
-// Function to save points and end the game
-function endGame() {
-    saveCumulativePoints(); // Save cumulative points to Firestore
-    alert("Game over! Your score has been saved.");
-    clearBoard(); // Clear the bingo board after the game ends
-}
+        // Function to save points and end the game
+        function endGame() {
+            saveCumulativePoints(); // Save cumulative points to Firestore
+            alert("Game over! Your score has been saved.");
+            clearBoard(); // Clear the bingo board after the game ends
+        }
 
-// Function to clear the bingo board and show no active game message
-function clearBoard() {
-    const bingoCells = document.querySelectorAll('.bingo-cell');
-    bingoCells.forEach(cell => {
-        cell.textContent = ''; // Clear text in each cell
-        cell.classList.remove('clicked'); // Remove the clicked class
-    });
-    document.querySelector('.bingo-grid').innerHTML = `<h3>No active game</h3>`;
-}
+        // Function to clear the bingo board and show no active game message
+        function clearBoard() {
+            const bingoCells = document.querySelectorAll('.bingo-cell');
+            bingoCells.forEach(cell => {
+                cell.textContent = ''; // Clear text in each cell
+                cell.classList.remove('clicked'); // Remove the clicked class
+            });
+            document.querySelector('.bingo-grid').innerHTML = `<h3>No active game</h3>`;
+        }
 
-// Call the function to start checking for status changes
-checkGameStatus();
+        // Call the function to start checking for status changes
+        checkGameStatus();
 
-// Function to save cumulative points to Firestore
-async function saveCumulativePoints() {
-    const userDocRef = doc(db, "users", currentUser.name);
-    const userDocSnap = await getDoc(userDocRef);
+        // Function to save cumulative points to Firestore
+        async function saveCumulativePoints() {
+            const userDocRef = doc(db, "users", currentUser.name);
+            const userDocSnap = await getDoc(userDocRef);
 
-    let cumulativePoints = 0;
-    if (userDocSnap.exists()) {
-        cumulativePoints = userDocSnap.data().cumulativePoints || 0;
-    }
+            let cumulativePoints = 0;
+            if (userDocSnap.exists()) {
+                cumulativePoints = userDocSnap.data().cumulativePoints || 0;
+            }
 
-    // Add current game points to the cumulative total
-    cumulativePoints += points;
+            // Add current game points to the cumulative total
+            cumulativePoints += points;
 
-    // Save the updated cumulative points to Firestore
-    await setDoc(userDocRef, { cumulativePoints: cumulativePoints }, { merge: true });
+            // Save the updated cumulative points to Firestore
+            await setDoc(userDocRef, { cumulativePoints: cumulativePoints }, { merge: true });
 
-    // Clear points for the next game
-    localStorage.removeItem('pointsThisGame');
-}
+            // Clear points for the next game
+            localStorage.removeItem('pointsThisGame');
+        }
 
-// Call the function to start checking for status changes
-checkGameStatus();
-        populateBingoGrid(); // Call the function to populate the grid
+        // Call the function to start checking for status changes
+        checkGameStatus();
         
-
+        populateBingoGrid(); // Call the function to populate the grid
     </script>
 
 </body>
