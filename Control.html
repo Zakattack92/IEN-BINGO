@@ -50,6 +50,8 @@
 
     <!-- Toggle Countdown Timer -->
     <button onclick="toggleCountdown()">Toggle Countdown Timer</button>
+    <button id="shuffle-board" onclick="shuffleBoard()">Shuffle Bingo Board</button>
+
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
@@ -157,6 +159,55 @@
                 console.error("Error checking schedule:", error);
             }
         }
+        // Function to shuffle the board
+  async function shuffleBoard() {
+    try {
+      // Get the current board from Firestore
+      const boardDocRef = doc(db, "game_state", "current");
+      const boardDocSnap = await getDoc(boardDocRef);
+
+      if (boardDocSnap.exists()) {
+        const gameData = boardDocSnap.data();
+        const currentBoard = gameData.board || [];
+
+        // Shuffle the phrases (excluding the "Free Spot")
+        const phrasesToShuffle = currentBoard.filter((phrase, index) => index !== 7);
+        shuffle(phrasesToShuffle);
+
+        // Reinsert "Free Spot" in the middle of the board (index 7)
+        const newBoard = [];
+        let phraseIndex = 0;
+        for (let i = 0; i < 15; i++) {
+          if (i === 7) {
+            newBoard.push("Free Spot");
+          } else {
+            newBoard.push(phrasesToShuffle[phraseIndex]);
+            phraseIndex++;
+          }
+        }
+
+        // Update the Firestore board with the shuffled phrases (without modifying lastUsed)
+        await setDoc(boardDocRef, { board: newBoard }, { merge: true });
+
+        alert("The bingo board has been shuffled!");
+
+      } else {
+        alert("No game state found!");
+      }
+    } catch (error) {
+      console.error("Error shuffling board: ", error);
+      alert("An error occurred while shuffling the board.");
+    }
+  }
+
+  // Shuffle function
+  function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
 
         // Continuously check if it's time to start or stop the game
         setInterval(checkSchedule, 60000); // Check every 60 seconds
