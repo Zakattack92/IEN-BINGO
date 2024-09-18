@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Review Phrases</title>
+    <title>Review Phrases & Users</title>
     <style>
         body {
             background-color: black;
@@ -11,11 +11,11 @@
             font-family: Arial, sans-serif;
             text-align: center;
         }
-        .phrase-list {
+        .phrase-list, .user-list {
             margin: 20px auto;
             width: 80%;
         }
-        .phrase-item {
+        .item {
             margin-bottom: 20px;
         }
         button {
@@ -26,8 +26,17 @@
     </style>
 </head>
 <body>
-    <h1>Review Submitted Phrases</h1>
-    <div class="phrase-list" id="phrase-list"></div>
+    <h1>Review Submitted Phrases & Pending Users</h1>
+
+    <!-- List for phrases -->
+    <div class="phrase-list" id="phrase-list">
+        <h2>Pending Phrases</h2>
+    </div>
+
+    <!-- List for users -->
+    <div class="user-list" id="userList">
+        <h2>Pending Users</h2>
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
@@ -35,12 +44,12 @@
     <script>
         // Initialize Firebase (use your config here)
         var firebaseConfig = {
-           apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
-        authDomain: "ien-bingo.firebaseapp.com",
-        projectId: "ien-bingo",
-        storageBucket: "ien-bingo.appspot.com",
-        messagingSenderId: "115041832401",
-        appId: "1:115041832401:web:785da7558648d1ac8124f0"
+           apiKey: "YOUR_API_KEY",
+           authDomain: "ien-bingo.firebaseapp.com",
+           projectId: "ien-bingo",
+           storageBucket: "ien-bingo.appspot.com",
+           messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+           appId: "YOUR_APP_ID"
         };
         firebase.initializeApp(firebaseConfig);
         var db = firebase.firestore();
@@ -51,7 +60,7 @@
             querySnapshot.forEach((doc) => {
                 var phraseData = doc.data();
                 var div = document.createElement('div');
-                div.classList.add('phrase-item');
+                div.classList.add('item');
                 div.innerHTML = `
                     <span>${phraseData.category}: ${phraseData.phrase}</span>
                     <button onclick="approvePhrase('${doc.id}')">Approve</button>
@@ -79,57 +88,48 @@
             });
         }
 
-          // Fetch all users awaiting approval
-        async function fetchPendingUsers() {
-            const q = query(collection(db, "users"), where("approved", "==", false));
-            const querySnapshot = await getDocs(q);
+        // Fetch all users awaiting approval
+        function fetchPendingUsers() {
+            db.collection("users").where("approved", "==", false).get().then((querySnapshot) => {
+                const userList = document.getElementById('userList');
+                userList.innerHTML = '';  // Clear the user list
 
-            const userList = document.getElementById('userList');
-            userList.innerHTML = '';  // Clear the user list
-
-            querySnapshot.forEach((doc) => {
-                const userData = doc.data();
-                const userItem = document.createElement('div');
-                userItem.classList.add('user-item');
-                userItem.innerHTML = `
-                    <span>${userData.name}</span>
-                    <button onclick="approveUser('${doc.id}')">Approve</button>
-                    <button onclick="rejectUser('${doc.id}')">Reject</button>
-                `;
-                userList.appendChild(userItem);
+                querySnapshot.forEach((doc) => {
+                    const userData = doc.data();
+                    const userItem = document.createElement('div');
+                    userItem.classList.add('item');
+                    userItem.innerHTML = `
+                        <span>${userData.name}</span>
+                        <button onclick="approveUser('${doc.id}')">Approve</button>
+                        <button onclick="rejectUser('${doc.id}')">Reject</button>
+                    `;
+                    userList.appendChild(userItem);
+                });
             });
         }
 
         // Approve user function
-        async function approveUser(userId) {
-            try {
-                const userDocRef = doc(db, "users", userId);
-                await updateDoc(userDocRef, { approved: true });
+        function approveUser(userId) {
+            db.collection("users").doc(userId).update({ approved: true }).then(() => {
                 alert("User approved!");
                 fetchPendingUsers();  // Refresh the list
-            } catch (error) {
+            }).catch((error) => {
                 console.error("Error approving user:", error);
-            }
+            });
         }
 
         // Reject user function
-        async function rejectUser(userId) {
-            try {
-                const userDocRef = doc(db, "users", userId);
-                await updateDoc(userDocRef, { approved: false });
+        function rejectUser(userId) {
+            db.collection("users").doc(userId).delete().then(() => {
                 alert("User rejected.");
                 fetchPendingUsers();  // Refresh the list
-            } catch (error) {
+            }).catch((error) => {
                 console.error("Error rejecting user:", error);
-            }
+            });
         }
 
-        // Initial fetch of pending users
+        // Fetch data on page load
         fetchPendingUsers();
-
-        // Expose functions globally
-        window.approveUser = approveUser;
-        window.rejectUser = rejectUser;
     </script>
 </body>
 </html>
