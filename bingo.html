@@ -289,6 +289,8 @@ async function generateAndSaveBingoBoard() {
         }
     });
 
+    console.log("Phrases by Category:", phrasesByCategory); // Debugging log
+
     const selectedPhrases = [];
     const categories = Object.keys(phrasesByCategory);
 
@@ -305,6 +307,8 @@ async function generateAndSaveBingoBoard() {
         }
     }
 
+    console.log("Selected Phrases:", selectedPhrases); // Debugging log
+
     shuffle(selectedPhrases); // Shuffle the phrases for randomness
 
     const bingoCells = [];
@@ -319,6 +323,8 @@ async function generateAndSaveBingoBoard() {
             phraseIndex++;
         }
     }
+
+    console.log("Generated Bingo Cells:", bingoCells); // Debugging log
 
     // Save the generated board in Firestore
     await setDoc(doc(db, "game_state", "current"), { board: bingoCells }, { merge: true });
