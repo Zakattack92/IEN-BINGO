@@ -14,11 +14,11 @@
         form {
             margin-top: 20px;
         }
-        input, select, button {
+        input, select {
             padding: 10px;
             margin: 5px;
             font-size: 1em;
-            
+        }
         .button-container {
             display: flex;
             justify-content: center;
@@ -72,7 +72,7 @@
             phrase: phrase,
             status: "pending"  // New field to mark as pending
           });
-          alert("Phrase submitted!");
+          alert("Phrase submitted for review!");
           document.getElementById('phrase-form').reset();
         } catch (error) {
           alert("Error adding phrase: " + error);
@@ -101,7 +101,6 @@
         <label for="phrase">Enter Phrase:</label>
         <input type="text" id="phrase" name="phrase" required>
         <br>
-        <button type="submit">Submit</button>
     </form>
 
     <!-- Button container for side-by-side buttons -->
