@@ -145,7 +145,7 @@
     <div class="rules-section hidden">
         <h2>Game Rules</h2>
         <p>1. Each box is 1 point.</p>
-        <p>2. Each row is 1 point.</p>
+        <p>2. Each row is 2 point.</p>
         <p>3. Each column is 3 points.</p>
         <p>4. Winner announced upon game end.</p>
     </div>
@@ -256,6 +256,9 @@ import { getFirestore, doc, setDoc, getDoc, query, collection, where, getDocs, o
         if (!currentUser) {
             window.location.href = 'index.html'; // Redirect to login page if not authenticated
         }
+
+        let points = parseInt(localStorage.getItem('pointsThisGame')) || 0;
+
 
         // Function to listen for game state changes
     function listenForCountdownChanges() {
@@ -541,11 +544,11 @@ async function loadClickedCells() {
             const fullBoard = checkFullBoard(clickedCells);
 
             points = clickedCells.length; // Each clicked square = 1 point
-            points += horizontalBingos * 1; // Horizontal bingo = 1 point
+            points += horizontalBingos * 2; // Horizontal bingo = 2 point
             points += verticalBingos * 3; // Vertical bingo = 3 points
-            points += letterI ? 4 : 0; // Letter I = 4 points
-            points += letterH ? 4 : 0; // Letter H = 5 points
-            points += fullBoard ? 5 : 0; // Full board = 5 bonus points
+            points += letterI ? 6 : 0; // Letter I = 6 points
+            points += letterH ? 8 : 0; // Letter H = 8 points
+            points += fullBoard ? 15 : 0; // Full board = 15 bonus points
 
             updatePointsDisplay(); // Update points display
             localStorage.setItem('pointsThisGame', points); // Save points to localStorage
@@ -626,6 +629,9 @@ function endGame() {
     clearBoard(); // Clear the bingo board after the game ends
     // Update the game status to 'idle'
     updateGameStatus("idle");
+points = 0; // Reset points
+    localStorage.removeItem('pointsThisGame'); // Clear points from localStorage
+    updatePointsDisplay(); // Reset points display
 }
 
         // Function to update the game status in Firestore
