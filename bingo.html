@@ -79,8 +79,11 @@
             background-color: #edbc00;
             color: black;
         }
-
-        /* Add some CSS for layout adjustments */
+        
+  .hidden {
+            display: none;
+        }
+        
         .rules-section {
             margin: 20px 0;
             color: #edbc00;
@@ -103,36 +106,37 @@
     <!-- User button displaying current user's name -->
     <button id="user-button" class="user-button">User</button>
 
-    <h1>I.E.N. Bingo</h1>
-    
-    <div class="points-display">
+    <h1 id="game-message">I.E.N. Bingo</h1>
+
+    <!-- Points display section -->
+    <div class="points-display hidden">
         Points: <span id="points-game">0</span>
     </div>
-    <div id="countdown-timer" style="color: red; font-size: 1.5em; font-weight: bold;"></div>
-    <div class="bingo-grid">
+
+    <!-- Countdown timer section -->
+    <div id="countdown-timer" class="hidden" style="color: red; font-size: 1.5em; font-weight: bold;"></div>
+
+    <!-- Bingo grid section -->
+    <div class="bingo-grid hidden">
         <div class="bingo-cell" id="cell-1"></div>
         <div class="bingo-cell" id="cell-2"></div>
         <div class="bingo-cell" id="cell-3"></div>
-
         <div class="bingo-cell" id="cell-4"></div>
         <div class="bingo-cell" id="cell-5"></div>
         <div class="bingo-cell" id="cell-6"></div>
-
         <div class="bingo-cell" id="cell-7"></div>
         <div class="bingo-cell free-spot" id="free-spot">Free Spot</div>
         <div class="bingo-cell" id="cell-9"></div>
-
         <div class="bingo-cell" id="cell-10"></div>
         <div class="bingo-cell" id="cell-11"></div>
         <div class="bingo-cell" id="cell-12"></div>
-
         <div class="bingo-cell" id="cell-13"></div>
         <div class="bingo-cell" id="cell-14"></div>
         <div class="bingo-cell" id="cell-15"></div>
     </div>
-    
-    <!-- Rules Section -->
-    <div class="rules-section">
+
+    <!-- Rules section -->
+    <div class="rules-section hidden">
         <h2>Game Rules</h2>
         <p>1. Each box is 1 point.</p>
         <p>2. Each row is 1 point.</p>
@@ -146,7 +150,63 @@
        <button class="submit-button" onclick="window.location.href='submit.html';">Submit a Phrase</button>
     </div>
     
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
+            authDomain: "ien-bingo.firebaseapp.com",
+            projectId: "ien-bingo",
+            storageBucket: "ien-bingo.appspot.com",
+            messagingSenderId: "115041832401",
+            appId: "1:115041832401:web:785da7558648d1ac8124f0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Function to check the game status and update the UI accordingly
+        async function checkGameStatus() {
+            const gameStateRef = doc(db, "game_state", "current");
+            const gameStateSnap = await getDoc(gameStateRef);
+
+            if (gameStateSnap.exists()) {
+                const gameState = gameStateSnap.data();
+                const gameStatus = gameState.status;
+
+                // If game is idle, show the "No games active" message and hide the grid and rules
+                if (gameStatus === "idle") {
+                    document.getElementById("game-message").textContent = "No games active or scheduled, sorry dude, check back later";
+                    hideGameElements();
+                } else if (gameStatus === "started") {
+                    // If game is started, show the bingo board and rules
+                    document.querySelector('.bingo-grid').classList.remove('hidden');
+                    document.querySelector('.rules-section').classList.remove('hidden');
+                    document.querySelector('.points-display').classList.remove('hidden');
+                    populateBingoGrid();
+                }
+            } else {
+                alert("Game state not found.");
+            }
+        }
+
+        // Function to hide game elements
+        function hideGameElements() {
+            document.querySelector('.bingo-grid').classList.add('hidden');
+            document.querySelector('.rules-section').classList.add('hidden');
+            document.querySelector('.points-display').classList.add('hidden');
+            document.getElementById("countdown-timer").classList.add('hidden');
+        }
+
+        // Function to populate the bingo grid
+        async function populateBingoGrid() {
+            // Your existing logic to populate the bingo grid
+        }
+
+        // Call the function to check the game status on page load
+        checkGameStatus();
+    
         // Redirect to login if not authenticated
         if (!localStorage.getItem('bingoUser')) {
             window.location.href = 'index.html'; // Redirect to login
@@ -162,6 +222,7 @@
         document.getElementById('user-button').addEventListener('click', function() {
             window.location.href = 'user_profile.html'; // Redirect to a user profile page (you can adjust the link)
         });
+        
     </script>
 
     <script type="module">
