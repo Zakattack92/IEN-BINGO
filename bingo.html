@@ -404,6 +404,7 @@ async function loadClickedCells() {
         const userData = userDocSnap.data();
         const clickedCells = userData.clickedCells || []; // Initialize clickedCells as an empty array if undefined
         updateClickedCells(clickedCells); // Update UI to reflect clicked cells
+        awardPoints(clickedCells); // Ensure points are awarded based on loaded clicked cells
     }
 }
         // Update the bingo grid to reflect clicked cells
@@ -417,7 +418,8 @@ async function loadClickedCells() {
         }
 
         // Award points based on clicked cells and check for bingos
-        function awardPoints(clickedCells) {
+        function awardPoints(clickedCells = []) {
+              if (!Array.isArray(clickedCells)) clickedCells = [];
             const horizontalBingos = checkHorizontalBingo(clickedCells);
             const verticalBingos = checkVerticalBingo(clickedCells);
             const letterI = checkLetterI(clickedCells);
@@ -428,7 +430,7 @@ async function loadClickedCells() {
             points += horizontalBingos * 1; // Horizontal bingo = 1 point
             points += verticalBingos * 3; // Vertical bingo = 3 points
             points += letterI ? 4 : 0; // Letter I = 4 points
-            points += letterH ? 5 : 0; // Letter H = 5 points
+            points += letterH ? 4 : 0; // Letter H = 5 points
             points += fullBoard ? 5 : 0; // Full board = 5 bonus points
 
             updatePointsDisplay(); // Update points display
@@ -477,6 +479,7 @@ async function loadClickedCells() {
 
         // Check for "H" pattern
         function checkLetterH(cells) {
+                if (!Array.isArray(cells)) return false;
             const letterH = [0, 2, 3, 5, 6, 7, 8, 9, 11, 12, 14]; // The  parts of an "H"
             return letterH.every(cell => cells.includes(cell));
         }
