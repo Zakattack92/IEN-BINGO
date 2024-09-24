@@ -504,6 +504,7 @@ async function checkGameStatus() {
 // Function to save points and end the game
 function endGame() {
     saveCumulativePoints(); // Save cumulative points to Firestore
+    clearClickedCells(); // Clear clicked cells for the current user
     alert("Game over! Your score has been saved.");
     clearBoard(); // Clear the bingo board after the game ends
 }
@@ -540,7 +541,16 @@ async function saveCumulativePoints() {
     // Clear points for the next game
     localStorage.removeItem('pointsThisGame');
 }
-
+// Function to clear the clicked cells for the current user
+async function clearClickedCells() {
+    try {
+        const userDocRef = doc(db, "user_clicks", currentUser.name);
+        // Update the Firestore document to clear the clickedCells array
+        await setDoc(userDocRef, { clickedCells: [] }, { merge: true });
+    } catch (error) {
+        console.error("Error clearing clicked cells:", error);
+    }
+}
 // Call the function to start checking for status changes
 checkGameStatus();
         populateBingoGrid(); // Call the function to populate the grid
