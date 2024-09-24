@@ -18,16 +18,23 @@
             padding: 10px;
             margin: 5px;
             font-size: 1em;
-        }
-        button.back-button {
+            
+        .button-container {
+            display: flex;
+            justify-content: center;
             margin-top: 20px;
+        }
+        .button-container button {
+            padding: 10px 20px;
+            font-size: 1.2em;
             background-color: transparent;
             border: 2px solid #edbc00;
             color: #edbc00;
             cursor: pointer;
+            margin: 0 10px;
             transition: background-color 0.3s, color 0.3s;
         }
-        button.back-button:hover {
+        .button-container button:hover {
             background-color: #edbc00;
             color: black;
         }
@@ -96,8 +103,12 @@
         <br>
         <button type="submit">Submit</button>
     </form>
-    <!-- Back to Bingo button -->
-    <button class="back-button" onclick="window.location.href='bingo.html'">Back to Bingo</button>
+
+    <!-- Button container for side-by-side buttons -->
+    <div class="button-container">
+        <button type="submit" form="phrase-form">Submit</button>
+        <button onclick="window.location.href='bingo.html'">Back to Bingo</button>
+    </div>
 
 </body>
 </html>
