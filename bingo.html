@@ -554,6 +554,19 @@ function endGame() {
     clearClickedCells(); // Clear clicked cells for the current user
     alert("Game over! Your score has been saved.");
     clearBoard(); // Clear the bingo board after the game ends
+    // Update the game status to 'idle'
+    updateGameStatus("idle");
+}
+
+        // Function to update the game status in Firestore
+async function updateGameStatus(status) {
+    try {
+        const gameStateRef = doc(db, "game_state", "current");
+        await setDoc(gameStateRef, { status: status }, { merge: true });
+        console.log(`Game status updated to: ${status}`);
+    } catch (error) {
+        console.error("Error updating game status:", error);
+    }
 }
 
 // Function to clear the bingo board and show no active game message
