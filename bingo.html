@@ -269,7 +269,7 @@ listenForCountdown();
 
        // Generate a new bingo board and save it to Firestore
 async function generateAndSaveBingoBoard() {
-    const q = query(collection(db, "bingo_phrases"));
+    const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
     const querySnapshot = await getDocs(q);
 
     const phrasesByCategory = {};
@@ -284,26 +284,25 @@ async function generateAndSaveBingoBoard() {
         const lastUsed = data.lastUsed || 0;
 
         // Add to all phrases
-        allPhrases.push({
-            id: doc.id,
-            phrase: data.phrase,
-            lastUsed: lastUsed,
-            category: data.category
-        });
-
-        // Check if the phrase hasn't been used recently
-        if (now - lastUsed > cooldownPeriod && data.category !== "Free Spot") {
-            unusedPhrases.push({
+        if (data.phrase && data.phrase.trim() !== "") { // Ensure no empty strings
+            allPhrases.push({
                 id: doc.id,
                 phrase: data.phrase,
                 lastUsed: lastUsed,
                 category: data.category
             });
+
+            // Check if the phrase hasn't been used recently
+            if (now - lastUsed > cooldownPeriod && data.category !== "Free Spot") {
+                unusedPhrases.push({
+                    id: doc.id,
+                    phrase: data.phrase,
+                    lastUsed: lastUsed,
+                    category: data.category
+                });
+            }
         }
     });
-
-    // Sort all phrases by `lastUsed` in ascending order (oldest used first)
-    allPhrases.sort((a, b) => a.lastUsed - b.lastUsed);
 
     console.log("Unused Phrases:", unusedPhrases);
     console.log("All Phrases (Sorted by Oldest Used):", allPhrases);
@@ -328,9 +327,12 @@ async function generateAndSaveBingoBoard() {
         await setDoc(doc(db, "bingo_phrases", phraseObj.id), { lastUsed: now }, { merge: true });
     }
 
-    console.log("Selected Phrases:", selectedPhrases);
+    // Filter out any potential empty strings
+    const finalPhrases = selectedPhrases.filter(phrase => phrase.trim() !== "");
 
-    shuffle(selectedPhrases); // Shuffle the phrases for randomness
+    console.log("Selected Phrases (Filtered):", finalPhrases);
+
+    shuffle(finalPhrases); // Shuffle the phrases for randomness
 
     const bingoCells = [];
     let phraseIndex = 0;
@@ -340,7 +342,7 @@ async function generateAndSaveBingoBoard() {
         if (i === 7) {
             bingoCells.push("Free Spot"); // Free Spot in the center
         } else {
-            bingoCells.push(selectedPhrases[phraseIndex] || '');
+            bingoCells.push(finalPhrases[phraseIndex] || '');
             phraseIndex++;
         }
     }
@@ -353,6 +355,7 @@ async function generateAndSaveBingoBoard() {
     // Fill the grid with the new board
     fillBingoGrid(bingoCells);
 }
+
 
 
 
