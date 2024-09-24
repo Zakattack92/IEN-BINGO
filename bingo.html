@@ -403,12 +403,8 @@ async function populateBingoGrid() {
             const freeSpotPhrase = "Free Spot"; // Always set the free spot text
 
             bingoCells.forEach((cell, index) => {
-               // if (index === 7) {
-                   // cell.textContent = freeSpotPhrase || "Free Spot"; // Always place free spot in the center
-               // } else {
                     cell.textContent = board[index] || '';
-               // }
-            });
+                  });
 
             // Add event listeners to cells for click actions
             bingoCells.forEach((cell, index) => {
