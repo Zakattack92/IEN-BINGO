@@ -62,18 +62,16 @@
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
 
-         
-
       // Check if user is logged in
       const currentUser = JSON.parse(localStorage.getItem('bingoUser'));
-         // Redirect to login if not authenticated
-        if (!localStorage.getItem('bingoUser')) {
-            window.location.href = 'index.html'; // Redirect to login
+      if (!currentUser) {
+          window.location.href = 'index.html'; // Redirect to login page if not authenticated
       } else {
           document.getElementById('current-user').textContent = `Current User: ${currentUser.name}`;
       }
 
-      async function updateProfileInfo() {
+      // Make these functions global
+      window.updateProfileInfo = async function() {
           const nickname = document.getElementById('nickname').value;
 
           try {
@@ -87,7 +85,7 @@
           }
       }
 
-      async function updatePasswordInfo() {
+      window.updatePasswordInfo = async function() {
           const currentPassword = document.getElementById('current-password').value;
           const newPassword = document.getElementById('password').value;
 
