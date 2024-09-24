@@ -269,45 +269,66 @@ listenForCountdown();
 
        // Generate a new bingo board and save it to Firestore
 async function generateAndSaveBingoBoard() {
-    const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
+    const q = query(collection(db, "bingo_phrases"));
     const querySnapshot = await getDocs(q);
-    const phrasesByCategory = {};
-    const cooldownPeriod = 21 * 24 * 60 * 60 * 1000; // Cooldown period of 3 days (or games)
 
+    const phrasesByCategory = {};
+    const cooldownPeriod = 3 * 24 * 60 * 60 * 1000; // Cooldown period of 3 days (in milliseconds)
     const now = new Date().getTime(); // Current time
+
+    const unusedPhrases = [];
+    const allPhrases = [];
 
     querySnapshot.forEach((doc) => {
         const data = doc.data();
+        const lastUsed = data.lastUsed || 0;
 
-        // Ensure phrase hasn't been used recently based on the cooldown period
-        const lastUsed = data.lastUsed || 0; // Default to 0 if lastUsed doesn't exist
+        // Add to all phrases
+        allPhrases.push({
+            id: doc.id,
+            phrase: data.phrase,
+            lastUsed: lastUsed,
+            category: data.category
+        });
+
+        // Check if the phrase hasn't been used recently
         if (now - lastUsed > cooldownPeriod && data.category !== "Free Spot") {
-            if (!phrasesByCategory[data.category]) {
-                phrasesByCategory[data.category] = [];
-            }
-            phrasesByCategory[data.category].push({ id: doc.id, phrase: data.phrase });
+            unusedPhrases.push({
+                id: doc.id,
+                phrase: data.phrase,
+                lastUsed: lastUsed,
+                category: data.category
+            });
         }
     });
 
-    console.log("Phrases by Category:", phrasesByCategory); // Debugging log
+    // Sort all phrases by `lastUsed` in ascending order (oldest used first)
+    allPhrases.sort((a, b) => a.lastUsed - b.lastUsed);
+
+    console.log("Unused Phrases:", unusedPhrases);
+    console.log("All Phrases (Sorted by Oldest Used):", allPhrases);
 
     const selectedPhrases = [];
-    const categories = Object.keys(phrasesByCategory);
 
-    // Select phrases from each category, ensuring 14 phrases total
-    while (selectedPhrases.length < 14 && categories.length > 0) {
-        for (const category of categories) {
-            if (phrasesByCategory[category].length > 0 && selectedPhrases.length < 14) {
-                const phraseObj = phrasesByCategory[category].shift();
-                selectedPhrases.push(phraseObj.phrase);
+    // First, try to fill the board with unused phrases
+    while (selectedPhrases.length < 14 && unusedPhrases.length > 0) {
+        const phraseObj = unusedPhrases.shift();
+        selectedPhrases.push(phraseObj.phrase);
 
-                // Update Firestore with the current timestamp as lastUsed
-                await setDoc(doc(db, "bingo_phrases", phraseObj.id), { lastUsed: now }, { merge: true });
-            }
-        }
+        // Mark it as used by updating `lastUsed` in Firestore
+        await setDoc(doc(db, "bingo_phrases", phraseObj.id), { lastUsed: now }, { merge: true });
     }
 
-    console.log("Selected Phrases:", selectedPhrases); // Debugging log
+    // If not enough unused phrases, fill remaining slots with oldest used phrases
+    while (selectedPhrases.length < 14 && allPhrases.length > 0) {
+        const phraseObj = allPhrases.shift();
+        selectedPhrases.push(phraseObj.phrase);
+
+        // Mark it as used by updating `lastUsed` in Firestore
+        await setDoc(doc(db, "bingo_phrases", phraseObj.id), { lastUsed: now }, { merge: true });
+    }
+
+    console.log("Selected Phrases:", selectedPhrases);
 
     shuffle(selectedPhrases); // Shuffle the phrases for randomness
 
@@ -324,7 +345,7 @@ async function generateAndSaveBingoBoard() {
         }
     }
 
-    console.log("Generated Bingo Cells:", bingoCells); // Debugging log
+    console.log("Generated Bingo Cells:", bingoCells);
 
     // Save the generated board in Firestore
     await setDoc(doc(db, "game_state", "current"), { board: bingoCells }, { merge: true });
@@ -332,6 +353,7 @@ async function generateAndSaveBingoBoard() {
     // Fill the grid with the new board
     fillBingoGrid(bingoCells);
 }
+
 
 
         // Shuffle function to randomize phrases
