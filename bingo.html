@@ -632,6 +632,8 @@ function endGame() {
 points = 0; // Reset points
     localStorage.removeItem('pointsThisGame'); // Clear points from localStorage
     updatePointsDisplay(); // Reset points display
+     setTimeout(() => {
+           }, 15000); // 15 second delay
 }
 
         // Function to update the game status in Firestore
