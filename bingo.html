@@ -548,7 +548,7 @@ async function loadClickedCells() {
             points += verticalBingos * 3; // Vertical bingo = 3 points
             points += letterI ? 8 : 0; // Letter I = 6 points
             points += letterH ? 8 : 0; // Letter H = 8 points
-            points += fullBoard ? 14 : 0; // Full board = 15 bonus points
+            //points += fullBoard ? 14 : 0; // Full board = 15 bonus points
 
             updatePointsDisplay(); // Update points display
             localStorage.setItem('pointsThisGame', points); // Save points to localStorage
