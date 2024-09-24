@@ -48,7 +48,6 @@
     </style>
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
-      import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-auth.js";
       import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
 
       const firebaseConfig = {
@@ -61,34 +60,25 @@
       };
 
       const app = initializeApp(firebaseConfig);
-      const auth = getAuth();
       const db = getFirestore(app);
 
-      onAuthStateChanged(auth, (user) => {
-          if (user) {
-              // User is logged in
-              const username = JSON.parse(localStorage.getItem('bingoUser')).name;
-              document.getElementById('current-user').textContent = `Current User: ${username}`;
-         } else {
-              // Redirect to login page
-              window.location.href = 'index.html';
-          }
-      });
+      // Check if user is logged in
+      const currentUser = JSON.parse(localStorage.getItem('bingoUser'));
+      if (!currentUser) {
+          window.location.href = 'index.html'; // Redirect to login page if not authenticated
+      } else {
+          document.getElementById('current-user').textContent = `Current User: ${currentUser.name}`;
+      }
 
       async function updateProfileInfo() {
-          const username = document.getElementById('username').value;
           const nickname = document.getElementById('nickname').value;
-
-          const currentUser = JSON.parse(localStorage.getItem('bingoUser')).name;
 
           try {
               // Update nickname in Firestore
               if (nickname) {
-                  await setDoc(doc(db, "users", currentUser), { nickname: nickname }, { merge: true });
+                  await setDoc(doc(db, "users", currentUser.name), { nickname: nickname }, { merge: true });
                   alert("Nickname updated successfully!");
               }
-
-              // Note: Usernames can't be changed in this setup. You may need to implement additional logic if needed.
           } catch (error) {
               alert("Error updating profile: " + error.message);
           }
@@ -98,14 +88,11 @@
           const currentPassword = document.getElementById('current-password').value;
           const newPassword = document.getElementById('password').value;
 
-          const currentUser = JSON.parse(localStorage.getItem('bingoUser')).name;
-
           try {
-              const userDocRef = doc(db, "users", currentUser);
+              const userDocRef = doc(db, "users", currentUser.name);
               const userDocSnap = await getDoc(userDocRef);
 
               if (userDocSnap.exists() && userDocSnap.data().password === currentPassword) {
-                  // Update password in Firestore
                   await setDoc(userDocRef, { password: newPassword }, { merge: true });
                   alert("Password updated successfully!");
               } else {
@@ -122,12 +109,6 @@
     <div id="current-user"></div>
 
     <div class="form-container">
-        <div class="form-group">
-            <label for="username">Change Username</label>
-            <input type="text" id="username" placeholder="Enter new username" disabled>
-            <small>Username cannot be changed in this setup.</small>
-        </div>
-
         <div class="form-group">
             <label for="nickname">Add Nickname (for Leaderboards)</label>
             <input type="text" id="nickname" placeholder="Enter nickname">
