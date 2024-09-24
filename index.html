@@ -23,7 +23,7 @@
             margin-top: 40px;
         }
 
-        input[type="email"], input[type="password"] {
+        input[type="text"], input[type="password"] {
             padding: 10px;
             margin: 10px;
             font-size: 1.2em;
@@ -46,7 +46,7 @@
         }
 
         @media (max-width: 768px) {
-            input[type="email"], input[type="password"] {
+            input[type="text"], input[type="password"] {
                 width: 90%; /* Increase input width on small screens */
             }
 
@@ -59,7 +59,7 @@
 <body>
     <h1>Login</h1>
     <form id="loginForm">
-        <input type="email" id="email" placeholder="Enter your email" required>
+        <input type="text" id="username" placeholder="Enter your username" required>
         <input type="password" id="password" placeholder="Enter your password" required>
         <button type="button" id="loginBtn" class="submit-button">Login</button>
         <button type="button" id="registerBtn" class="register-button">Register</button>
@@ -67,7 +67,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
@@ -78,30 +78,32 @@
             appId: "1:115041832401:web:785da7558648d1ac8124f0"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth();
+        const db = getFirestore(app);
 
         // Login function
         document.getElementById('loginBtn').addEventListener('click', async () => {
-            const email = document.getElementById('email').value.trim();
+            const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value.trim();
 
-            if (!email || !password) {
-                alert("Please enter both email and password");
+            if (!username || !password) {
+                alert("Please enter both username and password");
                 return;
             }
 
             try {
-                // Authenticate the user
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
+                const userDocRef = doc(db, "users", username);
+                const userDocSnap = await getDoc(userDocRef);
 
-                // Store user info in localStorage (optional but recommended for quick access)
-                localStorage.setItem('bingoUser', JSON.stringify({ email: user.email }));
+                if (!userDocSnap.exists() || userDocSnap.data().password !== password) {
+                    alert("Invalid username or password");
+                } else {
+                    // Store user info in localStorage
+                    localStorage.setItem('bingoUser', JSON.stringify({ name: username }));
 
-                // Redirect to bingo page
-                window.location.href = 'bingo.html';
+                    // Redirect to bingo page
+                    window.location.href = 'bingo.html';
+                }
             } catch (error) {
                 console.error("Error logging in:", error);
                 alert("Login failed. Please try again.");
@@ -110,26 +112,29 @@
 
         // Register function
         document.getElementById('registerBtn').addEventListener('click', async () => {
-            const email = document.getElementById('email').value.trim();
+            const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value.trim();
 
-            if (!email || !password) {
-                alert("Please enter both email and password to register");
+            if (!username || !password) {
+                alert("Please enter both username and password to register");
                 return;
             }
 
             try {
-                // Register the new user
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
+                const userDocRef = doc(db, "users", username);
+                const userDocSnap = await getDoc(userDocRef);
 
-                // Optionally store the user in localStorage
-                localStorage.setItem('bingoUser', JSON.stringify({ email: user.email }));
+                if (userDocSnap.exists()) {
+                    alert("Username already exists");
+                } else {
+                    // Register new user in Firestore
+                    await setDoc(userDocRef, { name: username, password: password });
 
-                alert("Account created successfully!");
+                    alert("Your account has been created successfully!");
 
-                // Redirect to bingo page
-                window.location.href = 'bingo.html';
+                    // Redirect to bingo page
+                    window.location.href = 'bingo.html';
+                }
             } catch (error) {
                 console.error("Error registering:", error);
                 alert("Registration failed. Please try again.");
