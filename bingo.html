@@ -277,34 +277,43 @@ async function generateAndSaveBingoBoard() {
     const now = new Date().getTime(); // Current time
 
     const unusedPhrases = [];
+    const freeSpotPhrases = [];
     const allPhrases = [];
 
     querySnapshot.forEach((doc) => {
         const data = doc.data();
         const lastUsed = data.lastUsed || 0;
 
-        // Add to all phrases
-        if (data.phrase && data.phrase.trim() !== "") { // Ensure no empty strings
+        // Add all phrases to the allPhrases array
+        if (data.phrase && data.phrase.trim() !== "") {
             allPhrases.push({
                 id: doc.id,
                 phrase: data.phrase,
                 lastUsed: lastUsed,
                 category: data.category
             });
+        }
 
-            // Check if the phrase hasn't been used recently
-            if (now - lastUsed > cooldownPeriod && data.category !== "Free Spot") {
-                unusedPhrases.push({
+        // Separate free spot phrases from the others
+        if (data.category === "Free Spot") {
+            if (now - lastUsed > cooldownPeriod) {
+                freeSpotPhrases.push({
                     id: doc.id,
                     phrase: data.phrase,
-                    lastUsed: lastUsed,
-                    category: data.category
+                    lastUsed: lastUsed
                 });
             }
+        } else if (now - lastUsed > cooldownPeriod) {
+            unusedPhrases.push({
+                id: doc.id,
+                phrase: data.phrase,
+                lastUsed: lastUsed
+            });
         }
     });
 
     console.log("Unused Phrases:", unusedPhrases);
+    console.log("Free Spot Phrases:", freeSpotPhrases);
     console.log("All Phrases (Sorted by Oldest Used):", allPhrases);
 
     const selectedPhrases = [];
@@ -334,13 +343,23 @@ async function generateAndSaveBingoBoard() {
 
     shuffle(finalPhrases); // Shuffle the phrases for randomness
 
+    // Choose a random Free Spot phrase
+    const randomFreeSpot = freeSpotPhrases.length > 0
+        ? freeSpotPhrases[Math.floor(Math.random() * freeSpotPhrases.length)]
+        : { phrase: "Free Spot" }; // Fallback in case no free spot phrases are available
+
+    // Update lastUsed for the chosen Free Spot phrase
+    if (randomFreeSpot.id) {
+        await setDoc(doc(db, "bingo_phrases", randomFreeSpot.id), { lastUsed: now }, { merge: true });
+    }
+
     const bingoCells = [];
     let phraseIndex = 0;
 
     // Fill all cells, with free spot in the middle (cell index 7)
     for (let i = 0; i < 15; i++) {
         if (i === 7) {
-            bingoCells.push("Free Spot"); // Free Spot in the center
+            bingoCells.push(randomFreeSpot.phrase); // Use the random Free Spot phrase
         } else {
             bingoCells.push(finalPhrases[phraseIndex] || '');
             phraseIndex++;
@@ -355,10 +374,6 @@ async function generateAndSaveBingoBoard() {
     // Fill the grid with the new board
     fillBingoGrid(bingoCells);
 }
-
-
-
-
         // Shuffle function to randomize phrases
         function shuffle(array) {
             for (let i = array.length - 1; i > 0; i--) {
