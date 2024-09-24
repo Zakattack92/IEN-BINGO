@@ -3,17 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controls Coming Soon</title>
+    <title>User Controls</title>
     <style>
         body {
             background-color: black;
             color: #edbc00;
             font-family: Arial, sans-serif;
             text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input {
+            padding: 10px;
+            margin: 5px;
+            font-size: 1em;
+            width: 300px;
         }
         button {
             padding: 10px 20px;
-            margin-top: 20px;
             font-size: 1.2em;
             background-color: transparent;
             border: 2px solid #edbc00;
@@ -25,12 +41,125 @@
             background-color: #edbc00;
             color: black;
         }
+        .form-container {
+            display: inline-block;
+            text-align: left;
+        }
     </style>
+    <script type="module">
+      // Import Firebase
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
+      import { getAuth, updateProfile, updatePassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-auth.js";
+      import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
+
+      // Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
+        authDomain: "ien-bingo.firebaseapp.com",
+        projectId: "ien-bingo",
+        storageBucket: "ien-bingo.appspot.com",
+        messagingSenderId: "115041832401",
+        appId: "1:115041832401:web:785da7558648d1ac8124f0"
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth();
+      const db = getFirestore(app);
+
+      // Get the current user
+      const currentUser = auth.currentUser;
+
+      document.addEventListener("DOMContentLoaded", async () => {
+          if (!currentUser) {
+              window.location.href = 'index.html'; // Redirect if not logged in
+          } else {
+              document.getElementById('current-user').textContent = `Current User: ${currentUser.displayName || currentUser.email}`;
+
+              // Load current nickname
+              const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+              if (userDoc.exists()) {
+                  const userData = userDoc.data();
+                  document.getElementById('nickname').value = userData.nickname || '';
+              }
+          }
+      });
+
+      // Function to update the user profile
+      async function updateProfileInfo() {
+          const newUsername = document.getElementById('username').value;
+          const newNickname = document.getElementById('nickname').value;
+
+          try {
+              // Update username
+              if (newUsername) {
+                  await updateProfile(currentUser, {
+                      displayName: newUsername
+                  });
+                  alert("Username updated successfully!");
+              }
+
+              // Update nickname for leaderboard
+              if (newNickname) {
+                  await setDoc(doc(db, "users", currentUser.uid), {
+                      nickname: newNickname
+                  }, { merge: true });
+                  alert("Nickname updated successfully!");
+              }
+          } catch (error) {
+              alert("Error updating profile: " + error.message);
+          }
+      }
+
+      // Function to update the password
+      async function updatePasswordInfo() {
+          const newPassword = document.getElementById('password').value;
+          const currentPassword = document.getElementById('current-password').value;
+
+          try {
+              // Reauthenticate user before updating password
+              await signInWithEmailAndPassword(auth, currentUser.email, currentPassword);
+
+              // Update password
+              await updatePassword(currentUser, newPassword);
+              alert("Password updated successfully!");
+          } catch (error) {
+              alert("Error updating password: " + error.message);
+          }
+      }
+    </script>
 </head>
 <body>
-    <h1>User Controls Coming Soon!</h1>
-    <p>We're working hard to bring you exciting user controls! Check back later for new features.</p>
-    
-    <button onclick="window.location.href='bingo.html'">Back to Bingo</button>
+    <h1>User Controls</h1>
+
+    <div id="current-user"></div>
+
+    <div class="form-container">
+        <!-- Form for updating username and nickname -->
+        <div class="form-group">
+            <label for="username">Change Username</label>
+            <input type="text" id="username" placeholder="Enter new username">
+        </div>
+
+        <div class="form-group">
+            <label for="nickname">Add Nickname (for Leaderboards)</label>
+            <input type="text" id="nickname" placeholder="Enter nickname">
+        </div>
+
+        <button onclick="updateProfileInfo()">Update Profile</button>
+
+        <!-- Form for updating password -->
+        <div class="form-group" style="margin-top: 20px;">
+            <label for="current-password">Current Password</label>
+            <input type="password" id="current-password" placeholder="Enter current password">
+        </div>
+
+        <div class="form-group">
+            <label for="password">New Password</label>
+            <input type="password" id="password" placeholder="Enter new password">
+        </div>
+
+        <button onclick="updatePasswordInfo()">Update Password</button>
+    </div>
 </body>
 </html>
