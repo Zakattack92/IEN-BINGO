@@ -149,6 +149,10 @@
        <button class="submit-button" onclick="window.location.href='leaderboard.html';">Leaderboards</button> 
        <button class="submit-button" onclick="window.location.href='submit.html';">Submit a Phrase</button>
     </div>
+
+    <!-- Idle message -->
+    <div class="idle-message hidden" id="idle-message">No games active or scheduled, sorry dude, check back later.</div>
+
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
@@ -175,9 +179,9 @@
                 const gameState = gameStateSnap.data();
                 const gameStatus = gameState.status;
 
-                // If game is idle, show the "No games active" message and hide the grid and rules
+               // If game is idle, show the "No games active" message and hide the grid and rules
                 if (gameStatus === "idle") {
-                    document.getElementById("game-message").textContent = "No games active or scheduled, sorry dude, check back later";
+                    document.getElementById("idle-message").classList.remove('hidden'); // Show idle message
                     hideGameElements();
                 } else if (gameStatus === "started") {
                     // If game is started, show the bingo board and rules
