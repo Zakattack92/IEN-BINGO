@@ -19,6 +19,18 @@
             margin: 5px;
             font-size: 1em;
         }
+        button.back-button {
+            margin-top: 20px;
+            background-color: transparent;
+            border: 2px solid #edbc00;
+            color: #edbc00;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        button.back-button:hover {
+            background-color: #edbc00;
+            color: black;
+        }
     </style>
     <!-- Firebase SDK - using modules -->
     <script type="module">
@@ -53,7 +65,7 @@
             phrase: phrase,
             status: "pending"  // New field to mark as pending
           });
-          alert("Phrase submitted for review!");
+          alert("Phrase submitted!");
           document.getElementById('phrase-form').reset();
         } catch (error) {
           alert("Error adding phrase: " + error);
@@ -84,5 +96,8 @@
         <br>
         <button type="submit">Submit</button>
     </form>
+    <!-- Back to Bingo button -->
+    <button class="back-button" onclick="window.location.href='bingo.html'">Back to Bingo</button>
+
 </body>
 </html>
