@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,6 +10,7 @@
             color: #edbc00; /* Deeper gold color */
             font-family: Arial, sans-serif;
             text-align: center;
+            position: relative; /* Allows positioning the user button */
         }
 
         h1 {
@@ -61,6 +61,25 @@
             right: 20px;
             font-size: 1.5em;
         }
+
+        .user-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: transparent;
+            border: 2px solid #edbc00; /* Button outline */
+            color: #edbc00;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .user-button:hover {
+            background-color: #edbc00;
+            color: black;
+        }
+
         /* Add some CSS for layout adjustments */
         .rules-section {
             margin: 20px 0;
@@ -81,7 +100,11 @@
     </style>
 </head>
 <body>
+    <!-- User button displaying current user's name -->
+    <button id="user-button" class="user-button">User</button>
+
     <h1>I.E.N. Bingo</h1>
+    
     <div class="points-display">
         Points: <span id="points-game">0</span>
     </div>
@@ -108,7 +131,7 @@
         <div class="bingo-cell" id="cell-15"></div>
     </div>
     
-<!-- Rules Section -->
+    <!-- Rules Section -->
     <div class="rules-section">
         <h2>Game Rules</h2>
         <p>1. Each box is 1 point.</p>
@@ -121,7 +144,6 @@
     <div class="button-section">
        <button class="submit-button" onclick="window.location.href='leaderboard.html';">Leaderboards</button> 
        <button class="submit-button" onclick="window.location.href='submit.html';">Submit a Phrase</button>
-        
     </div>
     
     <script>
@@ -133,6 +155,13 @@
         const user = JSON.parse(localStorage.getItem('bingoUser')); // Get logged-in user
         let points = parseInt(localStorage.getItem('pointsThisGame')) || 0; // Load points from localStorage
 
+        // Set the user button text to display the logged-in user's name
+        document.getElementById('user-button').textContent = user.name;
+
+        // Add functionality to the user button
+        document.getElementById('user-button').addEventListener('click', function() {
+            window.location.href = 'user_profile.html'; // Redirect to a user profile page (you can adjust the link)
+        });
     </script>
 
     <script type="module">
