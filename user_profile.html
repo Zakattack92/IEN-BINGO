@@ -49,7 +49,7 @@
     <script type="module">
       // Import Firebase
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
-      import { getAuth, updateProfile, updatePassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-auth.js";
+      import { getAuth, onAuthStateChanged, updateProfile, updatePassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-auth.js";
       import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
 
       // Firebase configuration
@@ -67,41 +67,42 @@
       const auth = getAuth();
       const db = getFirestore(app);
 
-      // Get the current user
-      const currentUser = auth.currentUser;
+      // Check if user is authenticated and load user data
+      onAuthStateChanged(auth, async (user) => {
+          if (user) {
+              // User is authenticated
+              document.getElementById('current-user').textContent = `Current User: ${user.displayName || user.email}`;
 
-      document.addEventListener("DOMContentLoaded", async () => {
-          if (!currentUser) {
-              window.location.href = 'index.html'; // Redirect if not logged in
-          } else {
-              document.getElementById('current-user').textContent = `Current User: ${currentUser.displayName || currentUser.email}`;
-
-              // Load current nickname
-              const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+              // Load the current nickname from Firestore
+              const userDoc = await getDoc(doc(db, "users", user.uid));
               if (userDoc.exists()) {
                   const userData = userDoc.data();
                   document.getElementById('nickname').value = userData.nickname || '';
               }
+          } else {
+              // Redirect to login if not authenticated
+              window.location.href = 'index.html'; 
           }
       });
 
       // Function to update the user profile
       async function updateProfileInfo() {
+          const user = auth.currentUser;
           const newUsername = document.getElementById('username').value;
           const newNickname = document.getElementById('nickname').value;
 
           try {
               // Update username
-              if (newUsername) {
-                  await updateProfile(currentUser, {
+              if (newUsername && user) {
+                  await updateProfile(user, {
                       displayName: newUsername
                   });
                   alert("Username updated successfully!");
               }
 
               // Update nickname for leaderboard
-              if (newNickname) {
-                  await setDoc(doc(db, "users", currentUser.uid), {
+              if (newNickname && user) {
+                  await setDoc(doc(db, "users", user.uid), {
                       nickname: newNickname
                   }, { merge: true });
                   alert("Nickname updated successfully!");
@@ -113,15 +114,16 @@
 
       // Function to update the password
       async function updatePasswordInfo() {
+          const user = auth.currentUser;
           const newPassword = document.getElementById('password').value;
           const currentPassword = document.getElementById('current-password').value;
 
           try {
               // Reauthenticate user before updating password
-              await signInWithEmailAndPassword(auth, currentUser.email, currentPassword);
+              await signInWithEmailAndPassword(auth, user.email, currentPassword);
 
               // Update password
-              await updatePassword(currentUser, newPassword);
+              await updatePassword(user, newPassword);
               alert("Password updated successfully!");
           } catch (error) {
               alert("Error updating password: " + error.message);
