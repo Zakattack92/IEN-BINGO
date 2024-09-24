@@ -150,16 +150,15 @@
         <p>4. Winner announced upon game end.</p>
     </div>
 
+        <!-- Idle message -->
+    <div class="idle-message hidden" id="idle-message">No games active or scheduled, sorry dude, check back later.</div>
+
     <!-- Buttons Section -->
     <div class="button-section">
        <button class="submit-button" onclick="window.location.href='leaderboard.html';">Leaderboards</button> 
        <button class="submit-button" onclick="window.location.href='submit.html';">Submit a Phrase</button>
     </div>
 
-    <!-- Idle message -->
-    <div class="idle-message hidden" id="idle-message">No games active or scheduled, sorry dude, check back later.</div>
-
-    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
         import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
