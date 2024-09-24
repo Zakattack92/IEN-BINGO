@@ -16,10 +16,9 @@
             margin-bottom: 20px;
         }
         #current-user {
-    font-size: 1.5em; /* Increase font size */
-    margin-bottom: 20px; /* Add some space below */
-}
-
+            font-size: 1.5em; /* Increase font size */
+            margin-bottom: 20px; /* Add some space below */
+        }
         .form-group {
             margin-bottom: 15px;
         }
@@ -99,6 +98,7 @@
               const userDocSnap = await getDoc(userDocRef);
 
               if (userDocSnap.exists() && userDocSnap.data().password === currentPassword) {
+                  // Update password in Firestore
                   await setDoc(userDocRef, { password: newPassword }, { merge: true });
                   alert("Password updated successfully!");
               } else {
@@ -134,5 +134,8 @@
 
         <button onclick="updatePasswordInfo()">Update Password</button>
     </div>
+
+    <!-- Back to Bingo button -->
+    <button style="margin-top: 20px;" onclick="window.location.href='bingo.html'">Back to Bingo</button>
 </body>
 </html>
