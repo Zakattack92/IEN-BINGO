@@ -346,6 +346,7 @@ async function generateAndSaveBingoBoard() {
         // Populate the bingo grid
 async function populateBingoGrid() {
     const savedBoard = await fetchSavedBoard(); // Fetch saved board from Firestore
+    console.log("Saved Board:", savedBoard); // Debugging log
     if (savedBoard) {
         fillBingoGrid(savedBoard); // Load saved board
         loadClickedCells(); // Load clicked cells for the current user
@@ -354,6 +355,7 @@ async function populateBingoGrid() {
         await generateAndSaveBingoBoard(); // Generate a new board if no saved one exists
     }
 }
+
 
         // Fill the bingo grid with phrases or load from saved state
         async function fillBingoGrid(board) {
