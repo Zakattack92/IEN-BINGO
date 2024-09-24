@@ -148,41 +148,66 @@
             }
         }
 
-        // Function to shuffle the board
-        async function shuffleBoard() {
-            try {
-                const boardDocRef = doc(db, "game_state", "current");
-                const boardDocSnap = await getDoc(boardDocRef);
+       // Function to shuffle the board
+async function shuffleBoard() {
+    try {
+        const boardDocRef = doc(db, "game_state", "current");
+        const boardDocSnap = await getDoc(boardDocRef);
 
-                if (boardDocSnap.exists()) {
-                    const gameData = boardDocSnap.data();
-                    const currentBoard = gameData.board || [];
+        if (boardDocSnap.exists()) {
+            const gameData = boardDocSnap.data();
+            const currentBoard = gameData.board || [];
 
-                    const phrasesToShuffle = currentBoard.filter((phrase, index) => index !== 7);
-                    shuffle(phrasesToShuffle);
+            // Fetch Free Spot Phrases
+            const freeSpotQuery = query(collection(db, "bingo_phrases"), where("category", "==", "Free Spot"));
+            const freeSpotSnapshot = await getDocs(freeSpotQuery);
 
-                    const newBoard = [];
-                    let phraseIndex = 0;
-                    for (let i = 0; i < 15; i++) {
-                        if (i === 7) {
-                            newBoard.push("Free Spot");
-                        } else {
-                            newBoard.push(phrasesToShuffle[phraseIndex]);
-                            phraseIndex++;
-                        }
-                    }
-
-                    await setDoc(boardDocRef, { board: newBoard }, { merge: true });
-                    alert("The bingo board has been shuffled!");
-
-                } else {
-                    alert("No game state found!");
+            const freeSpotPhrases = [];
+            freeSpotSnapshot.forEach((doc) => {
+                const data = doc.data();
+                if (data.phrase && data.phrase.trim() !== "") {
+                    freeSpotPhrases.push(data.phrase);
                 }
-            } catch (error) {
-                console.error("Error shuffling board: ", error);
-                alert("An error occurred while shuffling the board.");
+            });
+
+            if (freeSpotPhrases.length === 0) {
+                alert("No Free Spot phrases available.");
+                return;
             }
+
+            // Choose a random Free Spot phrase
+            const randomFreeSpot = freeSpotPhrases[Math.floor(Math.random() * freeSpotPhrases.length)];
+
+            // Shuffle the rest of the board, excluding the Free Spot
+            const phrasesToShuffle = currentBoard.filter((phrase, index) => index !== 7); // Exclude index 7
+            shuffle(phrasesToShuffle); // Shuffle the remaining phrases
+
+            const newBoard = [];
+            let phraseIndex = 0;
+
+            // Fill the new board with the shuffled phrases, ensuring the Free Spot is in the center
+            for (let i = 0; i < 15; i++) {
+                if (i === 7) {
+                    newBoard.push(randomFreeSpot); // Add the chosen Free Spot phrase to the center
+                } else {
+                    newBoard.push(phrasesToShuffle[phraseIndex]);
+                    phraseIndex++;
+                }
+            }
+
+            // Update the Firestore document with the new board
+            await setDoc(boardDocRef, { board: newBoard }, { merge: true });
+            alert("The bingo board has been shuffled, including a new Free Spot phrase!");
+
+        } else {
+            alert("No game state found!");
         }
+    } catch (error) {
+        console.error("Error shuffling board: ", error);
+        alert("An error occurred while shuffling the board.");
+    }
+}
+
 
         // Shuffle function
         function shuffle(array) {
