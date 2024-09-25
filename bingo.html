@@ -188,6 +188,28 @@
                 if (gameStatus === "idle") {
                     document.getElementById("idle-message").classList.remove('hidden'); // Show idle message
                     hideGameElements();
+                    
+                } else if (gameStatus === "scheduled") {
+            // If game is scheduled, show countdown and game details
+            document.querySelector('.rules-section').classList.add('hidden');
+            document.querySelector('.bingo-grid').classList.add('hidden');
+            document.getElementById("countdown-timer").classList.remove('hidden');
+            document.getElementById("idle-message").classList.add('hidden');
+
+            // Display the start and end times in a readable format
+            const startTimeDisplay = new Date(startTime).toLocaleString();
+            const endTimeDisplay = new Date(endTime).toLocaleString();
+            const totalDurationMinutes = Math.round((endTime - startTime) / (1000 * 60));
+
+            document.getElementById("game-message").innerHTML = `
+                <p>Game starts at: ${startTimeDisplay}</p>
+                <p>Game ends at: ${endTimeDisplay}</p>
+                <p>Total Duration: ${totalDurationMinutes} minutes</p>
+            `;
+
+            // Start the countdown to the game start
+            startCountdown(startTime);
+                    
                 } else if (gameStatus === "started") {
                     // If game is started, show the bingo board and rules
                     document.querySelector('.bingo-grid').classList.remove('hidden');
@@ -589,6 +611,8 @@ async function checkGameStatus() {
     const unsubscribe = onSnapshot(gameStateRef, (doc) => {
         if (doc.exists()) {
             const gameState = doc.data();
+            const startTime = gameState.startTime;
+        const endTime = gameState.endTime;
             if (gameState.status === "ended") {
                 endGame(); // If the game status is "ended," trigger the endGame function
             }
