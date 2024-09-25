@@ -237,10 +237,12 @@ function showCountdown(startTime, endTime) {
 
     // Update the game message
     document.getElementById("game-message").innerHTML = `
-        <p>Game starts: ${startTimeDisplay}</p>
-        <p>Game ends: ${endTimeDisplay}</p>
-        <p>Game Duration: ${totalDurationHours} Hours</p>
-   <p style="color: red; font-weight: bold;">GAME BEGINS IN:</p>
+        <p>Game starts:</p> 
+        <p> ${startTimeDisplay}</p>
+        <p>Game ends:</p>
+        <p>${endTimeDisplay}</p>
+        <p>Game Duration:</p>
+        <p>${totalDurationHours} Hours</p>
     `;
 
     startCountdown(endTime); // Call countdown using endTime
@@ -260,18 +262,19 @@ function startCountdown(endTime) {
         const now = new Date().getTime(); // Get the current time
         const distance = endTime - now; // Calculate the remaining time
 
-        // Time calculations for hours, minutes, and seconds
-        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((distance % (1000)) / 1000);
+        // Ensure that distance is positive
+        if (distance >= 0) {
+            // Time calculations for hours, minutes, and seconds
+            const hours = Math.floor((distance / (1000 * 60 * 60)) % 24); // Total hours
+            const minutes = Math.floor((distance / (1000 * 60)) % 60); // Total minutes
+            const seconds = Math.floor((distance / 1000) % 60); // Total seconds
 
-        // Replace the innerHTML to show the updated countdown, not append
-        countdownDisplay.innerHTML = `
-            GAME BEGINS IN: ${pad(hours)}:${pad(minutes)}:${pad(seconds)}
-        `;
-
-        // If the countdown is over, clear the interval and reset the display
-        if (distance < 0) {
+            // Replace the innerHTML to show the updated countdown
+            countdownDisplay.innerHTML = `
+                GAME BEGINS IN: ${pad(hours)}:${pad(minutes)}:${pad(seconds)}
+            `;
+        } else {
+            // If the countdown is over, clear the interval and display time up
             clearInterval(countdownTimer);
             countdownDisplay.innerHTML = "00:00:00"; // Display when countdown ends
         }
