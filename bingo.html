@@ -247,9 +247,6 @@ function showCountdown(startTime, endTime) {
 
     startCountdown(endTime); // Call countdown using endTime
 }
-
-
-
 // Function to start the countdown timer
 function startCountdown(startTime) {
     const countdownDisplay = document.getElementById("countdown-timer");
@@ -263,7 +260,10 @@ function startCountdown(startTime) {
 
         console.log(`Current Time: ${new Date(now).toLocaleTimeString()}`); // Log current time for debugging
 
-        const distance = startTime - now; // Calculate time difference until the start time
+        // Parse startTime as a Date object if it's not already in the correct format
+        const startTimeParsed = new Date(startTime).getTime(); // Convert startTime to milliseconds
+
+        const distance = startTimeParsed - now; // Calculate time difference until the start time
 
         // Ensure that the countdown is still valid (positive distance)
         if (distance >= 0) {
@@ -298,6 +298,7 @@ function startCountdown(startTime) {
 function pad(num) {
     return num.toString().padStart(2, '0');
 }
+
 
         function hideGameElements() {
             document.querySelector('.bingo-grid').classList.add('hidden');
