@@ -262,20 +262,26 @@ function startCountdown(startTime) {
 
     countdownTimer = setInterval(() => {
         const now = Date.now();  // Get the current UTC time in milliseconds
+        console.log("Current time (ms):", now); // Debugging: Log current time
 
         // Calculate the remaining time in milliseconds
         const timeRemaining = startTime - now;
+        console.log("Time remaining (ms):", timeRemaining); // Debugging: Log time remaining
 
         // Extract hours, minutes, and seconds from the remaining time
         let hours = Math.floor(timeRemaining / (1000 * 60 * 60));
         let minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
         let seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
 
+        console.log(`Hours: ${hours}, Minutes: ${minutes}, Seconds: ${seconds}`); // Debugging: Log hours, minutes, and seconds
+
         // Adjust display format when hours or minutes are 0
         let timeString = `${pad(minutes)}:${pad(seconds)}`;
         if (hours > 0) {
             timeString = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
         }
+
+        console.log("Formatted time string:", timeString); // Debugging: Log formatted time string
 
         // Update the countdown display
         countdownDisplay.innerHTML = `GAME BEGINS IN: ${timeString}`;
@@ -284,6 +290,7 @@ function startCountdown(startTime) {
         if (timeRemaining <= 0) {
             clearInterval(countdownTimer);
             countdownDisplay.innerHTML = "GAME STARTED!";
+            console.log("Countdown finished, game started!"); // Debugging: Log when the countdown ends
         }
 
     }, 1000); // Update every second
@@ -293,6 +300,7 @@ function startCountdown(startTime) {
 function pad(num) {
     return num.toString().padStart(2, '0');
 }
+
 
         function hideGameElements() {
             document.querySelector('.bingo-grid').classList.add('hidden');
