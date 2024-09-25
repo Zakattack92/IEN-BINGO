@@ -257,13 +257,19 @@ const endTimeFormatted = new Date(endTime).toLocaleTimeString([], { hour: '2-dig
 function startCountdown(startTimeFormatted) {
     const countdownDisplay = document.getElementById("countdown-timer");
 
-    // Clear any existing interval
-    clearInterval(countdownTimer);
+    // Check if startTimeFormatted is a string and log it
+    console.log("startTimeFormatted value:", startTimeFormatted);
 
-    // Parse the start time formatted as HH:MM into separate hours and minutes
-    const [startHours, startMinutes] = startTimeFormatted.split(':').map(Number); // Splits and converts to numbers
+    // Verify if it's in a valid format
+    if (typeof startTimeFormatted !== 'string') {
+        console.error("Error: startTimeFormatted is not a string:", startTimeFormatted);
+        return;
+    }
 
-    console.log(`Game Start Time Parsed: ${pad(startHours)}:${pad(startMinutes)}`); // Debugging: Log parsed start time
+    // Split the start time into hours and minutes
+    const [startHours, startMinutes] = startTimeFormatted.split(':').map(Number);
+
+    console.log(`Parsed Start Time: ${startHours}:${startMinutes}`); // Log parsed start time
 
     countdownTimer = setInterval(() => {
         // Get the current time
@@ -272,12 +278,12 @@ function startCountdown(startTimeFormatted) {
         const currentMinutes = now.getMinutes();
         const currentSeconds = now.getSeconds();
 
-        console.log(`Current Time: ${pad(currentHours)}:${pad(currentMinutes)}:${pad(currentSeconds)}`); // Debugging: Log current time
+        console.log(`Current Time: ${pad(currentHours)}:${pad(currentMinutes)}:${pad(currentSeconds)}`); // Debugging
 
         // Calculate the difference between the start time and current time
         let hours = startHours - currentHours;
         let minutes = startMinutes - currentMinutes;
-        let seconds = 0 - currentSeconds; // Countdown for seconds
+        let seconds = 0 - currentSeconds;
 
         // Adjust for negative seconds
         if (seconds < 0) {
@@ -291,11 +297,11 @@ function startCountdown(startTimeFormatted) {
             hours--;
         }
 
-        // If hours, minutes, and seconds are negative or zero, the game has started
+        // Check if the countdown is finished
         if (hours <= 0 && minutes <= 0 && seconds <= 0) {
             clearInterval(countdownTimer);
             countdownDisplay.innerHTML = "GAME STARTED!";
-            console.log("Countdown finished, game started!"); // Debugging: Log when the countdown ends
+            console.log("Countdown finished, game started!"); // Log when countdown ends
             return;
         }
 
@@ -305,10 +311,7 @@ function startCountdown(startTimeFormatted) {
             timeString = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
         }
 
-        console.log("Remaining Time - Hours: ", hours, " Minutes: ", minutes, " Seconds: ", seconds); // Debugging: Log hours, minutes, and seconds
-        console.log("Formatted time string:", timeString); // Debugging: Log formatted time string
-
-        // Update the countdown display
+        console.log("Remaining Time - Hours:", hours, " Minutes:", minutes, " Seconds:", seconds); // Log remaining time
         countdownDisplay.innerHTML = `GAME BEGINS IN: ${timeString}`;
 
     }, 1000); // Update every second
@@ -318,6 +321,7 @@ function startCountdown(startTimeFormatted) {
 function pad(num) {
     return num.toString().padStart(2, '0');
 }
+
 
         function hideGameElements() {
             document.querySelector('.bingo-grid').classList.add('hidden');
