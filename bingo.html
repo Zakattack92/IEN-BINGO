@@ -579,9 +579,6 @@ function clearBoard() {
     document.querySelector('.bingo-grid').innerHTML = `<h3>No active game</h3>`;
 }
 
-// Call the function to start checking for status changes
-checkGameStatus();
-
 // Function to save cumulative points to Firestore
 async function saveCumulativePoints() {
     const userDocRef = doc(db, "users", currentUser.name);
