@@ -254,16 +254,16 @@ const endTimeFormatted = new Date(endTime).toLocaleTimeString([], { hour: '2-dig
     startCountdown(endTime); // Call countdown using endTime
 }
 // Function to start the countdown timer
-function startCountdown(startTime) {
+function startCountdown(startTimeFormatted) {
     const countdownDisplay = document.getElementById("countdown-timer");
 
     // Clear any existing interval
     clearInterval(countdownTimer);
 
-    // Convert startTime to a Date object for easier comparison
-    const gameStartDate = new Date(startTime);
+    // Convert startTimeFormatted to a Date object
+    const gameStartDate = new Date(startTimeFormatted);
 
-    // Log the game start time in hours and minutes for debugging
+    // Log the game start time in hours, minutes, and seconds for debugging
     const gameStartHours = gameStartDate.getHours();
     const gameStartMinutes = gameStartDate.getMinutes();
     const gameStartSeconds = gameStartDate.getSeconds();
