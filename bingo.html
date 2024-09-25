@@ -165,6 +165,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
+    
         import { getFirestore, doc, setDoc, getDoc, updateDoc, increment, query, collection, where, getDocs } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -260,22 +261,6 @@
         document.getElementById('user-button').addEventListener('click', function() {
             window.location.href = 'user_profile.html'; // Redirect to a user profile page (you can adjust the link)
         });
-        
-
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, query, collection, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
-            authDomain: "ien-bingo.firebaseapp.com",
-            projectId: "ien-bingo",
-            storageBucket: "ien-bingo.appspot.com",
-            messagingSenderId: "115041832401",
-            appId: "1:115041832401:web:785da7558648d1ac8124f0"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
 
         let currentUser = JSON.parse(localStorage.getItem('bingoUser')); // Get logged-in user
 
