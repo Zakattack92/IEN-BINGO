@@ -105,27 +105,26 @@
             }
         }
 
-        // Schedule game start and end
         async function scheduleGame() {
-            const startTime = new Date(document.getElementById('start-time').value).getTime();
-            const endTime = new Date(document.getElementById('end-time').value).getTime();
+    const startTime = new Date(document.getElementById('start-time').value).getTime(); // This is already in UTC
+    const endTime = new Date(document.getElementById('end-time').value).getTime(); // This is already in UTC
 
-            if (startTime && endTime && startTime < endTime) {
-                try {
-                    await setDoc(doc(db, "game_state", "current"), {
-                        status: "scheduled",
-                        startTime,
-                        endTime,
-                        countdownEnabled: false
-                    });
-                    alert("Game Scheduled!");
-                } catch (error) {
-                    console.error("Error scheduling game:", error);
-                }
-            } else {
-                alert("Please select valid start and end times.");
-            }
+    if (startTime && endTime && startTime < endTime) {
+        try {
+            await setDoc(doc(db, "game_state", "current"), {
+                status: "scheduled",
+                startTime,  // Store as UTC timestamp
+                endTime,    // Store as UTC timestamp
+                countdownEnabled: false
+            });
+            alert("Game Scheduled!");
+        } catch (error) {
+            console.error("Error scheduling game:", error);
         }
+    } else {
+        alert("Please select valid start and end times.");
+    }
+}
 
         // Toggle the countdown timer
         async function toggleCountdown() {
