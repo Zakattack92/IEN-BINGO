@@ -119,7 +119,7 @@
         Points: <span id="points-game">0</span>
     </div>
 
-    <!-- Countdown timer section -->
+ <!-- Countdown timer section -->
     <div id="countdown-timer" class="hidden" style="color: red; font-size: 1.5em; font-weight: bold;"></div>
 
     <!-- Bingo grid section -->
@@ -150,11 +150,7 @@
         <p>4. Winner announced upon game end.</p>
     </div>
 
-    <!-- Countdown timer section -->
-<div id="countdown-timer" class="hidden" style="color: red; font-size: 1.5em; font-weight: bold;"></div>
-
-
-        <!-- Idle message -->
+    <!-- Idle message -->
     <h1 class="idle-message hidden" id="idle-message">No games, sorry dude.</h1>
 
     <!-- Buttons Section -->
@@ -165,8 +161,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
-    
-        import { getFirestore, doc, setDoc, getDoc, updateDoc, increment, query, collection, where, getDocs } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, increment, query, collection, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
@@ -180,6 +175,10 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        let countdownTimer;
+        const user = JSON.parse(localStorage.getItem('bingoUser'));
+        let points = parseInt(localStorage.getItem('pointsThisGame')) || 0;
+
         // Function to check the game status and update the UI accordingly
         async function checkGameStatus() {
             const gameStateRef = doc(db, "game_state", "current");
@@ -188,20 +187,30 @@
             if (gameStateSnap.exists()) {
                 const gameState = gameStateSnap.data();
                 const gameStatus = gameState.status;
+                const startTime = gameState.startTime;
+                const endTime = gameState.endTime;
 
-               // If game is idle, show the "No games active" message and hide the grid and rules
                 if (gameStatus === "idle") {
-                    document.getElementById("idle-message").classList.remove('hidden'); // Show idle message
+                    document.getElementById("idle-message").classList.remove('hidden');
                     hideGameElements();
-                    
                 } else if (gameStatus === "scheduled") {
-            // If game is scheduled, show countdown and game details
+                    showCountdown(startTime, endTime);
+                } else if (gameStatus === "started") {
+                    showGameElements();
+                    populateBingoGrid();
+                }
+            } else {
+                alert("Game state not found.");
+            }
+        }
+
+        // Function to show countdown timer
+        function showCountdown(startTime, endTime) {
             document.querySelector('.rules-section').classList.add('hidden');
             document.querySelector('.bingo-grid').classList.add('hidden');
             document.getElementById("countdown-timer").classList.remove('hidden');
             document.getElementById("idle-message").classList.add('hidden');
 
-            // Display the start and end times in a readable format
             const startTimeDisplay = new Date(startTime).toLocaleString();
             const endTimeDisplay = new Date(endTime).toLocaleString();
             const totalDurationMinutes = Math.round((endTime - startTime) / (1000 * 60));
@@ -212,25 +221,34 @@
                 <p>Total Duration: ${totalDurationMinutes} minutes</p>
             `;
 
-            // Start the countdown to the game start
             startCountdown(startTime);
-                    
-                } else if (gameStatus === "started") {
-                    // If game is started, show the bingo board and rules
-                    document.querySelector('.bingo-grid').classList.remove('hidden');
-                    document.querySelector('.rules-section').classList.remove('hidden');
-                    document.querySelector('.points-display').classList.remove('hidden');
-                    populateBingoGrid();
-                }
-            } else {
-                alert("Game state not found.");
-            }
         }
 
-        let countdownTimer; // Declare countdownTimer globally
+        function startCountdown(endTime) {
+            const countdownDisplay = document.getElementById("countdown-timer");
+            clearInterval(countdownTimer); // Clear existing countdown
 
+            countdownTimer = setInterval(() => {
+                const now = new Date().getTime();
+                const distance = endTime - now;
 
-        // Function to hide game elements
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000)) / 1000);
+
+                countdownDisplay.innerHTML = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+
+                if (distance < 0) {
+                    clearInterval(countdownTimer);
+                    countdownDisplay.innerHTML = "00:00:00";
+                }
+            }, 1000);
+        }
+
+        function pad(num) {
+            return num.toString().padStart(2, '0');
+        }
+
         function hideGameElements() {
             document.querySelector('.bingo-grid').classList.add('hidden');
             document.querySelector('.rules-section').classList.add('hidden');
@@ -238,80 +256,12 @@
             document.getElementById("countdown-timer").classList.add('hidden');
         }
 
-        // Call the function to check the game status on page load
-        checkGameStatus();
-    
-        // Redirect to login if not authenticated
-        if (!localStorage.getItem('bingoUser')) {
-            window.location.href = 'index.html'; // Redirect to login
+        function showGameElements() {
+            document.querySelector('.bingo-grid').classList.remove('hidden');
+            document.querySelector('.rules-section').classList.remove('hidden');
+            document.querySelector('.points-display').classList.remove('hidden');
         }
-
-        const user = JSON.parse(localStorage.getItem('bingoUser')); // Get logged-in user
-        let points = parseInt(localStorage.getItem('pointsThisGame')) || 0; // Load points from localStorage
-
-        // Set the user button text to display the logged-in user's name
-        document.getElementById('user-button').textContent = user.name;
-
-        // Add functionality to the user button
-        document.getElementById('user-button').addEventListener('click', function() {
-            window.location.href = 'user_profile.html'; // Redirect to a user profile page (you can adjust the link)
-        });
-
-        let currentUser = JSON.parse(localStorage.getItem('bingoUser')); // Get logged-in user
-
-        // Ensure user is logged in, otherwise redirect to login
-        if (!currentUser) {
-            window.location.href = 'index.html'; // Redirect to login page if not authenticated
-        }
-
-
-        // Function to listen for game state changes
-    function listenForCountdownChanges() {
-        const gameStateRef = doc(db, "game_state", "current");
-
-        // Listen for real-time changes in the game state
-        onSnapshot(gameStateRef, (doc) => {
-            if (doc.exists()) {
-                const gameState = doc.data();
-                if (gameState.countdownEnabled) {
-                    startCountdown(gameState.endTime);  // Start countdown when enabled
-                } else {
-                    clearCountdown();  // Clear the countdown when disabled
-                }
-            }
-        });
-    }
-
-    // Function to start the countdown timer
-function startCountdown(endTime) {
-    const countdownDisplay = document.getElementById("countdown-timer");
-
-    // Update the timer every second
-    countdownTimer = setInterval(() => {
-        const now = new Date().getTime();
-        const distance = endTime - now;
-
-        // Time calculations for hours, minutes, and seconds
-        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((distance % (1000)) / 1000);
-
-        // Display the result in HH:MM:SS format
-        countdownDisplay.innerHTML = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-
-        // If the countdown is over, clear the interval
-        if (distance < 0) {
-            clearInterval(countdownTimer);
-            countdownDisplay.innerHTML = "00:00:00";
-        }
-    }, 1000);
-}
-
-// Utility function to pad numbers with leading zeros
-function pad(num) {
-    return num.toString().padStart(2, '0');
-}
-
+        
 // Function to check if the countdown timer should be displayed
 async function listenForCountdown() {
     const gameStateRef = doc(db, "game_state", "current");
@@ -345,7 +295,6 @@ listenForCountdown();
             return null;
         }
 
-       // Generate a new bingo board and save it to Firestore
 // Generate a new bingo board and save it to Firestore
 async function generateAndSaveBingoBoard() {
     const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
@@ -671,12 +620,16 @@ async function clearClickedCells() {
         console.error("Error clearing clicked cells:", error);
     }
 }
-// Call the function to start checking for status changes
-checkGameStatus();
-        populateBingoGrid(); // Call the function to populate the grid
+// Start checking game status on load
+        checkGameStatus();
         
+        if (!user) {
+            window.location.href = 'index.html'; // Redirect to login if not authenticated
+        }
+
+        // Set the user button text
+        document.getElementById('user-button').textContent = user.name;
 
     </script>
-
 </body>
 </html>
