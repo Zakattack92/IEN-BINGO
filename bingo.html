@@ -218,49 +218,60 @@ document.getElementById('user-button').addEventListener('click', function() {
         }
 
         // Function to show countdown timer
-        function showCountdown(startTime, endTime) {
-            document.querySelector('.rules-section').classList.add('hidden');
-            document.querySelector('.bingo-grid').classList.add('hidden');
-            document.getElementById("countdown-timer").classList.remove('hidden');
-            document.getElementById("idle-message").classList.add('hidden');
+function showCountdown(startTime, endTime) {
+    document.querySelector('.rules-section').classList.add('hidden');
+    document.querySelector('.bingo-grid').classList.add('hidden');
+    document.getElementById("countdown-timer").classList.remove('hidden');
+    document.getElementById("idle-message").classList.add('hidden');
 
-            const startTimeDisplay = new Date(startTime).toLocaleString();
-            const endTimeDisplay = new Date(endTime).toLocaleString();
-            const totalDurationMinutes = Math.round((endTime - startTime) / (1000 * 60));
+    // Format the start and end times without seconds
+    const startTimeDisplay = new Date(startTime).toLocaleString([], { 
+        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+    const endTimeDisplay = new Date(endTime).toLocaleString([], { 
+        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
 
-            document.getElementById("game-message").innerHTML = `
-                <p>Game starts at: ${startTimeDisplay}</p>
-                <p>Game ends at: ${endTimeDisplay}</p>
-                <p>Total Duration: ${totalDurationMinutes} minutes</p>
-            `;
+    // Calculate duration in hours
+    const totalDurationHours = ((endTime - startTime) / (1000 * 60 * 60)).toFixed(2); // Duration in hours
 
-            startCountdown(startTime);
+    document.getElementById("game-message").innerHTML = `
+        <p>Game starts: ${startTimeDisplay}</p>
+        <p>Game ends: ${endTimeDisplay}</p>
+        <p>Game Duration: ${totalDurationHours} Hours</p>
+    `;
+
+    startCountdown(endTime); // Call countdown using endTime
+}
+
+       function startCountdown(endTime) {
+    const countdownDisplay = document.getElementById("countdown-timer");
+    clearInterval(countdownTimer); // Clear existing countdown
+
+    countdownTimer = setInterval(() => {
+        const now = new Date().getTime();
+        const distance = endTime - now;
+
+        // Time calculations for hours, minutes, and seconds
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000)) / 1000);
+
+        countdownDisplay.innerHTML = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+
+        // If the countdown is over, clear the interval
+        if (distance < 0) {
+            clearInterval(countdownTimer);
+            countdownDisplay.innerHTML = "00:00:00";
         }
+    }, 1000);
+}
 
-        function startCountdown(endTime) {
-            const countdownDisplay = document.getElementById("countdown-timer");
-            clearInterval(countdownTimer); // Clear existing countdown
+// Utility function to pad numbers with leading zeros
+function pad(num) {
+    return num.toString().padStart(2, '0');
+}
 
-            countdownTimer = setInterval(() => {
-                const now = new Date().getTime();
-                const distance = endTime - now;
-
-                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000)) / 1000);
-
-                countdownDisplay.innerHTML = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-
-                if (distance < 0) {
-                    clearInterval(countdownTimer);
-                    countdownDisplay.innerHTML = "00:00:00";
-                }
-            }, 500);
-        }
-
-        function pad(num) {
-            return num.toString().padStart(2, '0');
-        }
 
         function hideGameElements() {
             document.querySelector('.bingo-grid').classList.add('hidden');
