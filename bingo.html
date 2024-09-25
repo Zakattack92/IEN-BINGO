@@ -235,6 +235,10 @@ function showCountdown(startTime, endTime) {
     // Calculate duration in hours
     const totalDurationHours = ((endTime - startTime) / (1000 * 60 * 60)).toFixed(2); // Duration in hours
 
+    // Display start and end time in local time zone
+const startTimeDisplay = new Date(startTime).toLocaleString();  // Convert to local time
+const endTimeDisplay = new Date(endTime).toLocaleString();  // Convert to local time
+    
     // Update the game message
     document.getElementById("game-message").innerHTML = `
         <p>Next Game Starts:</p> 
@@ -255,54 +259,39 @@ function startCountdown(startTime) {
     clearInterval(countdownTimer);
 
     countdownTimer = setInterval(() => {
-        const now = new Date(); // Get the current time
+        const now = Date.now();  // Get the current UTC time in milliseconds
 
-        // Use toLocaleString with the correct time zone
-        const timeZone = "America/New_York"; // Change this to your specific time zone
+        // Calculate the remaining time in milliseconds
+        const timeRemaining = startTime - now;
 
-        // Log current time for debugging
-        console.log(`Current Time: ${now.toLocaleTimeString('en-US', { timeZone })}`);
+        // Extract hours, minutes, and seconds from the remaining time
+        let hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+        let minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+        let seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
 
-        // Parse startTime as a Date object and adjust for time zone
-        const startTimeParsed = new Date(startTime);
-
-        // Log start time for debugging
-        console.log(`Start Time: ${startTimeParsed.toLocaleTimeString('en-US', { timeZone })}`);
-
-        // Extract hours, minutes, and seconds for both current time and start time
-        const currentHours = now.toLocaleTimeString('en-US', { timeZone, hour: '2-digit', hour12: false });
-        const currentMinutes = now.toLocaleTimeString('en-US', { timeZone, minute: '2-digit', hour12: false });
-        const currentSeconds = now.toLocaleTimeString('en-US', { timeZone, second: '2-digit', hour12: false });
-
-        const startHours = startTimeParsed.toLocaleTimeString('en-US', { timeZone, hour: '2-digit', hour12: false });
-        const startMinutes = startTimeParsed.toLocaleTimeString('en-US', { timeZone, minute: '2-digit', hour12: false });
-        const startSeconds = startTimeParsed.toLocaleTimeString('en-US', { timeZone, second: '2-digit', hour12: false });
-
-        console.log(`Current Hours: ${currentHours}, Start Hours: ${startHours}`); // Debugging hours
-        console.log(`Current Minutes: ${currentMinutes}, Start Minutes: ${startMinutes}`);
-        console.log(`Current Seconds: ${currentSeconds}, Start Seconds: ${startSeconds}`);
-
-        // Calculate time differences
-        let hours = startHours - currentHours;
-        let minutes = startMinutes - currentMinutes;
-        let seconds = startSeconds - currentSeconds;
-
-        // Adjust minutes and seconds if negative
-        if (seconds < 0) {
-            seconds += 60;
-            minutes -= 1;
-        }
-        if (minutes < 0) {
-            minutes += 60;
-            hours -= 1;
+        // Adjust display format when hours or minutes are 0
+        let timeString = `${pad(minutes)}:${pad(seconds)}`;
+        if (hours > 0) {
+            timeString = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
         }
 
-        // If hours are negative, countdown is finished
-        if (hours < 0) {
+        // Update the countdown display
+        countdownDisplay.innerHTML = `GAME BEGINS IN: ${timeString}`;
+
+        // Stop countdown when time runs out
+        if (timeRemaining <= 0) {
             clearInterval(countdownTimer);
             countdownDisplay.innerHTML = "GAME STARTED!";
-            return;
         }
+
+    }, 1000); // Update every second
+}
+
+// Utility function to pad single digits with leading zeros
+function pad(num) {
+    return num.toString().padStart(2, '0');
+}
+
 
         // Format the time string
         let timeString = `GAME BEGINS IN: ${pad(minutes)}:${pad(seconds)}`;
