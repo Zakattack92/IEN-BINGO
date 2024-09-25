@@ -251,7 +251,7 @@ function showCountdown(startTime, endTime) {
 
 
 // Function to start the countdown timer
-function startCountdown(endTime) {
+function startCountdown(startTime) {
     const countdownDisplay = document.getElementById("countdown-timer");
 
     // Clear any existing interval
@@ -259,32 +259,37 @@ function startCountdown(endTime) {
 
     // Update the timer every second
     countdownTimer = setInterval(() => {
-        const now = new Date().getTime(); // Get the current time
-        const distance = endTime - now; // Calculate the remaining time
+        const now = new Date().getTime(); // Get the current time in milliseconds
 
-        // Ensure that distance is positive
+        console.log(`Current Time: ${new Date(now).toLocaleTimeString()}`); // Log current time for debugging
+
+        const distance = startTime - now; // Calculate time difference until the start time
+
+        // Ensure that the countdown is still valid (positive distance)
         if (distance >= 0) {
             // Time calculations for hours, minutes, and seconds
-            const hours = Math.floor((distance / (1000 * 60 * 60)) % 24); // Total hours
-            const minutes = Math.floor((distance / (1000 * 60)) % 60); // Total minutes
-            const seconds = Math.floor((distance / 1000) % 60); // Total seconds
+            const hours = Math.floor((distance / (1000 * 60 * 60)) % 24); // Calculate total hours
+            const minutes = Math.floor((distance / (1000 * 60)) % 60); // Calculate total minutes
+            const seconds = Math.floor((distance / 1000) % 60); // Calculate total seconds
 
             let timeString = `GAME BEGINS IN: ${pad(minutes)}:${pad(seconds)}`; // Default to showing minutes and seconds
 
-            // If hours are greater than 0, include them
+            // If hours are greater than 0, include hours in the countdown
             if (hours > 0) {
                 timeString = `GAME BEGINS IN: ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
             } else if (minutes === 0 && hours === 0) {
-                // If minutes and hours are 0, only show seconds
+                // If both hours and minutes are 0, only show seconds
                 timeString = `GAME BEGINS IN: ${pad(seconds)} seconds`;
             }
 
-            // Replace the innerHTML to show the updated countdown
+            // Update the countdown display with the calculated time
             countdownDisplay.innerHTML = timeString;
+
+            console.log(`Countdown Time: ${timeString}`); // Log the countdown for debugging
         } else {
-            // If the countdown is over, clear the interval and display time up
+            // If the countdown is finished, clear the interval and show "00:00:00"
             clearInterval(countdownTimer);
-            countdownDisplay.innerHTML = "00:00:00"; // Display when countdown ends
+            countdownDisplay.innerHTML = "GAME STARTED!";
         }
     }, 1000); // Update every 1000 milliseconds (1 second)
 }
@@ -293,8 +298,6 @@ function startCountdown(endTime) {
 function pad(num) {
     return num.toString().padStart(2, '0');
 }
-
-
 
         function hideGameElements() {
             document.querySelector('.bingo-grid').classList.add('hidden');
