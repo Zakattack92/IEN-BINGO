@@ -612,7 +612,7 @@ async function clearClickedCells() {
     }
 }
 // Start checking game status on load
-        checkGameStatus();
+        monitorGameState();
         
         if (!user) {
             window.location.href = 'index.html'; // Redirect to login if not authenticated
