@@ -341,6 +341,7 @@ listenForCountdown();
         }
 
        // Generate a new bingo board and save it to Firestore
+// Generate a new bingo board and save it to Firestore
 async function generateAndSaveBingoBoard() {
     const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
     const querySnapshot = await getDocs(q);
@@ -374,7 +375,7 @@ async function generateAndSaveBingoBoard() {
     });
 
     // Shuffle and select phrases logic here
-    const selectedPhrases = selectPhrases(allPhrases, unusedPhrases, freeSpotPhrases);
+    const selectedPhrases = selectPhrases(allPhrases);
 
     // Update timesUsed for new phrases
     for (const phrase of selectedPhrases) {
@@ -383,47 +384,12 @@ async function generateAndSaveBingoBoard() {
         });
     }
 
-
-    console.log("Unused Phrases:", unusedPhrases);
-    console.log("Free Spot Phrases:", freeSpotPhrases);
-    console.log("All Phrases (Sorted by Oldest Used):", allPhrases);
-
-//    const selectedPhrases = [];
-
-    // First, try to fill the board with unused phrases
-    while (selectedPhrases.length < 14 && unusedPhrases.length > 0) {
-        const phraseObj = unusedPhrases.shift();
-        selectedPhrases.push(phraseObj.phrase);
-
-        // Mark it as used by updating `lastUsed` in Firestore
-        await setDoc(doc(db, "bingo_phrases", phraseObj.id), { lastUsed: now }, { merge: true });
-    }
-
-    // If not enough unused phrases, fill remaining slots with oldest used phrases
-    while (selectedPhrases.length < 14 && allPhrases.length > 0) {
-        const phraseObj = allPhrases.shift();
-        selectedPhrases.push(phraseObj.phrase);
-
-        // Mark it as used by updating `lastUsed` in Firestore
-        await setDoc(doc(db, "bingo_phrases", phraseObj.id), { lastUsed: now }, { merge: true });
-    }
-
-    // Filter out any potential empty strings
-    const finalPhrases = selectedPhrases.filter(phrase => phrase.trim() !== "");
-
-    console.log("Selected Phrases (Filtered):", finalPhrases);
-
-    shuffle(finalPhrases); // Shuffle the phrases for randomness
+    shuffle(selectedPhrases); // Shuffle the phrases for randomness
 
     // Choose a random Free Spot phrase
     const randomFreeSpot = freeSpotPhrases.length > 0
         ? freeSpotPhrases[Math.floor(Math.random() * freeSpotPhrases.length)]
         : { phrase: "Free Spot" }; // Fallback in case no free spot phrases are available
-
-    // Update lastUsed for the chosen Free Spot phrase
-    if (randomFreeSpot.id) {
-        await setDoc(doc(db, "bingo_phrases", randomFreeSpot.id), { lastUsed: now }, { merge: true });
-    }
 
     const bingoCells = [];
     let phraseIndex = 0;
@@ -433,7 +399,7 @@ async function generateAndSaveBingoBoard() {
         if (i === 7) {
             bingoCells.push(randomFreeSpot.phrase); // Use the random Free Spot phrase
         } else {
-            bingoCells.push(finalPhrases[phraseIndex] || '');
+            bingoCells.push(selectedPhrases[phraseIndex].phrase || '');
             phraseIndex++;
         }
     }
@@ -446,16 +412,26 @@ async function generateAndSaveBingoBoard() {
     // Fill the grid with the new board
     fillBingoGrid(bingoCells);
 }
-        // Shuffle function to randomize phrases
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
 
-        // Populate the bingo grid
+// Select phrases logic (You can adjust this logic as needed)
+function selectPhrases(allPhrases) {
+    // Sort by least used first
+    const sortedPhrases = allPhrases.sort((a, b) => a.timesUsed - b.timesUsed);
+
+    // Select the first 14 phrases (excluding the free spot)
+    return sortedPhrases.slice(0, 14);
+}
+
+// Shuffle function to randomize phrases
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+// Populate the bingo grid
 async function populateBingoGrid() {
     const savedBoard = await fetchSavedBoard(); // Fetch saved board from Firestore
     console.log("Saved Board:", savedBoard); // Debugging log
@@ -468,24 +444,24 @@ async function populateBingoGrid() {
     }
 }
 
+// Fill the bingo grid with phrases or load from saved state
+async function fillBingoGrid(board) {
+    const bingoCells = document.querySelectorAll('.bingo-cell');
+    const freeSpotPhrase = "Free Spot"; // Always set the free spot text
 
-        // Fill the bingo grid with phrases or load from saved state
-        async function fillBingoGrid(board) {
-            const bingoCells = document.querySelectorAll('.bingo-cell');
-            const freeSpotPhrase = "Free Spot"; // Always set the free spot text
+    bingoCells.forEach((cell, index) => {
+        cell.textContent = board[index] || '';
+    });
 
-            bingoCells.forEach((cell, index) => {
-                    cell.textContent = board[index] || '';
-                  });
+    // Add event listeners to cells for click actions
+    bingoCells.forEach((cell, index) => {
+        cell.addEventListener('click', () => {
+            cell.classList.toggle('clicked'); // Toggle clicked state
+            saveClickedCell(index); // Save clicked state to Firestore
+        });
+    });
+}
 
-            // Add event listeners to cells for click actions
-            bingoCells.forEach((cell, index) => {
-                cell.addEventListener('click', () => {
-                    cell.classList.toggle('clicked'); // Toggle clicked state
-                    saveClickedCell(index); // Save clicked state to Firestore
-                });
-            });
-        }
 
         // Save clicked cells to Firestore
 async function saveClickedCell(cellIndex) {
