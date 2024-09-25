@@ -257,23 +257,30 @@ function startCountdown(startTime) {
     countdownTimer = setInterval(() => {
         const now = new Date(); // Get the current time
 
-        console.log(`Current Time: ${now.toLocaleTimeString()}`); // Log current time for debugging
+        // Use toLocaleString with the correct time zone
+        const timeZone = "America/New_York"; // Change this to your specific time zone
 
-        // Parse startTime as a Date object
+        // Log current time for debugging
+        console.log(`Current Time: ${now.toLocaleTimeString('en-US', { timeZone })}`);
+
+        // Parse startTime as a Date object and adjust for time zone
         const startTimeParsed = new Date(startTime);
 
-         // Log start time for debugging
-        console.log(`Start Time: ${startTimeParsed.toLocaleTimeString()}`);
-
+        // Log start time for debugging
+        console.log(`Start Time: ${startTimeParsed.toLocaleTimeString('en-US', { timeZone })}`);
 
         // Extract hours, minutes, and seconds for both current time and start time
-        const currentHours = now.getHours();
-        const currentMinutes = now.getMinutes();
-        const currentSeconds = now.getSeconds();
+        const currentHours = now.toLocaleTimeString('en-US', { timeZone, hour: '2-digit', hour12: false });
+        const currentMinutes = now.toLocaleTimeString('en-US', { timeZone, minute: '2-digit', hour12: false });
+        const currentSeconds = now.toLocaleTimeString('en-US', { timeZone, second: '2-digit', hour12: false });
 
-        const startHours = startTimeParsed.getHours();
-        const startMinutes = startTimeParsed.getMinutes();
-        const startSeconds = startTimeParsed.getSeconds();
+        const startHours = startTimeParsed.toLocaleTimeString('en-US', { timeZone, hour: '2-digit', hour12: false });
+        const startMinutes = startTimeParsed.toLocaleTimeString('en-US', { timeZone, minute: '2-digit', hour12: false });
+        const startSeconds = startTimeParsed.toLocaleTimeString('en-US', { timeZone, second: '2-digit', hour12: false });
+
+        console.log(`Current Hours: ${currentHours}, Start Hours: ${startHours}`); // Debugging hours
+        console.log(`Current Minutes: ${currentMinutes}, Start Minutes: ${startMinutes}`);
+        console.log(`Current Seconds: ${currentSeconds}, Start Seconds: ${startSeconds}`);
 
         // Calculate time differences
         let hours = startHours - currentHours;
