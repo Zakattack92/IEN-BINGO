@@ -260,41 +260,61 @@ function startCountdown(startTime) {
     // Clear any existing interval
     clearInterval(countdownTimer);
 
-    // Log the game start time in hours and minutes for debugging
+    // Convert startTime to a Date object for easier comparison
     const gameStartDate = new Date(startTime);
+
+    // Log the game start time in hours and minutes for debugging
     const gameStartHours = gameStartDate.getHours();
     const gameStartMinutes = gameStartDate.getMinutes();
-    console.log(`Game Start Time: ${pad(gameStartHours)}:${pad(gameStartMinutes)}`); // Debugging: Log game start time
+    const gameStartSeconds = gameStartDate.getSeconds();
+    
+    console.log(`Game Start Time: ${pad(gameStartHours)}:${pad(gameStartMinutes)}:${pad(gameStartSeconds)}`); // Debugging: Log game start time
 
     countdownTimer = setInterval(() => {
-        const now = Date.now();  // Get the current UTC time in milliseconds
-        console.log("Current time (ms):", now); // Debugging: Log current time
+        // Get the current time
+        const now = new Date();
+        const currentHours = now.getHours();
+        const currentMinutes = now.getMinutes();
+        const currentSeconds = now.getSeconds();
 
-        // Calculate the remaining time in milliseconds
-        const timeRemaining = startTime - now;
-        console.log("Time remaining (ms):", timeRemaining); // Debugging: Log time remaining
+        console.log(`Current Time: ${pad(currentHours)}:${pad(currentMinutes)}:${pad(currentSeconds)}`); // Debugging: Log current time
 
-        // Calculate hours, minutes, and seconds from the remaining time
-        let hours = Math.floor(timeRemaining / (1000 * 60 * 60));
-        let minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
-        let seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+        // Calculate the difference between the start time and current time
+        let hours = gameStartHours - currentHours;
+        let minutes = gameStartMinutes - currentMinutes;
+        let seconds = gameStartSeconds - currentSeconds;
 
-        console.log(`Hours: ${hours}, Minutes: ${minutes}, Seconds: ${seconds}`); // Debugging: Log hours, minutes, and seconds
+        // Adjust for negative seconds
+        if (seconds < 0) {
+            seconds += 60;
+            minutes--;
+        }
 
-        // Create the time string based on hours, minutes, and seconds
-        let timeString = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+        // Adjust for negative minutes
+        if (minutes < 0) {
+            minutes += 60;
+            hours--;
+        }
 
+        // If hours, minutes, and seconds are negative or zero, the game has started
+        if (hours <= 0 && minutes <= 0 && seconds <= 0) {
+            clearInterval(countdownTimer);
+            countdownDisplay.innerHTML = "GAME STARTED!";
+            console.log("Countdown finished, game started!"); // Debugging: Log when the countdown ends
+            return;
+        }
+
+        // Hide hours if they are 0
+        let timeString = `${pad(minutes)}:${pad(seconds)}`;
+        if (hours > 0) {
+            timeString = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+        }
+
+        console.log("Remaining Time - Hours: ", hours, " Minutes: ", minutes, " Seconds: ", seconds); // Debugging: Log hours, minutes, and seconds
         console.log("Formatted time string:", timeString); // Debugging: Log formatted time string
 
         // Update the countdown display
         countdownDisplay.innerHTML = `GAME BEGINS IN: ${timeString}`;
-
-        // Stop countdown when time runs out
-        if (timeRemaining <= 0) {
-            clearInterval(countdownTimer);
-            countdownDisplay.innerHTML = "GAME STARTED!";
-            console.log("Countdown finished, game started!"); // Debugging: Log when the countdown ends
-        }
 
     }, 1000); // Update every second
 }
@@ -303,6 +323,7 @@ function startCountdown(startTime) {
 function pad(num) {
     return num.toString().padStart(2, '0');
 }
+
 
 
         function hideGameElements() {
