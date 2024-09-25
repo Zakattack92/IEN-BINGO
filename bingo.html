@@ -179,6 +179,13 @@
         const user = JSON.parse(localStorage.getItem('bingoUser'));
         let points = parseInt(localStorage.getItem('pointsThisGame')) || 0;
 
+        if (!user) {
+            window.location.href = 'index.html'; // Redirect to login if not authenticated
+        }
+        // Set the user button text
+        document.getElementById('user-button').textContent = user.name;
+
+
         // Function to check the game status and update the UI accordingly
         async function checkGameStatus() {
             const gameStateRef = doc(db, "game_state", "current");
@@ -385,18 +392,17 @@ function shuffle(array) {
     return array;
 }
 
-// Populate the bingo grid
-async function populateBingoGrid() {
-    const savedBoard = await fetchSavedBoard(); // Fetch saved board from Firestore
-    console.log("Saved Board:", savedBoard); // Debugging log
-    if (savedBoard) {
-        fillBingoGrid(savedBoard); // Load saved board
-        loadClickedCells(); // Load clicked cells for the current user
-        awardPoints(); // Award points after grid is populated and clicked cells are loaded
-    } else {
-        await generateAndSaveBingoBoard(); // Generate a new board if no saved one exists
-    }
-}
+ // Populate the bingo grid
+        async function populateBingoGrid() {
+            const savedBoard = await fetchSavedBoard();
+            if (savedBoard) {
+                fillBingoGrid(savedBoard);
+                loadClickedCells(); // Load clicked cells for the current user
+                awardPoints(); // Award points after grid is populated and clicked cells are loaded
+            } else {
+                await generateAndSaveBingoBoard();
+            }
+        }
 
 // Fill the bingo grid with phrases or load from saved state
 async function fillBingoGrid(board) {
