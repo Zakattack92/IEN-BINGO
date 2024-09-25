@@ -254,50 +254,63 @@ function startCountdown(startTime) {
     // Clear any existing interval
     clearInterval(countdownTimer);
 
-    // Update the timer every second
     countdownTimer = setInterval(() => {
-        const now = new Date().getTime(); // Get the current time in milliseconds
+        const now = new Date(); // Get the current time
 
-        console.log(`Current Time: ${new Date(now).toLocaleTimeString()}`); // Log current time for debugging
+        console.log(`Current Time: ${now.toLocaleTimeString()}`); // Log current time for debugging
 
-        // Parse startTime as a Date object if it's not already in the correct format
-        const startTimeParsed = new Date(startTime).getTime(); // Convert startTime to milliseconds
+        // Parse startTime as a Date object
+        const startTimeParsed = new Date(startTime);
 
-        const distance = startTimeParsed - now; // Calculate time difference until the start time
+        // Extract hours, minutes, and seconds for both current time and start time
+        const currentHours = now.getHours();
+        const currentMinutes = now.getMinutes();
+        const currentSeconds = now.getSeconds();
 
-        // Ensure that the countdown is still valid (positive distance)
-        if (distance >= 0) {
-            // Time calculations for hours, minutes, and seconds
-            const hours = Math.floor((distance / (1000 * 60 * 60)) % 24); // Calculate total hours
-            const minutes = Math.floor((distance / (1000 * 60)) % 60); // Calculate total minutes
-            const seconds = Math.floor((distance / 1000) % 60); // Calculate total seconds
+        const startHours = startTimeParsed.getHours();
+        const startMinutes = startTimeParsed.getMinutes();
+        const startSeconds = startTimeParsed.getSeconds();
 
-            let timeString = `GAME BEGINS IN: ${pad(minutes)}:${pad(seconds)}`; // Default to showing minutes and seconds
+        // Calculate time differences
+        let hours = startHours - currentHours;
+        let minutes = startMinutes - currentMinutes;
+        let seconds = startSeconds - currentSeconds;
 
-            // If hours are greater than 0, include hours in the countdown
-            if (hours > 0) {
-                timeString = `GAME BEGINS IN: ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-            } else if (minutes === 0 && hours === 0) {
-                // If both hours and minutes are 0, only show seconds
-                timeString = `GAME BEGINS IN: ${pad(seconds)} seconds`;
-            }
+        // Adjust minutes and seconds if negative
+        if (seconds < 0) {
+            seconds += 60;
+            minutes -= 1;
+        }
+        if (minutes < 0) {
+            minutes += 60;
+            hours -= 1;
+        }
 
-            // Update the countdown display with the calculated time
-            countdownDisplay.innerHTML = timeString;
-
-            console.log(`Countdown Time: ${timeString}`); // Log the countdown for debugging
-        } else {
-            // If the countdown is finished, clear the interval and show "00:00:00"
+        // If hours are negative, countdown is finished
+        if (hours < 0) {
             clearInterval(countdownTimer);
             countdownDisplay.innerHTML = "GAME STARTED!";
+            return;
         }
-    }, 1000); // Update every 1000 milliseconds (1 second)
+
+        // Format the time string
+        let timeString = `GAME BEGINS IN: ${pad(minutes)}:${pad(seconds)}`;
+        if (hours > 0) {
+            timeString = `GAME BEGINS IN: ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+        }
+
+        // Update the countdown display
+        countdownDisplay.innerHTML = timeString;
+
+        console.log(`Countdown Time: ${timeString}`); // Log countdown time for debugging
+    }, 1000); // Update every second
 }
 
 // Utility function to pad single digits with leading zeros
 function pad(num) {
     return num.toString().padStart(2, '0');
 }
+
 
 
         function hideGameElements() {
