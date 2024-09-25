@@ -260,6 +260,12 @@ function startCountdown(startTime) {
     // Clear any existing interval
     clearInterval(countdownTimer);
 
+    // Log the game start time in hours and minutes for debugging
+    const gameStartDate = new Date(startTime);
+    const gameStartHours = gameStartDate.getHours();
+    const gameStartMinutes = gameStartDate.getMinutes();
+    console.log(`Game Start Time: ${pad(gameStartHours)}:${pad(gameStartMinutes)}`); // Debugging: Log game start time
+
     countdownTimer = setInterval(() => {
         const now = Date.now();  // Get the current UTC time in milliseconds
         console.log("Current time (ms):", now); // Debugging: Log current time
