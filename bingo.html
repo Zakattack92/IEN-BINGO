@@ -224,12 +224,12 @@ function showCountdown(startTime, endTime) {
     document.getElementById("countdown-timer").classList.remove('hidden');
     document.getElementById("idle-message").classList.add('hidden');
 
-    // Format the start and end times without seconds
+    // Format the start and end times without the year
     const startTimeDisplay = new Date(startTime).toLocaleString([], { 
-        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
     });
     const endTimeDisplay = new Date(endTime).toLocaleString([], { 
-        year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
     });
 
     // Calculate duration in hours
@@ -243,6 +243,7 @@ function showCountdown(startTime, endTime) {
 
     startCountdown(endTime); // Call countdown using endTime
 }
+
 
        function startCountdown(endTime) {
     const countdownDisplay = document.getElementById("countdown-timer");
