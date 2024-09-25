@@ -148,7 +148,7 @@
             }
         }
 
-       // Function to shuffle the board
+// Function to shuffle the board
 async function shuffleBoard() {
     try {
         const boardDocRef = doc(db, "game_state", "current");
@@ -158,15 +158,36 @@ async function shuffleBoard() {
             const gameData = boardDocSnap.data();
             const currentBoard = gameData.board || [];
 
-            // Fetch Free Spot Phrases
-            const freeSpotQuery = query(collection(db, "bingo_phrases"), where("category", "==", "Free Spot"));
-            const freeSpotSnapshot = await getDocs(freeSpotQuery);
+            // Step 1: Decrement `timesUsed` for the current board's phrases
+            await decrementTimesUsed(currentBoard);
 
+            // Fetch all approved phrases and Free Spot phrases
+            const allPhrasesQuery = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
+            const freeSpotQuery = query(collection(db, "bingo_phrases"), where("category", "==", "Free Spot"));
+
+            const [allPhrasesSnapshot, freeSpotSnapshot] = await Promise.all([getDocs(allPhrasesQuery), getDocs(freeSpotQuery)]);
+
+            const allPhrases = [];
             const freeSpotPhrases = [];
+
+            // Collect all phrases and categorize Free Spot phrases separately
+            allPhrasesSnapshot.forEach((doc) => {
+                const data = doc.data();
+                allPhrases.push({
+                    id: doc.id,
+                    phrase: data.phrase,
+                    timesUsed: data.timesUsed || 0
+                });
+            });
+
             freeSpotSnapshot.forEach((doc) => {
                 const data = doc.data();
                 if (data.phrase && data.phrase.trim() !== "") {
-                    freeSpotPhrases.push(data.phrase);
+                    freeSpotPhrases.push({
+                        id: doc.id,
+                        phrase: data.phrase,
+                        timesUsed: data.timesUsed || 0
+                    });
                 }
             });
 
@@ -175,29 +196,33 @@ async function shuffleBoard() {
                 return;
             }
 
-            // Choose a random Free Spot phrase
+            // Step 2: Choose a random Free Spot phrase
             const randomFreeSpot = freeSpotPhrases[Math.floor(Math.random() * freeSpotPhrases.length)];
 
-            // Shuffle the rest of the board, excluding the Free Spot
-            const phrasesToShuffle = currentBoard.filter((phrase, index) => index !== 7); // Exclude index 7
-            shuffle(phrasesToShuffle); // Shuffle the remaining phrases
+            // Shuffle the non-free spot phrases
+            const phrasesToShuffle = allPhrases.filter((phraseObj) => phraseObj.id !== randomFreeSpot.id);
+            shuffle(phrasesToShuffle); // Shuffle the non-free spot phrases
 
             const newBoard = [];
             let phraseIndex = 0;
 
-            // Fill the new board with the shuffled phrases, ensuring the Free Spot is in the center
+            // Step 3: Build the new board, ensuring the Free Spot is in the center (index 7)
             for (let i = 0; i < 15; i++) {
                 if (i === 7) {
-                    newBoard.push(randomFreeSpot); // Add the chosen Free Spot phrase to the center
+                    newBoard.push(randomFreeSpot.phrase); // Place the Free Spot in the center
                 } else {
-                    newBoard.push(phrasesToShuffle[phraseIndex]);
+                    newBoard.push(phrasesToShuffle[phraseIndex].phrase);
                     phraseIndex++;
                 }
             }
 
-            // Update the Firestore document with the new board
+            // Step 4: Increment `timesUsed` for the newly shuffled phrases
+            await incrementTimesUsed(newBoard);
+
+            // Step 5: Save the new board to Firestore
             await setDoc(boardDocRef, { board: newBoard }, { merge: true });
-            alert("The bingo board has been shuffled, including a new Free Spot phrase!");
+
+            alert("The bingo board has been reshuffled, and the counters have been updated!");
 
         } else {
             alert("No game state found!");
@@ -208,15 +233,51 @@ async function shuffleBoard() {
     }
 }
 
+// Function to decrement timesUsed for the current board's phrases
+async function decrementTimesUsed(currentBoard) {
+    for (const phrase of currentBoard) {
+        const phraseDocRef = query(collection(db, "bingo_phrases"), where("phrase", "==", phrase));
+        const phraseSnap = await getDocs(phraseDocRef);
 
-        // Shuffle function
-        function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
+        if (!phraseSnap.empty) {
+            const docId = phraseSnap.docs[0].id; // Get the document ID of the phrase
+            const phraseData = phraseSnap.docs[0].data();
+
+            // Decrement timesUsed only if it's greater than 0
+            const newTimesUsed = phraseData.timesUsed ? phraseData.timesUsed - 1 : 0;
+
+            await updateDoc(doc(db, "bingo_phrases", docId), { timesUsed: newTimesUsed });
         }
+    }
+}
+
+// Function to increment timesUsed for the new board's phrases
+async function incrementTimesUsed(newBoard) {
+    for (const phrase of newBoard) {
+        const phraseDocRef = query(collection(db, "bingo_phrases"), where("phrase", "==", phrase));
+        const phraseSnap = await getDocs(phraseDocRef);
+
+        if (!phraseSnap.empty) {
+            const docId = phraseSnap.docs[0].id; // Get the document ID of the phrase
+            const phraseData = phraseSnap.docs[0].data();
+
+            // Increment timesUsed
+            const newTimesUsed = phraseData.timesUsed ? phraseData.timesUsed + 1 : 1;
+
+            await updateDoc(doc(db, "bingo_phrases", docId), { timesUsed: newTimesUsed });
+        }
+    }
+}
+
+// Shuffle function
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
 
         // Function to handle scheduled game start and stop
         async function checkSchedule() {
