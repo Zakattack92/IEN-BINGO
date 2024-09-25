@@ -260,15 +260,10 @@ function startCountdown(startTimeFormatted) {
     // Clear any existing interval
     clearInterval(countdownTimer);
 
-    // Convert startTimeFormatted to a Date object
-    const gameStartDate = new Date(startTimeFormatted);
+    // Parse the start time formatted as HH:MM into separate hours and minutes
+    const [startHours, startMinutes] = startTimeFormatted.split(':').map(Number); // Splits and converts to numbers
 
-    // Log the game start time in hours, minutes, and seconds for debugging
-    const gameStartHours = gameStartDate.getHours();
-    const gameStartMinutes = gameStartDate.getMinutes();
-    const gameStartSeconds = gameStartDate.getSeconds();
-    
-    console.log(`Game Start Time: ${pad(gameStartHours)}:${pad(gameStartMinutes)}:${pad(gameStartSeconds)}`); // Debugging: Log game start time
+    console.log(`Game Start Time Parsed: ${pad(startHours)}:${pad(startMinutes)}`); // Debugging: Log parsed start time
 
     countdownTimer = setInterval(() => {
         // Get the current time
@@ -280,9 +275,9 @@ function startCountdown(startTimeFormatted) {
         console.log(`Current Time: ${pad(currentHours)}:${pad(currentMinutes)}:${pad(currentSeconds)}`); // Debugging: Log current time
 
         // Calculate the difference between the start time and current time
-        let hours = gameStartHours - currentHours;
-        let minutes = gameStartMinutes - currentMinutes;
-        let seconds = gameStartSeconds - currentSeconds;
+        let hours = startHours - currentHours;
+        let minutes = startMinutes - currentMinutes;
+        let seconds = 0 - currentSeconds; // Countdown for seconds
 
         // Adjust for negative seconds
         if (seconds < 0) {
@@ -323,8 +318,6 @@ function startCountdown(startTimeFormatted) {
 function pad(num) {
     return num.toString().padStart(2, '0');
 }
-
-
 
         function hideGameElements() {
             document.querySelector('.bingo-grid').classList.add('hidden');
