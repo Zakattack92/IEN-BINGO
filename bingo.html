@@ -236,15 +236,17 @@ function showCountdown(startTime, endTime) {
     const totalDurationHours = ((endTime - startTime) / (1000 * 60 * 60)).toFixed(2); // Duration in hours
 
     // Display start and end time in local time zone
-const startTimeDisplay = new Date(startTime).toLocaleString();  // Convert to local time
-const endTimeDisplay = new Date(endTime).toLocaleString();  // Convert to local time
+// If you need both separately, rename one
+const startTimeFormatted = new Date(startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+const endTimeFormatted = new Date(endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
     
     // Update the game message
     document.getElementById("game-message").innerHTML = `
         <p>Next Game Starts:</p> 
-        <p> ${startTimeDisplay}</p>
+        <p> ${startTimeFormatted}</p>
         <p>Game Ends:</p>
-        <p>${endTimeDisplay}</p>
+        <p>${endTimeFormatted}</p>
         <p>Game Duration:</p>
         <p>${totalDurationHours} Hours</p>
     `;
