@@ -262,6 +262,10 @@ function startCountdown(startTime) {
         // Parse startTime as a Date object
         const startTimeParsed = new Date(startTime);
 
+         // Log start time for debugging
+        console.log(`Start Time: ${startTimeParsed.toLocaleTimeString()}`);
+
+
         // Extract hours, minutes, and seconds for both current time and start time
         const currentHours = now.getHours();
         const currentMinutes = now.getMinutes();
