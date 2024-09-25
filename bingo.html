@@ -217,7 +217,7 @@ document.getElementById('user-button').addEventListener('click', function() {
             });
         }
 
-        // Function to show countdown timer
+// Function to show countdown timer
 function showCountdown(startTime, endTime) {
     document.querySelector('.rules-section').classList.add('hidden');
     document.querySelector('.bingo-grid').classList.add('hidden');
@@ -235,14 +235,21 @@ function showCountdown(startTime, endTime) {
     // Calculate duration in hours
     const totalDurationHours = ((endTime - startTime) / (1000 * 60 * 60)).toFixed(2); // Duration in hours
 
+    // Update the game message
     document.getElementById("game-message").innerHTML = `
         <p>Game starts: ${startTimeDisplay}</p>
         <p>Game ends: ${endTimeDisplay}</p>
         <p>Game Duration: ${totalDurationHours} Hours</p>
     `;
 
+    // Add "GAME BEGINS IN:" above the countdown timer
+    document.getElementById("countdown-timer").innerHTML = `
+        <p style="color: red; font-weight: bold;">GAME BEGINS IN:</p>
+    `;
+
     startCountdown(endTime); // Call countdown using endTime
 }
+
 
 
        function startCountdown(endTime) {
