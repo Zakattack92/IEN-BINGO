@@ -240,11 +240,7 @@ function showCountdown(startTime, endTime) {
         <p>Game starts: ${startTimeDisplay}</p>
         <p>Game ends: ${endTimeDisplay}</p>
         <p>Game Duration: ${totalDurationHours} Hours</p>
-    `;
-
-    // Add "GAME BEGINS IN:" above the countdown timer
-    document.getElementById("countdown-timer").innerHTML = `
-        <p style="color: red; font-weight: bold;">GAME BEGINS IN:</p>
+   <p style="color: red; font-weight: bold;">GAME BEGINS IN:</p>
     `;
 
     startCountdown(endTime); // Call countdown using endTime
@@ -252,34 +248,40 @@ function showCountdown(startTime, endTime) {
 
 
 
-       function startCountdown(endTime) {
+// Function to start the countdown timer
+function startCountdown(endTime) {
     const countdownDisplay = document.getElementById("countdown-timer");
-    clearInterval(countdownTimer); // Clear existing countdown
 
+    // Clear any existing interval
+    clearInterval(countdownTimer);
+
+    // Update the timer every second
     countdownTimer = setInterval(() => {
-        const now = new Date().getTime();
-        const distance = endTime - now;
+        const now = new Date().getTime(); // Get the current time
+        const distance = endTime - now; // Calculate the remaining time
 
         // Time calculations for hours, minutes, and seconds
         const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((distance % (1000)) / 1000);
 
-        countdownDisplay.innerHTML = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+        // Display the result in HH:MM:SS format
+        countdownDisplay.innerHTML += `
+            ${pad(hours)}:${pad(minutes)}:${pad(seconds)}
+        `;
 
-        // If the countdown is over, clear the interval
+        // If the countdown is over, clear the interval and reset the display
         if (distance < 0) {
             clearInterval(countdownTimer);
-            countdownDisplay.innerHTML = "00:00:00";
+            countdownDisplay.innerHTML = "00:00:00"; // Display when countdown ends
         }
-    }, 1000);
+    }, 1000); // Update every 1000 milliseconds (1 second)
 }
 
-// Utility function to pad numbers with leading zeros
+// Utility function to pad single digits with leading zeros
 function pad(num) {
     return num.toString().padStart(2, '0');
 }
-
 
         function hideGameElements() {
             document.querySelector('.bingo-grid').classList.add('hidden');
