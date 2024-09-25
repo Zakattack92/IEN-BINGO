@@ -294,27 +294,6 @@ function pad(num) {
     return num.toString().padStart(2, '0');
 }
 
-
-        // Format the time string
-        let timeString = `GAME BEGINS IN: ${pad(minutes)}:${pad(seconds)}`;
-        if (hours > 0) {
-            timeString = `GAME BEGINS IN: ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-        }
-
-        // Update the countdown display
-        countdownDisplay.innerHTML = timeString;
-
-        console.log(`Countdown Time: ${timeString}`); // Log countdown time for debugging
-    }, 1000); // Update every second
-}
-
-// Utility function to pad single digits with leading zeros
-function pad(num) {
-    return num.toString().padStart(2, '0');
-}
-
-
-
         function hideGameElements() {
             document.querySelector('.bingo-grid').classList.add('hidden');
             document.querySelector('.rules-section').classList.add('hidden');
