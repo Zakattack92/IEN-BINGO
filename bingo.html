@@ -186,29 +186,32 @@
         document.getElementById('user-button').textContent = user.name;
 
 
-        // Function to check the game status and update the UI accordingly
-        async function checkGameStatus() {
+           // Constantly monitor the game state with onSnapshot
+        function monitorGameState() {
             const gameStateRef = doc(db, "game_state", "current");
-            const gameStateSnap = await getDoc(gameStateRef);
 
-            if (gameStateSnap.exists()) {
-                const gameState = gameStateSnap.data();
-                const gameStatus = gameState.status;
-                const startTime = gameState.startTime;
-                const endTime = gameState.endTime;
+            onSnapshot(gameStateRef, (doc) => {
+                if (doc.exists()) {
+                    const gameState = doc.data();
+                    const gameStatus = gameState.status;
+                    const startTime = gameState.startTime;
+                    const endTime = gameState.endTime;
 
-                if (gameStatus === "idle") {
-                    document.getElementById("idle-message").classList.remove('hidden');
-                    hideGameElements();
-                } else if (gameStatus === "scheduled") {
-                    showCountdown(startTime, endTime);
-                } else if (gameStatus === "started") {
-                    showGameElements();
-                    populateBingoGrid();
+                    if (gameStatus === "idle") {
+                        document.getElementById("idle-message").classList.remove('hidden');
+                        hideGameElements();
+                    } else if (gameStatus === "scheduled") {
+                        showCountdown(startTime, endTime);
+                    } else if (gameStatus === "started") {
+                        showGameElements();
+                        populateBingoGrid();
+                    } else if (gameStatus === "ended") {
+                        endGame(); // Automatically end the game when status changes to "ended"
+                    }
+                } else {
+                    alert("Game state not found.");
                 }
-            } else {
-                alert("Game state not found.");
-            }
+            });
         }
 
         // Function to show countdown timer
@@ -541,22 +544,6 @@ async function loadClickedCells() {
             return cells.length === 15;
         }
 
-       // Function to listen to game status changes
-async function checkGameStatus() {
-    const gameStateRef = doc(db, "game_state", "current");
-
-    // Continuously listen for changes in the game state document
-    const unsubscribe = onSnapshot(gameStateRef, (doc) => {
-        if (doc.exists()) {
-            const gameState = doc.data();
-            const startTime = gameState.startTime;
-        const endTime = gameState.endTime;
-            if (gameState.status === "ended") {
-                endGame(); // If the game status is "ended," trigger the endGame function
-            }
-        }
-    });
-}
 
 // Function to save points and end the game
 function endGame() {
@@ -569,9 +556,7 @@ function endGame() {
 points = 0; // Reset points
     localStorage.removeItem('pointsThisGame'); // Clear points from localStorage
     updatePointsDisplay(); // Reset points display
-     setTimeout(() => {
-           }, 15000); // 15 second delay
-}
+     }
 
         // Function to update the game status in Firestore
 async function updateGameStatus(status) {
