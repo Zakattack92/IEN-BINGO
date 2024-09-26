@@ -254,32 +254,49 @@ const endTimeFormatted = new Date(endTime).toLocaleTimeString([], { hour: '2-dig
     startCountdown(endTime); // Call countdown using endTime
 }
 // Function to start the countdown timer
-function startCountdown(startTime) {
+// Function to start the countdown timer using startTimeFormatted (HH:MM)
+function startCountdown(startTimeFormatted) {
     const countdownDisplay = document.getElementById("countdown-timer");
 
+    // Parse the hours and minutes from startTimeFormatted
+    const [startHours, startMinutes] = startTimeFormatted.split(":").map(Number);
+
     countdownTimer = setInterval(() => {
-        const now = new Date().getTime();
+        const now = new Date();
+        
+        // Get the current time in hours and minutes
+        const currentHours = now.getHours();
+        const currentMinutes = now.getMinutes();
+        const currentSeconds = now.getSeconds();
 
-        // Calculate the remaining time in milliseconds
-        const timeRemaining = startTime - now;
+        // Calculate remaining time
+        let remainingHours = startHours - currentHours;
+        let remainingMinutes = startMinutes - currentMinutes;
+        let remainingSeconds = 60 - currentSeconds;
 
-        // Calculate hours, minutes, and seconds remaining
-        let hours = Math.floor((timeRemaining / (1000 * 60 * 60)) % 24);
-        let minutes = Math.floor((timeRemaining / (1000 * 60)) % 60);
-        let seconds = Math.floor((timeRemaining / 1000) % 60);
+        // Adjust if minutes go negative
+        if (remainingMinutes < 0) {
+            remainingMinutes += 60;
+            remainingHours -= 1;
+        }
+
+        // Adjust if hours go negative
+        if (remainingHours < 0) {
+            remainingHours += 24;  // Assuming the game starts within 24 hours
+        }
 
         // Adjust display format when hours or minutes are 0
-        let timeString = `${pad(minutes)}:${pad(seconds)}`;
-        if (hours > 0) {
-            timeString = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+        let timeString = `${pad(remainingMinutes)}:${pad(remainingSeconds)}`;
+        if (remainingHours > 0) {
+            timeString = `${pad(remainingHours)}:${pad(remainingMinutes)}:${pad(remainingSeconds)}`;
         }
 
         // Update the countdown display
         countdownDisplay.innerHTML = `GAME BEGINS IN: ${timeString}`;
-        console.log(`Remaining Time - Hours: ${hours}, Minutes: ${minutes}, Seconds: ${seconds}`);
+        console.log(`Remaining Time - Hours: ${remainingHours}, Minutes: ${remainingMinutes}, Seconds: ${remainingSeconds}`);
 
         // Stop countdown when time runs out
-        if (timeRemaining <= 0) {
+        if (remainingHours <= 0 && remainingMinutes <= 0 && remainingSeconds <= 0) {
             clearInterval(countdownTimer);
             countdownDisplay.innerHTML = "GAME STARTED!";
             console.log("Countdown finished, game started!");
@@ -291,6 +308,7 @@ function startCountdown(startTime) {
 function pad(num) {
     return num.toString().padStart(2, '0');
 }
+
 
 
         function hideGameElements() {
