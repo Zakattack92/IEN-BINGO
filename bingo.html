@@ -495,7 +495,7 @@ async function fillBingoGrid(board) {
 
         // Save clicked cells to Firestore
 async function saveClickedCell(cellIndex) {
-    const userDocRef = doc(db, "user_clicks", currentUser.name);
+    const userDocRef = doc(db, "user_clicks", user.name);
 const userDocSnap = await getDoc(userDocRef);
 
 let clickedCells = [];
@@ -519,7 +519,7 @@ if (userDocSnap.exists()) {
 }
 
 async function loadClickedCells() {
-    const userDocRef = doc(db, "user_clicks", currentUser.name);
+    const userDocRef = doc(db, "user_clicks", user.name);
     const userDocSnap = await getDoc(userDocRef);
 
     if (userDocSnap.exists()) {
@@ -648,7 +648,7 @@ function clearBoard() {
 
 // Function to save cumulative points to Firestore
 async function saveCumulativePoints() {
-    const userDocRef = doc(db, "users", currentUser.name);
+    const userDocRef = doc(db, "users", user.name);
     const userDocSnap = await getDoc(userDocRef);
 
     let cumulativePoints = 0;
@@ -668,7 +668,7 @@ async function saveCumulativePoints() {
 // Function to clear the clicked cells for the current user
 async function clearClickedCells() {
     try {
-        const userDocRef = doc(db, "user_clicks", currentUser.name);
+        const userDocRef = doc(db, "user_clicks", user.name);
         // Update the Firestore document to clear the clickedCells array
         await setDoc(userDocRef, { clickedCells: [] }, { merge: true });
     } catch (error) {
