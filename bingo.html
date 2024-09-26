@@ -289,14 +289,22 @@ console.log(`current Time: ${currentHours}:${currentMinutes}:${currentSeconds}`)
         let remainingMinutes = startMinutes - currentMinutes;
         let remainingSeconds = 59 - currentSeconds;
 
+// Adjust if seconds go negative
+        if (remainingSeconds === 60) {
+            remainingSeconds = 0;
+        } else if (remainingSeconds < 0) {
+            remainingSeconds += 60;
+            remainingMinutes -= 1;
+        }
+
         // Adjust if minutes go negative
-        if (remainingMinutes < -1) {
-            remainingMinutes += 59;
+        if (remainingMinutes < 0) {
+            remainingMinutes += 60;
             remainingHours -= 1;
         }
 
         // Adjust if hours go negative
-        if (remainingHours < -1) {
+        if (remainingHours < 0) {
             remainingHours += 24;  // Assuming the game starts within 24 hours
         }
 // Convert back to 12-hour format for display if needed
@@ -305,7 +313,6 @@ console.log(`current Time: ${currentHours}:${currentMinutes}:${currentSeconds}`)
         // Adjust display format when hours or minutes are 0
         let timeString = `${pad(remainingHours)}:${pad(remainingMinutes)}:${pad(remainingSeconds)}`;
         
-
         // Update the countdown display
         countdownDisplay.innerHTML = `GAME BEGINS IN: ${timeString}`;
         console.log(`Remaining Time - Hours: ${remainingHours}, Minutes: ${remainingMinutes}, Seconds: ${remainingSeconds}`);
