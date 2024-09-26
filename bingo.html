@@ -582,14 +582,22 @@ function updateClickedCells(clickedCells) {
 function awardPoints(clickedCells = [], clickedTimes = []) {
     if (!Array.isArray(clickedCells)) clickedCells = [];
 
+    // Ensure we check for bingos and full card completion
     const horizontalBingos = checkHorizontalBingo(clickedCells, clickedTimes);
     const verticalBingos = checkVerticalBingo(clickedCells, clickedTimes);
     const fullBoardCompleted = checkFullBoard(clickedCells, clickedTimes);
 
-    points = clickedCells.length; // Each clicked square = 1 point
-    points += horizontalBingos * 2; // Horizontal bingo = 2 point
-    points += verticalBingos * 3; // Vertical bingo = 3 points
-    points += fullBoardCompleted ? 14 : 0; // Full board = 14 bonus points
+    // Base points: 1 point per clicked cell
+    points = clickedCells.length;
+
+    // Bonus points for bingos
+    points += horizontalBingos * 2; // 2 points for each completed row
+    points += verticalBingos * 3;   // 3 points for each completed column
+
+    // Bonus for full board
+    if (fullBoardCompleted) {
+        points += 14;  // Full board bonus points
+    }
 
     updatePointsDisplay(); // Update points display
     localStorage.setItem('pointsThisGame', points); // Save points to localStorage
@@ -626,8 +634,9 @@ function checkHorizontalBingo(cells, clickedTimes) {
         }
     });
 
-    return completedRows;
+    return completedRows; // Return the number of completed rows for point calculation
 }
+
 
 
 // Check for vertical bingo and return the number of bingos along with the completion time
