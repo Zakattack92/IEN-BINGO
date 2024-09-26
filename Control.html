@@ -83,7 +83,7 @@
                 await setDoc(doc(db, "game_state", "current"), {
                     status: "started",
                     timestamp: Date.now(),
-                    countdownEnabled: false
+                    countdownEnabled: false,
                     endTime,
                 });
                 alert("Game Started!");
