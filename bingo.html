@@ -315,8 +315,7 @@ console.log(`current Time: ${currentHours}:${currentMinutes}:${currentSeconds}`)
             clearInterval(countdownTimer);
             countdownDisplay.innerHTML = "GAME STARTED!";
             console.log("Countdown finished, game started!");
-             clearGameMessage();
-        }
+                    }
     }, 250); // Update every second
 }
 
@@ -476,6 +475,7 @@ function shuffle(array) {
                 loadClickedCells(); // Load clicked cells for the current user
                 awardPoints(); // Award points after grid is populated and clicked cells are loaded
             } else {
+                 clearGameMessage();
                 await generateAndSaveBingoBoard();
             }
         }
