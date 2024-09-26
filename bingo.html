@@ -254,6 +254,7 @@ const endTimeFormatted = new Date(endTime).toLocaleTimeString([], { hour: '2-dig
    // Extract the hours and minutes from startTimeFormatted
     const [startHours, startMinutes] = startTimeFormatted.split(":").map(Number);
 
+        console.log(`Start Time Formatted: ${startTimeFormatted}`);
     // Display the start time for debugging purposes
     console.log(`Game Start Time: ${startHours}:${startMinutes}`);
 
