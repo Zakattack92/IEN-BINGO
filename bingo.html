@@ -649,6 +649,13 @@ function clearBoard() {
 // Function to save cumulative points to Firestore
 async function saveCumulativePoints() {
     try {
+        // Retrieve the current points from localStorage
+        let currentPoints = parseInt(localStorage.getItem('pointsThisGame')) || 0;
+
+        if (currentPoints <= 0) {
+            console.log("No points to save.");
+            return; // No points to save
+        }
     const userDocRef = doc(db, "users", user.name);
     const userDocSnap = await getDoc(userDocRef);
 
@@ -659,7 +666,7 @@ console.log(`Current cumulative points: ${cumulativePoints}`);
         }
 
     // Add current game points to the cumulative total
-    cumulativePoints += points;
+    cumulativePoints += currentPoints;;
 console.log(`New cumulative points: ${cumulativePoints}`);
 
     // Save the updated cumulative points to Firestore
