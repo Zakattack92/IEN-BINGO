@@ -328,6 +328,9 @@ if (remainingMinutes < 0) {
     document.getElementById("game-message").innerHTML = ""; // Clears the game message
 }
 
+        function resetGameMessage() {
+    document.getElementById("game-message").innerHTML = `<h1>I.E.N. Bingo</h1>`;
+}
         
 // Utility function to pad single digits with leading zeros
 function pad(num) {
@@ -481,6 +484,8 @@ function shuffle(array) {
                 awardPoints(); // Award points after grid is populated and clicked cells are loaded
             } else {
                  clearGameMessage();
+                resetGameMessage();
+
                 await generateAndSaveBingoBoard();
             }
         }
