@@ -519,20 +519,32 @@ let clickedCells = [];
 if (userDocSnap.exists()) {
     clickedCells = userDocSnap.data().clickedCells || []; // Ensure it's always initialized as an array.
 }
+// Get current time in HH:MM (military time)
+    const now = new Date();
+    const currentTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }); // Military time
 
+    // Toggle clicked state (add/remove clicked cells and log the time clicked)
+    const clickedCellData = {
+        cellIndex: cellIndex,
+        timeClicked: currentTime
+    };
 
-    // Toggle clicked state (add/remove clicked cells)
-    if (clickedCells.includes(cellIndex)) {
-        clickedCells = clickedCells.filter(index => index !== cellIndex);
+    // Check if the cell was already clicked, if not, add it to the list with the time
+    const existingCellIndex = clickedCells.findIndex(cell => cell.cellIndex === cellIndex);
+    
+    if (existingCellIndex > -1) {
+        // Remove the cell if it was already clicked
+        clickedCells.splice(existingCellIndex, 1);
     } else {
-        clickedCells.push(cellIndex);
+        // Add the new clicked cell with time
+        clickedCells.push(clickedCellData);
     }
 
     // Save the updated clicked cells to Firestore
     await setDoc(userDocRef, { clickedCells: clickedCells }, { merge: true });
 
     // Award points based on current clicks
-            awardPoints(clickedCells);
+    awardPoints(clickedCells);
 }
 
 async function loadClickedCells() {
