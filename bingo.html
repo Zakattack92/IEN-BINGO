@@ -562,16 +562,21 @@ async function loadClickedCells() {
     }
 }
         // Update the bingo grid to reflect clicked cells
-        function updateClickedCells(clickedCells) {
-            const bingoCells = document.querySelectorAll('.bingo-cell');
-            bingoCells.forEach((cell, index) => {
-                if (clickedCells.includes(index)) {
-                    cell.classList.add('clicked'); // Mark cell as clicked
-                } else {
+function updateClickedCells(clickedCells) {
+    const bingoCells = document.querySelectorAll('.bingo-cell');
+    
+    // Extract only the indices from clickedCells (which are objects now)
+    const clickedIndices = clickedCells.map(cell => cell.cellIndex);
+
+    bingoCells.forEach((cell, index) => {
+        if (clickedIndices.includes(index)) {
+            cell.classList.add('clicked'); // Mark cell as clicked
+        } else {
             cell.classList.remove('clicked'); // Remove clicked class if it's not in the clickedIndices
         }
-            });
-        }
+    });
+}
+
 
         // Award points based on clicked cells and check for bingos
         function awardPoints(clickedCells = []) {
