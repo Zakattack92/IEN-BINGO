@@ -263,7 +263,7 @@ const endTimeFormatted = new Date(endTime).toLocaleTimeString([], { hour: '2-dig
     }
 
     console.log(`Game Start Time (military): ${startHours}:${startMinutes}`);
-startMinutes -= 1;
+
     // Pass the military time values to startCountdown
     startCountdown(startHours, startMinutes);
 }
