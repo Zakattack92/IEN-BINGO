@@ -303,9 +303,7 @@ console.log(`current Time: ${currentHours}:${currentMinutes}:${currentSeconds}`)
         const displayHours = remainingHours % 12 || 12; // Convert 0 hours to 12 for display purposes
         const ampm = remainingHours >= 12 ? 'PM' : 'AM';
         // Adjust display format when hours or minutes are 0
-        let timeString = `${pad(remainingMinutes)}:${pad(remainingSeconds)}`;
-        if (remainingHours > 0) {
-            timeString = `${pad(remainingHours)}:${pad(remainingMinutes)}:${pad(remainingSeconds)}`;
+        let timeString = `${pad(remainingHours)}:${pad(remainingMinutes)}:${pad(remainingSeconds)}`;
         }
 
         // Update the countdown display
