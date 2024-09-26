@@ -303,6 +303,9 @@ function shuffle(array) {
 
                 if (gameStateSnap.exists()) {
                     const gameState = gameStateSnap.data();
+                    const startTime = gameState.startTime; // Get startTime from Firestore
+            const endTime = gameState.endTime; // Get endTime from Firestore
+
                     if (gameState.status === "scheduled" && now >= gameState.startTime && now <= gameState.endTime) {
                         startScheduledGame(gameState.startTime, gameState.endTime); // Pass startTime and endTime
                     } else if (gameState.status === "started" && now >= gameState.endTime) {
