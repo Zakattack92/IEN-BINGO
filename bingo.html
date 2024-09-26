@@ -648,24 +648,30 @@ function clearBoard() {
 
 // Function to save cumulative points to Firestore
 async function saveCumulativePoints() {
+    try {
     const userDocRef = doc(db, "users", user.name);
     const userDocSnap = await getDoc(userDocRef);
 
     let cumulativePoints = 0;
     if (userDocSnap.exists()) {
         cumulativePoints = userDocSnap.data().cumulativePoints || 0;
-    }
+console.log(`Current cumulative points: ${cumulativePoints}`);
+        }
 
     // Add current game points to the cumulative total
     cumulativePoints += points;
+console.log(`New cumulative points: ${cumulativePoints}`);
 
     // Save the updated cumulative points to Firestore
     await setDoc(userDocRef, { cumulativePoints: cumulativePoints }, { merge: true });
+console.log("Cumulative points saved successfully!");
 
     // Clear points for the next game
     localStorage.removeItem('pointsThisGame');
-}
-// Function to clear the clicked cells for the current user
+}catch (error) {
+        console.error("Error saving cumulative points:", error);
+    }
+    // Function to clear the clicked cells for the current user
 async function clearClickedCells() {
     try {
         const userDocRef = doc(db, "user_clicks", user.name);
