@@ -251,16 +251,23 @@ const endTimeFormatted = new Date(endTime).toLocaleTimeString([], { hour: '2-dig
         <p>${totalDurationHours} Hours</p>
     `;
 
-   // Extract the hours and minutes from startTimeFormatted
-    const [startHours, startMinutes] = startTimeFormatted.split(":").map(Number);
+    // Extract the hours and minutes from startTimeFormatted (12-hour time) and convert to military time
+    let [timeString, ampm] = startTimeFormatted.split(" ");
+    let [startHours, startMinutes] = timeString.split(":").map(Number);
 
-        console.log(`Start Time Formatted: ${startTimeFormatted}`);
-    // Display the start time for debugging purposes
-    console.log(`Game Start Time: ${startHours}:${startMinutes}`);
+    // Convert to military time
+    if (ampm === "PM" && startHours !== 12) {
+        startHours += 12; // Convert PM to 24-hour format
+    } else if (ampm === "AM" && startHours === 12) {
+        startHours = 0; // Handle 12 AM as 0 hours
+    }
 
-    // Pass the extracted hours and minutes to the countdown function
+    console.log(`Game Start Time (military): ${startHours}:${startMinutes}`);
+
+    // Pass the military time values to startCountdown
     startCountdown(startHours, startMinutes);
 }
+
 
 // Function to start the countdown timer using hours and minutes
 function startCountdown(startHours, startMinutes) {
@@ -276,7 +283,7 @@ function startCountdown(startHours, startMinutes) {
         const currentHours = now.getHours();
         const currentMinutes = now.getMinutes();
         const currentSeconds = now.getSeconds();
-console.log(`Game Start Time: ${currentHours}:${currentMinutes}:${currentSeconds}`);
+console.log(`current Time: ${currentHours}:${currentMinutes}:${currentSeconds}`);
         // Calculate remaining time
         let remainingHours = startHours - currentHours;
         let remainingMinutes = startMinutes - currentMinutes;
@@ -284,7 +291,7 @@ console.log(`Game Start Time: ${currentHours}:${currentMinutes}:${currentSeconds
 
         // Adjust if minutes go negative
         if (remainingMinutes < 0) {
-            remainingMinutes += 60;
+            remainingMinutes += 59;
             remainingHours -= 1;
         }
 
@@ -292,7 +299,9 @@ console.log(`Game Start Time: ${currentHours}:${currentMinutes}:${currentSeconds
         if (remainingHours < 0) {
             remainingHours += 24;  // Assuming the game starts within 24 hours
         }
-
+// Convert back to 12-hour format for display if needed
+        const displayHours = remainingHours % 12 || 12; // Convert 0 hours to 12 for display purposes
+        const ampm = remainingHours >= 12 ? 'PM' : 'AM';
         // Adjust display format when hours or minutes are 0
         let timeString = `${pad(remainingMinutes)}:${pad(remainingSeconds)}`;
         if (remainingHours > 0) {
