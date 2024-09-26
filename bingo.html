@@ -276,7 +276,7 @@ function startCountdown(startHours, startMinutes) {
         const currentHours = now.getHours();
         const currentMinutes = now.getMinutes();
         const currentSeconds = now.getSeconds();
-
+console.log(`Game Start Time: ${currentHours}:${currentMinutes}:${currentSeconds}`);
         // Calculate remaining time
         let remainingHours = startHours - currentHours;
         let remainingMinutes = startMinutes - currentMinutes;
