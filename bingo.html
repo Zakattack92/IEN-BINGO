@@ -290,16 +290,16 @@ console.log(`current Time: ${currentHours}:${currentMinutes}:${currentSeconds}`)
         let remainingSeconds = 59 - currentSeconds;
 
 // Adjust if seconds go negative
-        if (remainingSeconds === 60) {
-            remainingSeconds = 0;
-        } else if (remainingSeconds < 0) {
-            remainingSeconds += 60;
+        if (remainingSeconds === 59) {
+            remainingSeconds = -1;
+        } else if (remainingSeconds < -1) {
+            remainingSeconds += 59;
             remainingMinutes -= 1;
         }
 
         // Adjust if minutes go negative
-        if (remainingMinutes < 0) {
-            remainingMinutes += 60;
+        if (remainingMinutes < -1) {
+            remainingMinutes += 59;
             remainingHours -= 1;
         }
 
