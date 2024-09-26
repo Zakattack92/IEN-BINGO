@@ -252,7 +252,7 @@ const endTimeFormatted = new Date(endTime).toLocaleTimeString([], { hour: '2-dig
     `;
 
     // Extract the hours and minutes from startTimeFormatted (12-hour time) and convert to military time
-    let [timeString, ampm] = startTimeFormatted.split(" ");
+    let [timeString, ampm] = startTimeDisplay.split(" ");
     let [startHours, startMinutes] = timeString.split(":").map(Number);
 
     // Convert to military time
