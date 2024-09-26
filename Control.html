@@ -110,10 +110,9 @@
         // Manually end the game
         async function endGame() {
             try {
-                await updateDoc(doc(db, "game_state", "current"), {  // Using updateDoc to change the status
+                await setDoc(doc(db, "game_state", "current"), {  // Using updateDoc to change the status
                     status: "ended",
-                    Endtime: Date.now(),
-                    countdownEnabled: false
+                    Endtime: Date.now()
                 });
                 alert("Game Ended Manually!");
             } catch (error) {
