@@ -287,16 +287,16 @@ console.log(`current Time: ${currentHours}:${currentMinutes}:${currentSeconds}`)
         // Calculate remaining time
         let remainingHours = startHours - currentHours;
         let remainingMinutes = startMinutes - currentMinutes;
-        let remainingSeconds = 60 - currentSeconds;
+        let remainingSeconds = 59 - currentSeconds;
 
         // Adjust if minutes go negative
-        if (remainingMinutes < 0) {
+        if (remainingMinutes < -1) {
             remainingMinutes += 59;
             remainingHours -= 1;
         }
 
         // Adjust if hours go negative
-        if (remainingHours < 0) {
+        if (remainingHours < -1) {
             remainingHours += 24;  // Assuming the game starts within 24 hours
         }
 // Convert back to 12-hour format for display if needed
