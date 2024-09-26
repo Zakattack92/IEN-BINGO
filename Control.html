@@ -80,11 +80,10 @@
         // Manually start the game
         async function startGame() {
             try {
-                await setDoc(doc(db, "game_state", "current"), {
+                await updateDoc(doc(db, "game_state", "current"), {
                     status: "started",
                     timestamp: Date.now(),
-                    countdownEnabled: false,
-                    endTime,
+                    countdownEnabled: false
                 });
                 alert("Game Started!");
             } catch (error) {
