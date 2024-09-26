@@ -251,20 +251,27 @@ const endTimeFormatted = new Date(endTime).toLocaleTimeString([], { hour: '2-dig
         <p>${totalDurationHours} Hours</p>
     `;
 
-    startCountdown(endTime); // Call countdown using endTime
+   // Extract the hours and minutes from startTimeFormatted
+    const [startHours, startMinutes] = startTimeFormatted.split(":").map(Number);
+
+    // Display the start time for debugging purposes
+    console.log(`Game Start Time: ${startHours}:${startMinutes}`);
+
+    // Pass the extracted hours and minutes to the countdown function
+    startCountdown(startHours, startMinutes);
 }
-// Function to start the countdown timer
-// Function to start the countdown timer using startTimeFormatted (HH:MM)
-function startCountdown(startTimeFormatted) {
+
+// Function to start the countdown timer using hours and minutes
+function startCountdown(startHours, startMinutes) {
     const countdownDisplay = document.getElementById("countdown-timer");
 
-    // Parse the hours and minutes from startTimeFormatted
-    const [startHours, startMinutes] = startTimeFormatted.split(":").map(Number);
+    // Clear any existing interval
+    clearInterval(countdownTimer);
 
     countdownTimer = setInterval(() => {
         const now = new Date();
         
-        // Get the current time in hours and minutes
+        // Get the current time in hours, minutes, and seconds
         const currentHours = now.getHours();
         const currentMinutes = now.getMinutes();
         const currentSeconds = now.getSeconds();
