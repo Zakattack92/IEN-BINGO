@@ -92,12 +92,27 @@
             }
         }
 
+        async function startScheduledGame(startTime, endTime) {
+    try {
+        await setDoc(doc(db, "game_state", "current"), {
+            status: "started",
+            startTime,  // Save the scheduled start time
+            endTime,    // Save the scheduled end time
+           countdownEnabled: false
+        });
+        alert("Scheduled game started!");
+    } catch (error) {
+        console.error("Error starting scheduled game:", error);
+    }
+}
+
+
         // Manually end the game
         async function endGame() {
             try {
                 await updateDoc(doc(db, "game_state", "current"), {  // Using updateDoc to change the status
                     status: "ended",
-                    timestamp: Date.now(),
+                    Endtime: Date.now(),
                     countdownEnabled: false
                 });
                 alert("Game Ended Manually!");
@@ -289,7 +304,7 @@ function shuffle(array) {
                 if (gameStateSnap.exists()) {
                     const gameState = gameStateSnap.data();
                     if (gameState.status === "scheduled" && now >= gameState.startTime && now <= gameState.endTime) {
-                        startGame();
+                        startScheduledGame(gameState.startTime, gameState.endTime); // Pass startTime and endTime
                     } else if (gameState.status === "started" && now >= gameState.endTime) {
                         endGame();
                     }
@@ -300,7 +315,7 @@ function shuffle(array) {
         }
 
         // Continuously check if it's time to start or stop the game
-        setInterval(checkSchedule, 60000); // Check every 60 seconds
+        setInterval(checkSchedule, 30000); // Check every 60 seconds
 
         // Expose functions to global window object
         window.startGame = startGame;
