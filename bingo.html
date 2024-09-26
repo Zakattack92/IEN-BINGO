@@ -579,33 +579,37 @@ function updateClickedCells(clickedCells) {
 
 
         // Award points based on clicked cells and check for bingos
-        function awardPoints(clickedCells = []) {
-              if (!Array.isArray(clickedCells)) clickedCells = [];
-            const horizontalBingos = checkHorizontalBingo(clickedCells);
-            const verticalBingos = checkVerticalBingo(clickedCells);
-            const letterI = checkLetterI(clickedCells);
-            const letterH = checkLetterH(clickedCells);
-            const fullBoard = checkFullBoard(clickedCells);
+function awardPoints(clickedCells = []) {
+    if (!Array.isArray(clickedCells)) clickedCells = [];
 
-            points = clickedCells.length; // Each clicked square = 1 point
-            points += horizontalBingos * 2; // Horizontal bingo = 2 point
-            points += verticalBingos * 3; // Vertical bingo = 3 points
-            points += letterI ? 8 : 0; // Letter I = 6 points
-            points += letterH ? 8 : 0; // Letter H = 8 points
-            //points += fullBoard ? 14 : 0; // Full board = 15 bonus points
+    // Get the clicked indices and times
+    const clickedIndices = clickedCells.map(c => c.cellIndex);
+    const clickedTimes = clickedCells.map(c => c.timeClicked);
 
-            updatePointsDisplay(); // Update points display
-            localStorage.setItem('pointsThisGame', points); // Save points to localStorage
-        }
+    const horizontalBingos = checkHorizontalBingo(clickedIndices, clickedTimes);
+    const verticalBingos = checkVerticalBingo(clickedIndices, clickedTimes);
+    const letterI = checkLetterI(clickedIndices, clickedTimes);
+    const letterH = checkLetterH(clickedIndices, clickedTimes);
+    const fullBoard = checkFullBoard(clickedIndices);
 
-        // Update points display in the top-right corner
-        function updatePointsDisplay() {
-            document.getElementById("points-game").textContent = points;
-        }
+    points = clickedIndices.length; // Each clicked square = 1 point
+    points += horizontalBingos * 2; // Horizontal bingo = 2 points
+    points += verticalBingos * 3; // Vertical bingo = 3 points
+    points += letterI ? 8 : 0; // Letter I = 8 points
+    points += letterH ? 8 : 0; // Letter H = 8 points
+    // points += fullBoard ? 14 : 0; // Full board = 14 points
 
-        function checkHorizontalBingo(cells) {
-    if (!Array.isArray(cells)) return false;
+    updatePointsDisplay(); // Update points display
+    localStorage.setItem('pointsThisGame', points); // Save points to localStorage
+}
 
+// Update points display in the top-right corner
+function updatePointsDisplay() {
+    document.getElementById("points-game").textContent = points;
+}
+
+   // Check for horizontal bingo and return the number of bingos along with the completion time
+function checkHorizontalBingo(clickedIndices, clickedTimes) {
     const rows = [
         [0, 1, 2],
         [3, 4, 5],
@@ -613,19 +617,67 @@ function updateClickedCells(clickedCells) {
         [9, 10, 11],
         [12, 13, 14],
     ];
-    return rows.filter(row => row.every(cell => cells.includes(cell))).length;
+
+    let bingoCount = 0;
+    rows.forEach((row, rowIndex) => {
+        // Check if all cells in the row are clicked
+        if (row.every(cell => clickedIndices.includes(cell))) {
+            bingoCount++;
+
+            // Get the times corresponding to the clicked cells in this row
+            const timesForRow = row.map(cell => clickedTimes[clickedIndices.indexOf(cell)]);
+
+            // Convert times to milliseconds for easy comparison
+            const timesInMs = timesForRow.map(t => new Date(`1970-01-01T${t}:00`).getTime());
+
+            // Find the latest (maximum) time in this row
+            const lastClickedTime = Math.max(...timesInMs);
+
+            // Convert the latest click time back to HH:MM format
+            const completedTime = new Date(lastClickedTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            // Log the time the row was completed
+            console.log(`Row ${rowIndex + 1} completed at ${completedTime}`);
+            
+            // You could save this completedTime to Firestore if needed
+        }
+    });
+    return bingoCount; // Return the number of horizontal bingos
 }
 
-
-
-       function checkVerticalBingo(cells) {
-    if (!cells || !Array.isArray(cells)) return 0; // Ensure cells is a defined array
+// Check for vertical bingo and return the number of bingos along with the completion time
+function checkVerticalBingo(clickedIndices, clickedTimes) {
     const columns = [
         [0, 3, 6, 9, 12],
         [1, 4, 7, 10, 13],
         [2, 5, 8, 11, 14],
     ];
-    return columns.filter(column => column.every(cell => cells.includes(cell))).length;
+
+    let bingoCount = 0;
+    columns.forEach((column, columnIndex) => {
+        // Check if all cells in the column are clicked
+        if (column.every(cell => clickedIndices.includes(cell))) {
+            bingoCount++;
+
+            // Get the times corresponding to the clicked cells in this column
+            const timesForColumn = column.map(cell => clickedTimes[clickedIndices.indexOf(cell)]);
+
+            // Convert times to milliseconds
+            const timesInMs = timesForColumn.map(t => new Date(`1970-01-01T${t}:00`).getTime());
+
+            // Find the latest (maximum) time
+            const lastClickedTime = Math.max(...timesInMs);
+
+            // Convert the latest click time back to HH:MM format
+            const completedTime = new Date(lastClickedTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            // Log the time the column was completed
+            console.log(`Column ${columnIndex + 1} completed at ${completedTime}`);
+            
+            // You could save this completedTime to Firestore if needed
+        }
+    });
+    return bingoCount; // Return the number of vertical bingos
 }
 
         // Check for "I" pattern
@@ -645,10 +697,30 @@ function updateClickedCells(clickedCells) {
             return letterH.every(cell => cells.includes(cell));
         }
 
-        // Check for a full board
-        function checkFullBoard(cells) {
-            return cells.length === 15;
-        }
+        // Check for a full board and return whether the board is full and the completion time
+function checkFullBoard(clickedIndices, clickedTimes) {
+    // Check if the board is full (i.e., all 15 cells are clicked)
+    if (clickedIndices.length === 15) {
+        // Get the times corresponding to all clicked cells
+        const timesInMs = clickedTimes.map(t => new Date(`1970-01-01T${t}:00`).getTime());
+
+        // Find the latest (maximum) time in the clicked cells
+        const lastClickedTime = Math.max(...timesInMs);
+
+        // Convert the latest click time back to HH:MM format
+        const completedTime = new Date(lastClickedTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        // Log the time the board was completed
+        console.log(`Full board completed at ${completedTime}`);
+
+        // You could save this completedTime to Firestore if needed
+
+        return true; // Return true if the board is fully clicked
+    } else {
+        return false; // Board is not fully clicked
+    }
+}
+
 
 
 // Function to save points and end the game
