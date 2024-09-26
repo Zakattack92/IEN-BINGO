@@ -252,14 +252,14 @@ const endTimeFormatted = new Date(endTime).toLocaleTimeString([], { hour: '2-dig
     `;
 
     // Extract the hours and minutes from startTimeFormatted (12-hour time) and convert to military time
-    let [timeString, ampm] = startTimeDisplay.split(" ");
+    let [timeString, ampm] = startTimeFormatted.split(" ");
     let [startHours, startMinutes] = timeString.split(":").map(Number);
 
     // Convert to military time
     if (ampm === "PM" && startHours !== 12) {
         startHours += 12; // Convert PM to 24-hour format
     } else if (ampm === "AM" && startHours === 12) {
-        startHours = 0; // Handle 12 AM as 0 hours
+        startHours = 00; // Handle 12 AM as 0 hours
     }
 
     console.log(`Game Start Time (military): ${startHours}:${startMinutes}`);
