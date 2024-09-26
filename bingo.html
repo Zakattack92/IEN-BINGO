@@ -554,6 +554,9 @@ async function loadClickedCells() {
     if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
         const clickedCells = userData.clickedCells || []; // Initialize clickedCells as an empty array if undefined
+        // Extract cell indices from clickedCells
+        const clickedIndices = clickedCells.map(cell => cell.cellIndex);
+
         updateClickedCells(clickedCells); // Update UI to reflect clicked cells
         awardPoints(clickedCells); // Ensure points are awarded based on loaded clicked cells
     }
@@ -564,7 +567,9 @@ async function loadClickedCells() {
             bingoCells.forEach((cell, index) => {
                 if (clickedCells.includes(index)) {
                     cell.classList.add('clicked'); // Mark cell as clicked
-                }
+                } else {
+            cell.classList.remove('clicked'); // Remove clicked class if it's not in the clickedIndices
+        }
             });
         }
 
