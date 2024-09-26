@@ -315,10 +315,16 @@ console.log(`current Time: ${currentHours}:${currentMinutes}:${currentSeconds}`)
             clearInterval(countdownTimer);
             countdownDisplay.innerHTML = "GAME STARTED!";
             console.log("Countdown finished, game started!");
+             clearGameMessage();
         }
     }, 250); // Update every second
 }
 
+        function clearGameMessage() {
+    document.getElementById("game-message").innerHTML = ""; // Clears the game message
+}
+
+        
 // Utility function to pad single digits with leading zeros
 function pad(num) {
     return num.toString().padStart(2, '0');
