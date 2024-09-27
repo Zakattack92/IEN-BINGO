@@ -557,7 +557,7 @@ async function loadClickedCells() {
 let clickedIndices = clickedCells.map(cell => cell.cellIndex); // Extract just the indices
 
         // Extract cell indices from clickedCells
-        const clickedIndices = clickedCells.map(cell => cell.cellIndex);
+        let clickedIndices = clickedCells.map(cell => cell.cellIndex);
 
         // Update UI to reflect clicked cells
         updateClickedCells(clickedIndices);
