@@ -554,6 +554,7 @@ async function loadClickedCells() {
     if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
         const clickedCells = userData.clickedCells || []; // Initialize clickedCells as an empty array if undefined
+const clickedIndices = clickedCells.map(cell => cell.cellIndex); // Extract just the indices
 
         // Extract cell indices from clickedCells
         const clickedIndices = clickedCells.map(cell => cell.cellIndex);
@@ -563,6 +564,11 @@ async function loadClickedCells() {
 
         // Award points based on loaded clicked cells
         awardPoints(clickedCells);
+        // If points are saved in Firebase, load and display them
+        if (userData.points) {
+            points = userData.points;
+            updatePointsDisplay(); // Display points in UI
+        }
     }
 }
 
@@ -853,6 +859,26 @@ async function saveCompletionToFirestore(type, index, completedTime) {
         console.error(`Error saving ${type} completion:`, error);
     }
 }
+
+        async function loadPoints() {
+    const userDocRef = doc(db, "user_clicks", user.name);
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+
+        if (userData.points) {
+            points = userData.points;
+            updatePointsDisplay(); // Update points in the UI
+        }
+    }
+}
+
+        // On page load, ensure that clicked cells and points are loaded
+window.onload = async function() {
+    await loadClickedCells();
+    await loadPoints();
+};
 
 
 // Start checking game status on load
