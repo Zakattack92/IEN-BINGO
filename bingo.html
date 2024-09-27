@@ -554,7 +554,7 @@ async function loadClickedCells() {
     if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
         const clickedCells = userData.clickedCells || []; // Initialize clickedCells as an empty array if undefined
-const clickedIndices = clickedCells.map(cell => cell.cellIndex); // Extract just the indices
+let clickedIndices = clickedCells.map(cell => cell.cellIndex); // Extract just the indices
 
         // Extract cell indices from clickedCells
         const clickedIndices = clickedCells.map(cell => cell.cellIndex);
