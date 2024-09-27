@@ -733,15 +733,24 @@ function checkFullBoard(cells, clickedTimes) {
     }
 
     // Ensure clickedTimes has values for all 15 cells
-    const allTimes = clickedTimes.map(time => new Date(`1970-01-01T${time}:00`).getTime());
-    const lastClickedTime = new Date(Math.max(...allTimes));
+    const allTimes = clickedTimes.map(time => {
+        const dateTime = new Date(`1970-01-01T${time}:00`);
+        return !isNaN(dateTime.getTime()) ? dateTime.getTime() : null;
+    }).filter(time => time !== null); // Filter out invalid dates
 
-    // Save the completed full board to Firestore
-    saveCompletionToFirestore('full_board', 'completed', lastClickedTime);
+    // Check if we successfully extracted times
+    if (allTimes.length === 15) {
+        const lastClickedTime = new Date(Math.max(...allTimes));
 
-    return true;  // Full board completed
+        // Save the completed full board to Firestore
+        saveCompletionToFirestore('full_board', 'completed', lastClickedTime);
+
+        return true;  // Full board completed
+    } else {
+        console.error("Some clickedTimes were invalid:", clickedTimes);
+        return false;  // Handle case where times are invalid
+    }
 }
-
 
 
 
