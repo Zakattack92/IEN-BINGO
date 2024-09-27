@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=.80">
+    <title>I.E.N. Bingo</title>
+    <style>
+        body {
+            background-color: black;
+            color: #edbc00; /* Deeper gold color */
+            font-family: Arial, sans-serif;
+            text-align: center;
+            position: relative; /* Allows positioning the user button */
+        }
+
+        h1 {
+            margin-top: 20px;
+        }
+
+        .bingo-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 columns wide */
+            grid-gap: 10px;
+            margin: 20px auto;
+            width: 80%;
+        }
+
+        .bingo-cell {
+            border: 2px solid #edbc00; /* Deeper gold */
+            padding: 20px;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+
+        .free-spot {
+            font-weight: bold;
+        }
+
+        .clicked {
+            background-color: #DAA520;
+            color: black;
+        }
+
+        .submit-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: #edbc00;
+            color: black;
+            border: none;
+            cursor: pointer;
+        }
+
+        .submit-button:hover {
+            background-color: #c89700;
+        }
+
+        .points-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5em;
+        }
+
+        .user-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 1.25px 2.5px;
+            font-size: 1.2em;
+            background-color: transparent;
+            border: 2px solid #edbc00; /* Button outline */
+            color: #edbc00;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .user-button:hover {
+            background-color: #edbc00;
+            color: black;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .rules-section {
+            margin: 20px 0;
+            color: #edbc00;
+            text-align: center;
+        }
+
+        .button-section {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .submit-button {
+            flex: 1;
+            margin: 0 10px;
+        }
+
+        /* Message styling when game is idle */
+        .idle-message {
+            margin-top: 30px;
+            font-size: 1.5em;
+            color: #edbc00;
+        }
+    </style>
+</head>
+<body>
+    <!-- User button displaying current user's name -->
+    <button id="user-button" class="user-button">User</button>
+
+    <h1 id="game-message">I.E.N. Bingo</h1>
+
+    <!-- Points display section -->
+    <div class="points-display hidden">
+        Points: <span id="points-game">0</span>
+    </div>
+
+    <!-- Countdown timer section -->
+    <div id="countdown-timer" class="hidden" style="color: red; font-size: 1.5em; font-weight: bold;"></div>
+
+    <!-- Bingo grid section -->
+    <div class="bingo-grid hidden">
+        <div class="bingo-cell" id="cell-1"></div>
+        <div class="bingo-cell" id="cell-2"></div>
+        <div class="bingo-cell" id="cell-3"></div>
+        <div class="bingo-cell" id="cell-4"></div>
+        <div class="bingo-cell" id="cell-5"></div>
+        <div class="bingo-cell" id="cell-6"></div>
+        <div class="bingo-cell" id="cell-7"></div>
+        <div class="bingo-cell free-spot" id="free-spot">Free Spot</div>
+        <div class="bingo-cell" id="cell-9"></div>
+        <div class="bingo-cell" id="cell-10"></div>
+        <div class="bingo-cell" id="cell-11"></div>
+        <div class="bingo-cell" id="cell-12"></div>
+        <div class="bingo-cell" id="cell-13"></div>
+        <div class="bingo-cell" id="cell-14"></div>
+        <div class="bingo-cell" id="cell-15"></div>
+    </div>
+
+    <!-- Rules section -->
+    <div class="rules-section hidden">
+        <h2>Game Rules</h2>
+        <p>1. Each box = 1 point.</p>
+        <p>2. Each row = 2 points.</p>
+        <p>3. Each column = 3 points.</p>
+        <p>4. Winner announced upon game end.</p>
+    </div>
+
+    <!-- Idle message -->
+    <h1 class="idle-message hidden" id="idle-message">No game scheduled, check back soon! ...but while I gotcha, why not suggest a new phrase!</h1>
+
+    <!-- Buttons Section -->
+    <div class="button-section">
+       <button class="submit-button" onclick="window.location.href='leaderboard.html';">Leaderboards</button> 
+       <button class="submit-button" onclick="window.location.href='submit.html';">Submit a Phrase</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, increment, query, collection, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.3.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDQ0kenGUnwgbZwTgTdqUQHgJWIL25i7hc",
+            authDomain: "ien-bingo.firebaseapp.com",
+            projectId: "ien-bingo",
+            storageBucket: "ien-bingo.appspot.com",
+            messagingSenderId: "115041832401",
+            appId: "1:115041832401:web:785da7558648d1ac8124f0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let countdownTimer;
+        const user = JSON.parse(localStorage.getItem('bingoUser'));
+        let points = parseInt(localStorage.getItem('pointsThisGame')) || 0;
+
+        if (!user) {
+            window.location.href = 'index.html'; // Redirect to login if not authenticated
+        }
+        // Set the user button text
+        document.getElementById('user-button').textContent = user.name;
+
+        // Add functionality to the user button
+        document.getElementById('user-button').addEventListener('click', function() {
+            window.location.href = 'user_profile.html'; // Adjust the URL as needed
+        });
+
+        // Function to monitor game state
+        function monitorGameState() {
+            const gameStateRef = doc(db, "game_state", "current");
+
+            onSnapshot(gameStateRef, (doc) => {
+                if (doc.exists()) {
+                    const gameState = doc.data();
+                    const gameStatus = gameState.status;
+                    const startTime = gameState.startTime;
+                    const endTime = gameState.endTime;
+
+                    if (gameStatus === "idle") {
+                        document.getElementById("idle-message").classList.remove('hidden');
+                        hideGameElements();
+                    } else if (gameStatus === "scheduled") {
+                        showCountdown(startTime, endTime);
+                    } else if (gameStatus === "started") {
+                        showGameElements();
+                        populateBingoGrid();
+                    } else if (gameStatus === "ended") {
+                        endGame(); // Automatically end the game when status changes to "ended"
+                    }
+                } else {
+                    alert("Game state not found.");
+                }
+            });
+        }
+
+        // Function to show countdown timer
+        function showCountdown(startTime, endTime) {
+            document.querySelector('.rules-section').classList.add('hidden');
+            document.querySelector('.bingo-grid').classList.add('hidden');
+            document.getElementById("countdown-timer").classList.remove('hidden');
+            document.getElementById("idle-message").classList.add('hidden');
+
+            const startTimeFormatted = new Date(startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const endTimeFormatted = new Date(endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            document.getElementById("game-message").innerHTML = `
+                <p>Next Game Starts: ${startTimeFormatted}</p>
+                <p>Game Ends: ${endTimeFormatted}</p>
+            `;
+
+            let [timeString, ampm] = startTimeFormatted.split(" ");
+            let [startHours, startMinutes] = timeString.split(":").map(Number);
+
+            if (ampm === "PM" && startHours !== 12) {
+                startHours += 12;
+            } else if (ampm === "AM" && startHours === 12) {
+                startHours = 0;
+            }
+
+            startCountdown(startHours, startMinutes - 1);
+        }
+
+        function startCountdown(startHours, startMinutes) {
+            const countdownDisplay = document.getElementById("countdown-timer");
+
+            clearInterval(countdownTimer);
+
+            countdownTimer = setInterval(() => {
+                const now = new Date();
+                let remainingHours = startHours - now.getHours();
+                let remainingMinutes = startMinutes - now.getMinutes();
+                let remainingSeconds = 59 - now.getSeconds();
+
+                if (remainingSeconds < 0) {
+                    remainingSeconds = 59;
+                    remainingMinutes -= 1;
+                }
+
+                if (remainingMinutes < 0) {
+                    remainingMinutes = 59;
+                    remainingHours -= 1;
+                }
+
+                if (remainingHours < 0) {
+                    remainingHours += 24;
+                }
+
+                const timeString = `${pad(remainingHours)}:${pad(remainingMinutes)}:${pad(remainingSeconds)}`;
+                countdownDisplay.innerHTML = `GAME BEGINS IN: ${timeString}`;
+
+                if (remainingHours <= 0 && remainingMinutes <= 0 && remainingSeconds <= 0) {
+                    clearInterval(countdownTimer);
+                    countdownDisplay.innerHTML = "GAME STARTED!";
+                }
+            }, 250);
+        }
+
+        function pad(num) {
+            return num.toString().padStart(2, '0');
+        }
+
+        function hideGameElements() {
+            document.querySelector('.bingo-grid').classList.add('hidden');
+            document.querySelector('.rules-section').classList.add('hidden');
+            document.querySelector('.points-display').classList.add('hidden');
+            document.getElementById("countdown-timer").classList.add('hidden');
+        }
+
+        function showGameElements() {
+            document.querySelector('.bingo-grid').classList.remove('hidden');
+            document.querySelector('.rules-section').classList.remove('hidden');
+            document.querySelector('.points-display').classList.remove('hidden');
+        }
+
+        async function populateBingoGrid() {
+            const savedBoard = await fetchSavedBoard();
+            if (savedBoard) {
+                fillBingoGrid(savedBoard);
+                await loadClickedCells();
+                awardPoints();
+            } else {
+                await generateAndSaveBingoBoard();
+            }
+        }
+
+        async function fetchSavedBoard() {
+            const boardDocRef = doc(db, "game_state", "current");
+            const boardDocSnap = await getDoc(boardDocRef);
+
+            if (boardDocSnap.exists()) {
+                const gameData = boardDocSnap.data();
+                return gameData.board || null;
+            }
+            return null;
+        }
+
+        async function generateAndSaveBingoBoard() {
+            const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
+            const querySnapshot = await getDocs(q);
+
+            const allPhrases = [];
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                allPhrases.push({
+                    id: doc.id,
+                    phrase: data.phrase,
+                    timesUsed: data.timesUsed || 0,
+                    category: data.category
+                });
+            });
+
+            const selectedPhrases = selectPhrases(allPhrases);
+
+            for (const phrase of selectedPhrases) {
+                await updateDoc(doc(db, "bingo_phrases", phrase.id), {
+                    timesUsed: increment(1)
+                });
+            }
+
+            const bingoCells = [];
+            for (let i = 0; i < 15; i++) {
+                if (i === 7) {
+                    bingoCells.push("Free Spot");
+                } else {
+                    bingoCells.push(selectedPhrases[i].phrase || '');
+                }
+            }
+
+            await setDoc(doc(db, "game_state", "current"), { board: bingoCells }, { merge: true });
+            fillBingoGrid(bingoCells);
+        }
+
+        function selectPhrases(allPhrases) {
+            const sortedPhrases = allPhrases.sort((a, b) => a.timesUsed - b.timesUsed);
+            return sortedPhrases.slice(0, 14);
+        }
+
+        function fillBingoGrid(board) {
+            const bingoCells = document.querySelectorAll('.bingo-cell');
+            bingoCells.forEach((cell, index) => {
+                cell.textContent = board[index] || '';
+            });
+        }
+
+        async function loadClickedCells() {
+            const userDocRef = doc(db, "user_clicks", user.name);
+            const userDocSnap = await getDoc(userDocRef);
+
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                const clickedCells = userData.clickedCells || [];
+                updateClickedCells(clickedCells.map(cell => cell.cellIndex));
+            }
+        }
+
+        function updateClickedCells(clickedIndices) {
+            const bingoCells = document.querySelectorAll('.bingo-cell');
+            bingoCells.forEach((cell, index) => {
+                if (clickedIndices.includes(index)) {
+                    cell.classList.add('clicked');
+                } else {
+                    cell.classList.remove('clicked');
+                }
+            });
+        }
+
+        function awardPoints() {
+            // Implementation of awardPoints logic here...
+        }
+
+        function endGame() {
+            saveCumulativePoints();
+            clearClickedCells();
+            alert("Game over! Your score has been saved.");
+            clearBoard();
+            updateGameStatus("idle");
+            points = 0;
+            localStorage.removeItem('pointsThisGame');
+            updatePointsDisplay();
+        }
+
+        function updatePointsDisplay() {
+            document.getElementById("points-game").textContent = points;
+        }
+
+        window.onload = async function() {
+            await loadClickedCells();
+            monitorGameState();
+        };
+    </script>
+</body>
+</html>
