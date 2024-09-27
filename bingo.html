@@ -586,22 +586,15 @@ function awardPoints(clickedCells = []) {
     // Extract just the cell indices from clickedCells
     const cellIndices = clickedCells.map(cell => cell.cellIndex);
 
+    // Extract just the clicked times from clickedCells
+    const clickedTimes = clickedCells.map(cell => cell.timeClicked || "00:00"); // Ensure default time if missing
+
     // Ensure we check for bingos and full card completion
-    const horizontalBingos = checkHorizontalBingo(cellIndices);
-    const verticalBingos = checkVerticalBingo(cellIndices);
-    const fullBoard = checkFullBoard(cellIndices); // Correctly define fullBoard
+    const horizontalBingos = checkHorizontalBingo(cellIndices, clickedTimes);
+    const verticalBingos = checkVerticalBingo(cellIndices, clickedTimes); // Make sure to pass clickedTimes here
+    const fullBoard = checkFullBoard(cellIndices, clickedTimes); // Correctly define fullBoard
     const letterI = checkLetterI(cellIndices);
     const letterH = checkLetterH(cellIndices);
-
-    // Base points: 1 point per clicked cell
-    points = cellIndices.length;
-
-    // Bonus points for bingos
-    points += horizontalBingos * 2; // 2 points for each completed row
-    points += verticalBingos * 3;   // 3 points for each completed column
-    points += letterI ? 6 : 0;      // Letter I = 6 points
-    points += letterH ? 8 : 0;      // Letter H = 8 points
-
     // Bonus for full board
     if (fullBoard) {
         points += 14;  // Full board bonus points
@@ -689,14 +682,19 @@ function checkVerticalBingo(cells, clickedTimes) {
 
     columns.forEach((column, index) => {
         if (column.every(cell => cells.includes(cell))) {
-            // Get the time of the last clicked cell in this column
-            const columnTimes = column.map(i => new Date(`1970-01-01T${clickedTimes[i]}:00`).getTime());
-            const lastTimeInColumn = new Date(Math.max(...columnTimes)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            // Make sure `clickedTimes` is properly populated for each cell in the column
+            const columnTimes = column
+                .map(i => clickedTimes[i] ? new Date(`1970-01-01T${clickedTimes[i]}:00`).getTime() : 0)
+                .filter(time => time > 0); // Ensure valid times
 
-            // Save the completed column to Firestore
-            saveCompletionToFirestore('column', index + 1, lastTimeInColumn);
+            if (columnTimes.length > 0) {
+                const lastTimeInColumn = new Date(Math.max(...columnTimes)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-            completedColumns++;
+                // Save the completed column to Firestore
+                saveCompletionToFirestore('column', index + 1, lastTimeInColumn);
+
+                completedColumns++;
+            }
         }
     });
 
