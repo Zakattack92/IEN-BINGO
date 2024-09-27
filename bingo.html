@@ -589,15 +589,11 @@ function awardPoints(clickedCells = [], clickedTimes = []) {
     // Ensure we check for bingos and full card completion
     const horizontalBingos = checkHorizontalBingo(clickedCells, clickedTimes);
     const verticalBingos = checkVerticalBingo(clickedCells, clickedTimes);
-    const fullBoardCompleted = checkFullBoard(clickedCells, clickedTimes);
+    const fullBoard = checkFullBoard(clickedCells, clickedTimes);
      const letterI = checkLetterI(clickedCells);
     const letterH = checkLetterH(clickedCells);
 
-    // Ensure fullBoard is defined by checking the full board status
-    //const fullBoard = checkFullBoard(clickedCells);
-
-
-    // Base points: 1 point per clicked cell
+     // Base points: 1 point per clicked cell
     points = clickedCells.length;
 
     // Bonus points for bingos
@@ -607,7 +603,7 @@ function awardPoints(clickedCells = [], clickedTimes = []) {
     points += letterH ? 8 : 0; // Letter H = 8 points
 
     // Bonus for full board
-    if (fullBoardCompleted) {
+    if (fullBoard) {
         points += 14;  // Full board bonus points
     }
     // Log the points for debugging
