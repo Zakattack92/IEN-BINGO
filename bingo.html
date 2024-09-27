@@ -481,13 +481,12 @@ function shuffle(array) {
             const savedBoard = await fetchSavedBoard();
             if (savedBoard) {
                 fillBingoGrid(savedBoard);
-                loadClickedCells(); // Load clicked cells for the current user
+               await  loadClickedCells(); // Load clicked cells for the current user
                 awardPoints(); // Award points after grid is populated and clicked cells are loaded
             } else {
                  clearGameMessage();
                 resetGameMessage();
-
-                await generateAndSaveBingoBoard();
+await generateAndSaveBingoBoard();
             }
         }
 
@@ -502,12 +501,17 @@ async function fillBingoGrid(board) {
 
     // Add event listeners to cells for click actions
     bingoCells.forEach((cell, index) => {
-        cell.addEventListener('click', () => {
-            cell.classList.toggle('clicked'); // Toggle clicked state
-            saveClickedCell(index); // Save clicked state to Firestore
-        });
+    cell.addEventListener('click', async () => {
+        // Toggle clicked class and save the click to Firestore
+        if (cell.classList.contains('clicked')) {
+            cell.classList.remove('clicked');
+        } else {
+            cell.classList.add('clicked');
+        }
+        
+        await saveClickedCell(index); // Save cell click state to Firestore after toggling
     });
-}
+});
 
 
 // Save clicked cells to Firestore
@@ -875,8 +879,9 @@ async function saveCompletionToFirestore(type, index, completedTime) {
 
         // On page load, ensure that clicked cells and points are loaded
 window.onload = async function() {
-    await loadClickedCells();
-    await loadPoints();
+    await loadClickedCells(); // Ensure clicked cells are loaded first
+    await loadPoints();       // Ensure points are loaded first
+    monitorGameState();       // Then monitor game state and make further updates
 };
 
 
