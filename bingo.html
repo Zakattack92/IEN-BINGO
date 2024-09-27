@@ -593,6 +593,10 @@ function awardPoints(clickedCells = [], clickedTimes = []) {
      const letterI = checkLetterI(clickedCells);
     const letterH = checkLetterH(clickedCells);
 
+    // Ensure fullBoard is defined by checking the full board status
+    const fullBoard = checkFullBoard(clickedCells);
+
+
     // Base points: 1 point per clicked cell
     points = clickedCells.length;
 
