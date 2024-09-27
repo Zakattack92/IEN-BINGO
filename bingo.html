@@ -651,14 +651,9 @@ async function updateCompletionStatusInFirebase(horizontalBingos, verticalBingos
 }
 
 
-// Update points display in the top-right corner
-function updatePointsDisplay() {
-    document.getElementById("points-game").textContent = points;
-}
-
-   // Check for horizontal bingo and return the number of bingos along with the completion time
+// Check for horizontal bingo and return the number of bingos
 function checkHorizontalBingo(cells) {
-    if (!Array.isArray(cells)) return false;
+    if (!Array.isArray(cells)) return 0; // Return 0 if cells is not a valid array
 
     const rows = [
         [0, 1, 2],
@@ -668,17 +663,17 @@ function checkHorizontalBingo(cells) {
         [12, 13, 14],
     ];
 
-    let rowCompleted = false;
+    let completedRows = 0;
 
-    rows.forEach((row, rowIndex) => {
+    rows.forEach((row) => {
         if (row.every(cell => cells.includes(cell))) {
-            rowCompleted = true;
-            console.log(`Row ${rowIndex + 1} completed!`);
+            completedRows++; // Increment the count for each completed row
         }
     });
 
-    return rowCompleted ? 1 : 0;  // Return 1 for a completed row
+    return completedRows; // Return the total number of completed rows
 }
+
 
 // Check for vertical bingo and return the number of bingos along with the completion time
 function checkVerticalBingo(cells, clickedTimes) {
