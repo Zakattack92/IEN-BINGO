@@ -80,7 +80,7 @@
             color: black;
         }
         
-  .hidden {
+        .hidden {
             display: none;
         }
         
@@ -99,8 +99,9 @@
         .submit-button {
             flex: 1;
             margin: 0 10px;
+        } /* This CSS rule was incomplete, so I closed it properly */
 
-              /* Message styling when game is idle */
+        /* Message styling when game is idle */
         .idle-message {
             margin-top: 30px;
             font-size: 1.5em;
@@ -119,7 +120,7 @@
         Points: <span id="points-game">0</span>
     </div>
 
- <!-- Countdown timer section -->
+    <!-- Countdown timer section -->
     <div id="countdown-timer" class="hidden" style="color: red; font-size: 1.5em; font-weight: bold;"></div>
 
     <!-- Bingo grid section -->
@@ -145,7 +146,7 @@
     <div class="rules-section hidden">
         <h2>Game Rules</h2>
         <p>1. Each box = 1 point.</p>
-        <p>2. Each row = 2 point.</p>
+        <p>2. Each row = 2 points.</p>
         <p>3. Each column = 3 points.</p>
         <p>4. Winner announced upon game end.</p>
     </div>
@@ -185,11 +186,12 @@
         // Set the user button text
         document.getElementById('user-button').textContent = user.name;
 
-// Add functionality to the user button
-document.getElementById('user-button').addEventListener('click', function() {
-    window.location.href = 'user_profile.html'; // Adjust the URL as needed
-});
-           // Constantly monitor the game state with onSnapshot
+        // Add functionality to the user button
+        document.getElementById('user-button').addEventListener('click', function() {
+            window.location.href = 'user_profile.html'; // Adjust the URL as needed
+        });
+
+        // Function to monitor game state
         function monitorGameState() {
             const gameStateRef = doc(db, "game_state", "current");
 
