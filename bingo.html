@@ -218,9 +218,7 @@ function monitorGameState() {
             alert("Game state not found.");
         }
     });
-}
-
-        
+}        
 
 // Function to show countdown timer
 function showCountdown(startTime, endTime) {
@@ -342,10 +340,7 @@ if (remainingMinutes < 0) {
 function pad(num) {
     return num.toString().padStart(2, '0');
 }
-
-
-
-        function hideGameElements() {
+                function hideGameElements() {
             document.querySelector('.bingo-grid').classList.add('hidden');
             document.querySelector('.rules-section').classList.add('hidden');
             document.querySelector('.points-display').classList.add('hidden');
