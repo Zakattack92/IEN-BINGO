@@ -499,8 +499,8 @@ async function fillBingoGrid(board) {
         cell.textContent = board[index] || '';
     });
 
-    // Add event listeners to cells for click actions
-    bingoCells.forEach((cell, index) => {
+   // Add event listeners to cells for click actions
+bingoCells.forEach((cell, index) => {
     cell.addEventListener('click', async () => {
         // Toggle clicked class and save the click to Firestore
         if (cell.classList.contains('clicked')) {
@@ -512,6 +512,7 @@ async function fillBingoGrid(board) {
         await saveClickedCell(index); // Save cell click state to Firestore after toggling
     });
 });
+
 
 
 // Save clicked cells to Firestore
