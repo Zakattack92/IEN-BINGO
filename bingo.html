@@ -595,6 +595,16 @@ function awardPoints(clickedCells = []) {
     const fullBoard = checkFullBoard(cellIndices, clickedTimes); // Correctly define fullBoard
     const letterI = checkLetterI(cellIndices);
     const letterH = checkLetterH(cellIndices);
+
+    // Base points: 1 point per clicked cell
+    points = clickedCells.length;
+
+    // Bonus points for bingos
+    points += horizontalBingos * 2; // 2 points for each completed row
+    points += verticalBingos * 3;   // 3 points for each completed column
+    points += letterI ? 6 : 0; // Letter I = 6 points
+    points += letterH ? 8 : 0; // Letter H = 8 points
+
     // Bonus for full board
     if (fullBoard) {
         points += 14;  // Full board bonus points
