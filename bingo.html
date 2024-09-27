@@ -510,24 +510,19 @@ async function fillBingoGrid(board) {
 }
 
 
-        // Save clicked cells to Firestore
+// Save clicked cells to Firestore
 async function saveClickedCell(cellIndex) {
     const userDocRef = doc(db, "user_clicks", user.name);
-const userDocSnap = await getDoc(userDocRef);
+    const userDocSnap = await getDoc(userDocRef);
 
-let clickedCells = [];
-if (userDocSnap.exists()) {
-    clickedCells = userDocSnap.data().clickedCells || []; // Ensure it's always initialized as an array.
-}
-// Get current time in HH:MM (military time)
+    let clickedCells = [];
+    if (userDocSnap.exists()) {
+        clickedCells = userDocSnap.data().clickedCells || []; // Ensure it's always initialized as an array.
+    }
+
+    // Get current time in HH:MM (military time)
     const now = new Date();
     const currentTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }); // Military time
-
-    // Toggle clicked state (add/remove clicked cells and log the time clicked)
-    const clickedCellData = {
-        cellIndex: cellIndex,
-        timeClicked: currentTime
-    };
 
     // Check if the cell was already clicked, if not, add it to the list with the time
     const existingCellIndex = clickedCells.findIndex(cell => cell.cellIndex === cellIndex);
@@ -537,7 +532,10 @@ if (userDocSnap.exists()) {
         clickedCells.splice(existingCellIndex, 1);
     } else {
         // Add the new clicked cell with time
-        clickedCells.push(clickedCellData);
+        clickedCells.push({
+            cellIndex: cellIndex,
+            timeClicked: currentTime
+        });
     }
 
     // Save the updated clicked cells to Firestore
@@ -547,6 +545,8 @@ if (userDocSnap.exists()) {
     awardPoints(clickedCells);
 }
 
+
+// Load clicked cells from Firestore
 async function loadClickedCells() {
     const userDocRef = doc(db, "user_clicks", user.name);
     const userDocSnap = await getDoc(userDocRef);
@@ -554,19 +554,21 @@ async function loadClickedCells() {
     if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
         const clickedCells = userData.clickedCells || []; // Initialize clickedCells as an empty array if undefined
+
         // Extract cell indices from clickedCells
         const clickedIndices = clickedCells.map(cell => cell.cellIndex);
 
-        updateClickedCells(clickedCells); // Update UI to reflect clicked cells
-        awardPoints(clickedCells); // Ensure points are awarded based on loaded clicked cells
+        // Update UI to reflect clicked cells
+        updateClickedCells(clickedIndices);
+
+        // Award points based on loaded clicked cells
+        awardPoints(clickedCells);
     }
 }
-        // Update the bingo grid to reflect clicked cells
-function updateClickedCells(clickedCells) {
+
+// Update the bingo grid to reflect clicked cells
+function updateClickedCells(clickedIndices) {
     const bingoCells = document.querySelectorAll('.bingo-cell');
-    
-    // Extract only the indices from clickedCells (which are objects now)
-    const clickedIndices = clickedCells.map(cell => cell.cellIndex);
 
     bingoCells.forEach((cell, index) => {
         if (clickedIndices.includes(index)) {
@@ -577,44 +579,41 @@ function updateClickedCells(clickedCells) {
     });
 }
 
-
-        // Award points based on clicked cells and check for bingos
-function awardPoints(clickedCells = [], clickedTimes = []) {
+// Award points based on clicked cells and check for bingos
+function awardPoints(clickedCells = []) {
     if (!Array.isArray(clickedCells)) clickedCells = [];
 
-    // Log the clicked cells for debugging
-    console.log("Clicked Cells:", clickedCells);
-
+    // Extract just the cell indices from clickedCells
+    const cellIndices = clickedCells.map(cell => cell.cellIndex);
 
     // Ensure we check for bingos and full card completion
-    const horizontalBingos = checkHorizontalBingo(clickedCells, clickedTimes);
-    const verticalBingos = checkVerticalBingo(clickedCells, clickedTimes);
-    const fullBoard = checkFullBoard(clickedCells, clickedTimes);
-     const letterI = checkLetterI(clickedCells);
-    const letterH = checkLetterH(clickedCells);
+    const horizontalBingos = checkHorizontalBingo(cellIndices);
+    const verticalBingos = checkVerticalBingo(cellIndices);
+    const fullBoard = checkFullBoard(cellIndices); // Correctly define fullBoard
+    const letterI = checkLetterI(cellIndices);
+    const letterH = checkLetterH(cellIndices);
 
-     // Base points: 1 point per clicked cell
-    points = clickedCells.length;
+    // Base points: 1 point per clicked cell
+    points = cellIndices.length;
 
     // Bonus points for bingos
     points += horizontalBingos * 2; // 2 points for each completed row
     points += verticalBingos * 3;   // 3 points for each completed column
-    points += letterI ? 6 : 0; // Letter I = 6 points
-    points += letterH ? 8 : 0; // Letter H = 8 points
+    points += letterI ? 6 : 0;      // Letter I = 6 points
+    points += letterH ? 8 : 0;      // Letter H = 8 points
 
     // Bonus for full board
     if (fullBoard) {
         points += 14;  // Full board bonus points
     }
-    // Log the points for debugging
-    console.log(`Points: ${points}`);
+
     updatePointsDisplay(); // Update points display
     localStorage.setItem('pointsThisGame', points); // Save points to localStorage
 
-     // Now update Firebase with completed rows or columns
+    // Now update Firebase with completed rows or columns
     updateCompletionStatusInFirebase(horizontalBingos, verticalBingos, fullBoard);
-
 }
+
 async function updateCompletionStatusInFirebase(horizontalBingos, verticalBingos, fullBoard) {
     const userDocRef = doc(db, "user_clicks", user.name);
     const now = new Date();
