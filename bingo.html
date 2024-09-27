@@ -582,10 +582,16 @@ function updateClickedCells(clickedCells) {
 function awardPoints(clickedCells = [], clickedTimes = []) {
     if (!Array.isArray(clickedCells)) clickedCells = [];
 
+    // Log the clicked cells for debugging
+    console.log("Clicked Cells:", clickedCells);
+
+
     // Ensure we check for bingos and full card completion
     const horizontalBingos = checkHorizontalBingo(clickedCells, clickedTimes);
     const verticalBingos = checkVerticalBingo(clickedCells, clickedTimes);
     const fullBoardCompleted = checkFullBoard(clickedCells, clickedTimes);
+     const letterI = checkLetterI(clickedCells);
+    const letterH = checkLetterH(clickedCells);
 
     // Base points: 1 point per clicked cell
     points = clickedCells.length;
@@ -593,14 +599,53 @@ function awardPoints(clickedCells = [], clickedTimes = []) {
     // Bonus points for bingos
     points += horizontalBingos * 2; // 2 points for each completed row
     points += verticalBingos * 3;   // 3 points for each completed column
+    points += letterI ? 6 : 0; // Letter I = 6 points
+    points += letterH ? 8 : 0; // Letter H = 8 points
 
     // Bonus for full board
     if (fullBoardCompleted) {
         points += 14;  // Full board bonus points
     }
-
+    // Log the points for debugging
+    console.log(`Points: ${points}`);
     updatePointsDisplay(); // Update points display
     localStorage.setItem('pointsThisGame', points); // Save points to localStorage
+
+     // Now update Firebase with completed rows or columns
+    updateCompletionStatusInFirebase(horizontalBingos, verticalBingos, fullBoard);
+
+}
+async function updateCompletionStatusInFirebase(horizontalBingos, verticalBingos, fullBoard) {
+    const userDocRef = doc(db, "user_clicks", user.name);
+    const now = new Date();
+    const timestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const completedData = {
+        completed: {}
+    };
+
+    if (horizontalBingos > 0) {
+        completedData.completed.rows = `Row completed at ${timestamp}`;
+        console.log("Row Bingo completed at", timestamp);
+    }
+
+    if (verticalBingos > 0) {
+        completedData.completed.columns = `Column completed at ${timestamp}`;
+        console.log("Column Bingo completed at", timestamp);
+    }
+
+    if (fullBoard) {
+        completedData.completed.fullBoard = `Full board completed at ${timestamp}`;
+        console.log("Full Board completed at", timestamp);
+    }
+
+    // Update Firebase
+    try {
+        await setDoc(userDocRef, completedData, { merge: true });
+        console.log("Updated completion status in Firebase");
+    } catch (error) {
+        console.error("Error updating Firebase:", error);
+    }
 }
 
 
@@ -610,7 +655,9 @@ function updatePointsDisplay() {
 }
 
    // Check for horizontal bingo and return the number of bingos along with the completion time
-function checkHorizontalBingo(cells, clickedTimes) {
+function checkHorizontalBingo(cells) {
+    if (!Array.isArray(cells)) return false;
+
     const rows = [
         [0, 1, 2],
         [3, 4, 5],
@@ -619,22 +666,16 @@ function checkHorizontalBingo(cells, clickedTimes) {
         [12, 13, 14],
     ];
 
-    let completedRows = 0;
+    let rowCompleted = false;
 
-    rows.forEach((row, index) => {
+    rows.forEach((row, rowIndex) => {
         if (row.every(cell => cells.includes(cell))) {
-            // Get the time of the last clicked cell in this row
-            const rowTimes = row.map(i => new Date(`1970-01-01T${clickedTimes[i]}:00`).getTime());
-            const lastTimeInRow = new Date(Math.max(...rowTimes));
-
-            // Save the completed row to Firestore
-            saveCompletionToFirestore('row', index + 1, lastTimeInRow);
-
-            completedRows++;
+            rowCompleted = true;
+            console.log(`Row ${rowIndex + 1} completed!`);
         }
     });
 
-    return completedRows; // Return the number of completed rows for point calculation
+    return rowCompleted ? 1 : 0;  // Return 1 for a completed row
 }
 
 // Check for vertical bingo and return the number of bingos along with the completion time
