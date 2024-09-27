@@ -509,12 +509,9 @@ bingoCells.forEach((cell, index) => {
         } else {
             cell.classList.add('clicked');
         }
-        
         await saveClickedCell(index); // Save cell click state to Firestore after toggling
     });
 });
-
-
 
 // Save clicked cells to Firestore
 async function saveClickedCell(cellIndex) {
@@ -661,7 +658,6 @@ async function updateCompletionStatusInFirebase(horizontalBingos, verticalBingos
     }
 }
 
-
 // Check for horizontal bingo and return the number of bingos
 function checkHorizontalBingo(cells) {
     if (!Array.isArray(cells)) return 0; // Return 0 if cells is not a valid array
@@ -765,9 +761,6 @@ function checkFullBoard(cells, clickedTimes) {
 function updatePointsDisplay() {
     document.getElementById("points-game").textContent = points;
 }
-
-
-
 
 // Function to save points and end the game
 function endGame() {
