@@ -554,14 +554,14 @@ async function loadClickedCells() {
     if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
         const clickedCells = userData.clickedCells || []; // Initialize clickedCells as an empty array if undefined
-let clickedIndices = clickedCells.map(cell => cell.cellIndex); // Extract just the indices
+        let clickedIndices = clickedCells.map(cell => cell.cellIndex); // Extract just the indices
 
-  
         // Update UI to reflect clicked cells
         updateClickedCells(clickedIndices);
 
         // Award points based on loaded clicked cells
         awardPoints(clickedCells);
+
         // If points are saved in Firebase, load and display them
         if (userData.points) {
             points = userData.points;
@@ -582,6 +582,7 @@ function updateClickedCells(clickedIndices) {
         }
     });
 }
+
 
 // Award points based on clicked cells and check for bingos
 function awardPoints(clickedCells = []) {
