@@ -192,31 +192,34 @@
         });
 
         // Function to monitor game state
-        function monitorGameState() {
-            const gameStateRef = doc(db, "game_state", "current");
+       // Function to monitor game state
+function monitorGameState() {
+    const gameStateRef = doc(db, "game_state", "current");
 
-            onSnapshot(gameStateRef, (doc) => {
-                if (doc.exists()) {
-                    const gameState = doc.data();
-                    const gameStatus = gameState.status;
-                    const startTime = gameState.startTime;
-                    const endTime = gameState.endTime;
+    onSnapshot(gameStateRef, (doc) => {
+        if (doc.exists()) {
+            const gameState = doc.data();
+            const gameStatus = gameState.status;
+            const startTime = gameState.startTime;
+            const endTime = gameState.endTime;
 
-                    if (gameStatus === "idle") {
-                        document.getElementById("idle-message").classList.remove('hidden');
-                        hideGameElements();
-                    } else if (gameStatus === "scheduled") {
-                        showCountdown(startTime, endTime);
-                    } else if (gameStatus === "started") {
-                        showGameElements();
-                        populateBingoGrid();
-                    } else if (gameStatus === "ended") {
-                        endGame(); // Automatically end the game when status changes to "ended"
-                    }
-                } else {
-                    alert("Game state not found.");
-                }
-            });
+            if (gameStatus === "idle") {
+                document.getElementById("idle-message").classList.remove('hidden');
+                hideGameElements();
+            } else if (gameStatus === "scheduled") {
+                showCountdown(startTime, endTime);
+            } else if (gameStatus === "started") {
+                showGameElements();
+                populateBingoGrid();
+            } else if (gameStatus === "ended") {
+                endGame(); // Automatically end the game when status changes to "ended"
+            }
+        } else {
+            alert("Game state not found.");
+        }
+    });
+}
+
         
 
 // Function to show countdown timer
