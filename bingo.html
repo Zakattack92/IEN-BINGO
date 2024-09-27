@@ -589,7 +589,7 @@ function awardPoints(clickedCells = [], clickedTimes = []) {
     // Ensure we check for bingos and full card completion
     const horizontalBingos = checkHorizontalBingo(clickedCells, clickedTimes);
     const verticalBingos = checkVerticalBingo(clickedCells, clickedTimes);
-    const fullBoardCompleted = checkFullBoard(clickedCells, clickedTimes);
+    const fullBoard = checkFullBoard(clickedCells, clickedTimes);
      const letterI = checkLetterI(clickedCells);
     const letterH = checkLetterH(clickedCells);
 
