@@ -498,7 +498,8 @@ async function fillBingoGrid(board) {
     bingoCells.forEach((cell, index) => {
         cell.textContent = board[index] || '';
     });
-
+    }
+        
    // Add event listeners to cells for click actions
 bingoCells.forEach((cell, index) => {
     cell.addEventListener('click', async () => {
