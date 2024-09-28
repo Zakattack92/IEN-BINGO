@@ -490,30 +490,32 @@ await generateAndSaveBingoBoard();
             }
         }
 let bingoCells; // Declare globally so it can be accessed from other functions
-// Fill the bingo grid with phrases or load from saved state
+let bingoCells; // Declare globally so it can be accessed from other functions
+
+// Function to fill the bingo grid with phrases or load from saved state
 async function fillBingoGrid(board) {
-     bingoCells = document.querySelectorAll('.bingo-cell');
+    bingoCells = document.querySelectorAll('.bingo-cell'); // Initialize the global variable
     const freeSpotPhrase = "Free Spot"; // Always set the free spot text
 
     bingoCells.forEach((cell, index) => {
         cell.textContent = board[index] || '';
     });
-    }
-        
-   // Add event listeners to cells for click actions
-bingoCells.forEach((cell, index) => {
-    cell.addEventListener('click', async () => {
-        // Toggle clicked class and save the click to Firestore
-        if (cell.classList.contains('clicked')) {
-            cell.classList.remove('clicked');
-        } else {
-            cell.classList.add('clicked');
-        }
-        await saveClickedCell(index); // Save cell click state to Firestore after toggling
-    });
-});
 
-// Save clicked cells to Firestore
+    // Add event listeners to cells for click actions
+    bingoCells.forEach((cell, index) => {
+        cell.addEventListener('click', async () => {
+            // Toggle clicked class and save the click to Firestore
+            if (cell.classList.contains('clicked')) {
+                cell.classList.remove('clicked');
+            } else {
+                cell.classList.add('clicked');
+            }
+            await saveClickedCell(index); // Save cell click state to Firestore after toggling
+        });
+    });
+}
+
+// Function to save clicked cells to Firestore
 async function saveClickedCell(cellIndex) {
     const userDocRef = doc(db, "user_clicks", user.name);
     const userDocSnap = await getDoc(userDocRef);
@@ -548,8 +550,7 @@ async function saveClickedCell(cellIndex) {
     awardPoints(clickedCells);
 }
 
-
-// Load clicked cells from Firestore
+// Function to load clicked cells from Firestore
 async function loadClickedCells() {
     const userDocRef = doc(db, "user_clicks", user.name);
     const userDocSnap = await getDoc(userDocRef);
@@ -573,10 +574,8 @@ async function loadClickedCells() {
     }
 }
 
-// Update the bingo grid to reflect clicked cells
+// Function to update the bingo grid to reflect clicked cells
 function updateClickedCells(clickedIndices) {
-    const bingoCells = document.querySelectorAll('.bingo-cell');
-
     bingoCells.forEach((cell, index) => {
         if (clickedIndices.includes(index)) {
             cell.classList.add('clicked'); // Mark cell as clicked
@@ -585,6 +584,14 @@ function updateClickedCells(clickedIndices) {
         }
     });
 }
+
+// Other necessary code, including awarding points and monitoring game state...
+
+window.onload = async function() {
+    await loadClickedCells(); // Ensure clicked cells are loaded first
+    await loadPoints();       // Ensure points are loaded first
+    monitorGameState();       // Then monitor game state and make further updates
+};
 
 
 // Award points based on clicked cells and check for bingos
