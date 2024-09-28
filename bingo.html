@@ -640,22 +640,29 @@ async function updateCompletionStatusInFirebase(horizontalBingos, verticalBingos
         completed: {}
     };
 
+    // If rows are completed, log them to Firestore with the timestamp
     if (horizontalBingos > 0) {
-        completedData.completed.rows = `Row completed at ${timestamp}`;
-        console.log("Row Bingo completed at", timestamp);
+        for (let i = 1; i <= horizontalBingos; i++) { // Assuming 'horizontalBingos' tells you how many rows are completed
+            completedData.completed[`row.${i}`] = timestamp;
+            console.log(`Row ${i} completed at ${timestamp}`);
+        }
     }
 
+    // If columns are completed, log them to Firestore with the timestamp
     if (verticalBingos > 0) {
-        completedData.completed.columns = `Column completed at ${timestamp}`;
-        console.log("Column Bingo completed at", timestamp);
+        for (let i = 1; i <= verticalBingos; i++) { // Assuming 'verticalBingos' tells you how many columns are completed
+            completedData.completed[`column.${i}`] = timestamp;
+            console.log(`Column ${i} completed at ${timestamp}`);
+        }
     }
 
+    // If full board is completed, log it to Firestore
     if (fullBoard) {
-        completedData.completed.fullBoard = `Full board completed at ${timestamp}`;
-        console.log("Full Board completed at", timestamp);
+        completedData.completed.full_board = timestamp;
+        console.log(`Full board completed at ${timestamp}`);
     }
 
-    // Update Firebase
+    // Update Firestore with the completed rows/columns/full_board data
     try {
         await setDoc(userDocRef, completedData, { merge: true });
         console.log("Updated completion status in Firebase");
@@ -663,6 +670,7 @@ async function updateCompletionStatusInFirebase(horizontalBingos, verticalBingos
         console.error("Error updating Firebase:", error);
     }
 }
+
 
 // Check for horizontal bingo and return the number of bingos
 function checkHorizontalBingo(cells) {
