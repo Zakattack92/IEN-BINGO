@@ -903,6 +903,12 @@ async function loadPoints() {
     } else {
         console.log("No points data found for user.");
     }
+     // Fallback: If no points are found in Firestore, load from LocalStorage as a backup
+    if (!points && localStorage.getItem('pointsThisGame')) {
+        points = parseInt(localStorage.getItem('pointsThisGame'), 10) || 0;
+        console.log("Loaded points from LocalStorage:", points);
+        updatePointsDisplay();
+    }
 }
 
         // On page load, ensure that clicked cells and points are loaded
