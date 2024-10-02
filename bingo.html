@@ -565,11 +565,9 @@ async function loadClickedCells() {
         // Award points based on loaded clicked cells
         awardPoints(clickedCells);
 
-        // If points are saved in Firebase, load and display them
-       // if (userData.points) {
-            //points = userData.points;
-           // updatePointsDisplay(); // Display points in UI
-        //}
+      // We no longer need to load points separately, since awardPoints handles updating
+    } else {
+        console.log("No user_clicks document found for user.");
     }
 }
 
