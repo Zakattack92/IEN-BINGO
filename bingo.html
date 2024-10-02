@@ -613,7 +613,7 @@ function awardPoints(clickedCells = []) {
         points += 14;  // Full board bonus points
     }
 
-    updatePointsDisplay(); // Update points display
+    updatePointsDisplay(points); // Update points display
     localStorage.setItem('pointsThisGame', points); // Save points to localStorage
 
     // Now update Firebase with completed rows or columns
@@ -777,7 +777,7 @@ function checkFullBoard(cells, clickedTimes) {
 }
 
         // Update points display in the top-right corner
-function updatePointsDisplay() {
+function updatePointsDisplay(points) {
     document.getElementById("points-game").textContent = points;
 }
 
