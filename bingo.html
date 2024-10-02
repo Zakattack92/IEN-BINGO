@@ -99,8 +99,9 @@
         .submit-button {
             flex: 1;
             margin: 0 10px;
-        }
+        } /* This CSS rule was incomplete, so I closed it properly */
 
+        /* Message styling when game is idle */
         .idle-message {
             margin-top: 30px;
             font-size: 1.5em;
@@ -109,16 +110,20 @@
     </style>
 </head>
 <body>
+    <!-- User button displaying current user's name -->
     <button id="user-button" class="user-button">User</button>
 
     <h1 id="game-message">I.E.N. Bingo</h1>
 
+    <!-- Points display section -->
     <div class="points-display hidden">
         Points: <span id="points-game">0</span>
     </div>
 
+    <!-- Countdown timer section -->
     <div id="countdown-timer" class="hidden" style="color: red; font-size: 1.5em; font-weight: bold;"></div>
 
+    <!-- Bingo grid section -->
     <div class="bingo-grid hidden">
         <div class="bingo-cell" id="cell-1"></div>
         <div class="bingo-cell" id="cell-2"></div>
@@ -137,6 +142,7 @@
         <div class="bingo-cell" id="cell-15"></div>
     </div>
 
+    <!-- Rules section -->
     <div class="rules-section hidden">
         <h2>Game Rules</h2>
         <p>1. Each box = 1 point.</p>
@@ -145,8 +151,10 @@
         <p>4. Winner announced upon game end.</p>
     </div>
 
+    <!-- Idle message -->
     <h1 class="idle-message hidden" id="idle-message">No game scheduled, check back soon! ...but while I gotcha, why not suggest a new phrase!</h1>
 
+    <!-- Buttons Section -->
     <div class="button-section">
        <button class="submit-button" onclick="window.location.href='leaderboard.html';">Leaderboards</button> 
        <button class="submit-button" onclick="window.location.href='submit.html';">Submit a Phrase</button>
@@ -175,127 +183,164 @@
         if (!user) {
             window.location.href = 'index.html'; // Redirect to login if not authenticated
         }
-
+        // Set the user button text
         document.getElementById('user-button').textContent = user.name;
 
+        // Add functionality to the user button
         document.getElementById('user-button').addEventListener('click', function() {
             window.location.href = 'user_profile.html'; // Adjust the URL as needed
         });
 
-        function monitorGameState() {
-            const gameStateRef = doc(db, "game_state", "current");
+        // Function to monitor game state
+       // Function to monitor game state
+function monitorGameState() {
+    const gameStateRef = doc(db, "game_state", "current");
 
-            onSnapshot(gameStateRef, (doc) => {
-                if (doc.exists()) {
-                    const gameState = doc.data();
-                    const gameStatus = gameState.status;
-                    const startTime = gameState.startTime;
-                    const endTime = gameState.endTime;
+    onSnapshot(gameStateRef, (doc) => {
+        if (doc.exists()) {
+            const gameState = doc.data();
+            const gameStatus = gameState.status;
+            const startTime = gameState.startTime;
+            const endTime = gameState.endTime;
 
-                    if (gameStatus === "idle") {
-                        document.getElementById("idle-message").classList.remove('hidden');
-                        hideGameElements();
-                    } else if (gameStatus === "scheduled") {
-                        showCountdown(startTime, endTime);
-                    } else if (gameStatus === "started") {
-                        showGameElements();
-                        populateBingoGrid();
-                    } else if (gameStatus === "ended") {
-                        endGame(); // Automatically end the game when status changes to "ended"
-                    }
-                } else {
-                    alert("Game state not found.");
-                }
-            });
-        }        
-
-        function showCountdown(startTime, endTime) {
-            document.querySelector('.rules-section').classList.add('hidden');
-            document.querySelector('.bingo-grid').classList.add('hidden');
-            document.getElementById("countdown-timer").classList.remove('hidden');
-            document.getElementById("idle-message").classList.add('hidden');
-
-            const startTimeFormatted = new Date(startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const endTimeFormatted = new Date(endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            const totalDurationHours = ((endTime - startTime) / (1000 * 60 * 60)).toFixed(2); // Duration in hours
-
-            document.getElementById("game-message").innerHTML = `
-                <p>Next Game Starts:</p> 
-                <p>${startTimeFormatted}</p>
-                <p>Game Ends:</p>
-                <p>${endTimeFormatted}</p>
-                <p>Game Duration:</p>
-                <p>${totalDurationHours} Hours</p>
-            `;
-
-            let [timeString, ampm] = startTimeFormatted.split(" ");
-            let [startHours, startMinutes] = timeString.split(":").map(Number);
-
-            if (ampm === "PM" && startHours !== 12) {
-                startHours += 12; // Convert PM to 24-hour format
-            } else if (ampm === "AM" && startHours === 12) {
-                startHours = 0; // Handle 12 AM as 0 hours
+            if (gameStatus === "idle") {
+                document.getElementById("idle-message").classList.remove('hidden');
+                hideGameElements();
+            } else if (gameStatus === "scheduled") {
+                showCountdown(startTime, endTime);
+            } else if (gameStatus === "started") {
+                showGameElements();
+                populateBingoGrid();
+            } else if (gameStatus === "ended") {
+                endGame(); // Automatically end the game when status changes to "ended"
             }
-
-            console.log(`Game Start Time (military): ${startHours}:${startMinutes}`);
-
-            startMinutes -= 1;
-            startCountdown(startHours, startMinutes);
+        } else {
+            alert("Game state not found.");
         }
+    });
+}        
 
-        let bingoCells; // Declare globally at the top of the script
+// Function to show countdown timer
+function showCountdown(startTime, endTime) {
+    document.querySelector('.rules-section').classList.add('hidden');
+    document.querySelector('.bingo-grid').classList.add('hidden');
+    document.getElementById("countdown-timer").classList.remove('hidden');
+    document.getElementById("idle-message").classList.add('hidden');
 
-        function startCountdown(startHours, startMinutes) {
-            const countdownDisplay = document.getElementById("countdown-timer");
+    // Format the start and end times without the year
+    const startTimeDisplay = new Date(startTime).toLocaleString([], { 
+        month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+    const endTimeDisplay = new Date(endTime).toLocaleString([], { 
+        month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+
+    // Calculate duration in hours
+    const totalDurationHours = ((endTime - startTime) / (1000 * 60 * 60)).toFixed(2); // Duration in hours
+
+    // Display start and end time in local time zone
+// If you need both separately, rename one
+const startTimeFormatted = new Date(startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+const endTimeFormatted = new Date(endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    
+    // Update the game message
+    document.getElementById("game-message").innerHTML = 
+        <p>Next Game Starts:</p> 
+        <p> ${startTimeFormatted}</p>
+        <p>Game Ends:</p>
+        <p>${endTimeFormatted}</p>
+        <p>Game Duration:</p>
+        <p>${totalDurationHours} Hours</p>
+    ;
+
+    // Extract the hours and minutes from startTimeFormatted (12-hour time) and convert to military time
+    let [timeString, ampm] = startTimeFormatted.split(" ");
+    let [startHours, startMinutes] = timeString.split(":").map(Number);
+
+    // Convert to military time
+    if (ampm === "PM" && startHours !== 12) {
+        startHours += 12; // Convert PM to 24-hour format
+    } else if (ampm === "AM" && startHours === 12) {
+        startHours = 0; // Handle 12 AM as 0 hours
+    }
+
+    console.log(Game Start Time (military): ${startHours}:${startMinutes});
+startMinutes -= 1;
+
+    // Pass the military time values to startCountdown
+    startCountdown(startHours, startMinutes);
+}
+
+
+// Function to start the countdown timer using hours and minutes
+function startCountdown(startHours, startMinutes) {
+    const countdownDisplay = document.getElementById("countdown-timer");
+
+    // Clear any existing interval
+    clearInterval(countdownTimer);
+
+    countdownTimer = setInterval(() => {
+        const now = new Date();
+        
+        // Get the current time in hours, minutes, and seconds
+        const currentHours = now.getHours();
+        const currentMinutes = now.getMinutes();
+        const currentSeconds = now.getSeconds();
+console.log(current Time: ${currentHours}:${currentMinutes}:${currentSeconds});
+        // Calculate remaining time
+        let remainingHours = startHours - currentHours;
+        let remainingMinutes = startMinutes - currentMinutes;
+        let remainingSeconds = 59 - currentSeconds;
+
+// Adjust if seconds go negative
+if (remainingSeconds < 0) {
+    remainingSeconds = 59;
+    remainingMinutes -= 1;
+}
+
+// Adjust if minutes go negative
+if (remainingMinutes < 0) {
+    remainingMinutes = 59;
+    remainingHours -= 1;
+}
+
+        // Adjust if hours go negative
+        if (remainingHours < 0) {
+            remainingHours += 24;  // Assuming the game starts within 24 hours
+        }
+// Convert back to 12-hour format for display if needed
+        const displayHours = remainingHours % 12 || 12; // Convert 0 hours to 12 for display purposes
+        const ampm = remainingHours >= 12 ? 'PM' : 'AM';
+        // Adjust display format when hours or minutes are 0
+        let timeString = ${pad(remainingHours)}:${pad(remainingMinutes)}:${pad(remainingSeconds)};
+        
+        // Update the countdown display
+        countdownDisplay.innerHTML = GAME BEGINS IN: ${timeString};
+        console.log(Remaining Time - Hours: ${remainingHours}, Minutes: ${remainingMinutes}, Seconds: ${remainingSeconds});
+
+        // Stop countdown when time runs out
+        if (remainingHours <= 0 && remainingMinutes <= 0 && remainingSeconds <= 0) {
             clearInterval(countdownTimer);
+            countdownDisplay.innerHTML = "GAME STARTED!";
+            console.log("Countdown finished, game started!");
+                    }
+    }, 250); // Update every second
+}
 
-            countdownTimer = setInterval(() => {
-                const now = new Date();
-                const currentHours = now.getHours();
-                const currentMinutes = now.getMinutes();
-                const currentSeconds = now.getSeconds();
+        function clearGameMessage() {
+    document.getElementById("game-message").innerHTML = ""; // Clears the game message
+}
 
-                console.log(`Current Time: ${currentHours}:${currentMinutes}:${currentSeconds}`);
-
-                let remainingHours = startHours - currentHours;
-                let remainingMinutes = startMinutes - currentMinutes;
-                let remainingSeconds = 59 - currentSeconds;
-
-                if (remainingSeconds < 0) {
-                    remainingSeconds = 59;
-                    remainingMinutes -= 1;
-                }
-
-                if (remainingMinutes < 0) {
-                    remainingMinutes = 59;
-                    remainingHours -= 1;
-                }
-
-                if (remainingHours < 0) {
-                    remainingHours += 24;  
-                }
-
-                const displayHours = remainingHours % 12 || 12; 
-                const ampm = remainingHours >= 12 ? 'PM' : 'AM';
-                let timeString = `${pad(remainingHours)}:${pad(remainingMinutes)}:${pad(remainingSeconds)}`;
-                
-                countdownDisplay.innerHTML = `GAME BEGINS IN: ${timeString}`;
-                console.log(`Remaining Time - Hours: ${remainingHours}, Minutes: ${remainingMinutes}, Seconds: ${remainingSeconds}`);
-
-                if (remainingHours <= 0 && remainingMinutes <= 0 && remainingSeconds <= 0) {
-                    clearInterval(countdownTimer);
-                    countdownDisplay.innerHTML = "GAME STARTED!";
-                    console.log("Countdown finished, game started!");
-                }
-            }, 250);
-        }
-
-        function pad(num) {
-            return num.toString().padStart(2, '0');
-        }
-
-        function hideGameElements() {
+        function resetGameMessage() {
+    document.getElementById("game-message").innerHTML = <h1>I.E.N. Bingo</h1>;
+}
+        
+// Utility function to pad single digits with leading zeros
+function pad(num) {
+    return num.toString().padStart(2, '0');
+}
+                function hideGameElements() {
             document.querySelector('.bingo-grid').classList.add('hidden');
             document.querySelector('.rules-section').classList.add('hidden');
             document.querySelector('.points-display').classList.add('hidden');
@@ -307,73 +352,29 @@
             document.querySelector('.rules-section').classList.remove('hidden');
             document.querySelector('.points-display').classList.remove('hidden');
         }
-
-        async function populateBingoGrid() {
-            const savedBoard = await fetchSavedBoard();
-            if (savedBoard) {
-                fillBingoGrid(savedBoard);
-                await loadClickedCells();
-                awardPoints();
+        
+// Function to check if the countdown timer should be displayed
+async function listenForCountdown() {
+    const gameStateRef = doc(db, "game_state", "current");
+    
+    const unsubscribe = onSnapshot(gameStateRef, (doc) => {
+        if (doc.exists()) {
+            const gameState = doc.data();
+            if (gameState.countdownEnabled) {
+                const endTime = gameState.endTime; // Assuming endTime is set in Firestore
+                startCountdown(endTime);
             } else {
-                clearGameMessage();
-                resetGameMessage();
-                await generateAndSaveBingoBoard();
+                clearInterval(countdownTimer);
+                document.getElementById("countdown-timer").innerHTML = ""; // Clear display if countdown is disabled
             }
         }
+    });
+}
 
-        async function loadClickedCells() {
-            const userDocRef = doc(db, "user_clicks", user.name);
-            const userDocSnap = await getDoc(userDocRef);
+// Call this function to start listening for countdown changes
+listenForCountdown();
 
-            if (userDocSnap.exists()) {
-                const userData = userDocSnap.data();
-                const clickedCells = userData.clickedCells || [];
-                let clickedIndices = clickedCells.map(cell => cell.cellIndex);
-
-                updateClickedCells(clickedIndices);
-                awardPoints(clickedCells);
-            }
-        }
-
-        function updateClickedCells(clickedIndices) {
-            bingoCells.forEach((cell, index) => {
-                if (clickedIndices.includes(index)) {
-                    cell.classList.add('clicked');
-                } else {
-                    cell.classList.remove('clicked');
-                }
-            });
-        }
-
-        function awardPoints(clickedCells = []) {
-            if (!Array.isArray(clickedCells)) clickedCells = [];
-
-            const cellIndices = clickedCells.map(cell => cell.cellIndex);
-            const clickedTimes = clickedCells.map(cell => cell.timeClicked || "00:00");
-
-            const horizontalBingos = checkHorizontalBingo(cellIndices, clickedTimes);
-            const verticalBingos = checkVerticalBingo(cellIndices, clickedTimes);
-            const fullBoard = checkFullBoard(cellIndices, clickedTimes);
-            const letterI = checkLetterI(cellIndices);
-            const letterH = checkLetterH(cellIndices);
-
-            points = clickedCells.length;
-            points += horizontalBingos * 2;
-            points += verticalBingos * 3;
-            points += letterI ? 6 : 0;
-            points += letterH ? 8 : 0;
-
-            if (fullBoard) {
-                points += 14;
-            }
-
-            updatePointsDisplay();
-            localStorage.setItem('pointsThisGame', points);
-            updateCompletionStatusInFirebase(horizontalBingos, verticalBingos, fullBoard);
-            savePointsToFirestore();
-        }
-
-         // Fetch the saved bingo board from Firestore
+        // Fetch the saved bingo board from Firestore
         async function fetchSavedBoard() {
             const boardDocRef = doc(db, "game_state", "current");
             const boardDocSnap = await getDoc(boardDocRef);
@@ -385,147 +386,553 @@
             return null;
         }
 
+// Generate a new bingo board and save it to Firestore
+async function generateAndSaveBingoBoard() {
+    const q = query(collection(db, "bingo_phrases"), where("status", "==", "approved"));
+    const querySnapshot = await getDocs(q);
 
-        async function updateCompletionStatusInFirebase(horizontalBingos, verticalBingos, fullBoard) {
-            const userDocRef = doc(db, "user_clicks", user.name);
-            const now = new Date();
-            const timestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const allPhrases = [];
+    const unusedPhrases = [];
+    const freeSpotPhrases = [];
 
-            const completedData = { completed: {} };
+    querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const timesUsed = data.timesUsed || 0; // Get timesUsed, default to 0 if not set
 
-            if (horizontalBingos > 0) {
-                for (let i = 1; i <= horizontalBingos; i++) {
-                    completedData.completed[`row.${i}`] = timestamp;
-                    console.log(`Row ${i} completed at ${timestamp}`);
-                }
-            }
-
-            if (verticalBingos > 0) {
-                for (let i = 1; i <= verticalBingos; i++) {
-                    completedData.completed[`column.${i}`] = timestamp;
-                    console.log(`Column ${i} completed at ${timestamp}`);
-                }
-            }
-
-            if (fullBoard) {
-                completedData.completed.full_board = timestamp;
-                console.log(`Full board completed at ${timestamp}`);
-            }
-
-            try {
-                await setDoc(userDocRef, completedData, { merge: true });
-                console.log("Updated completion status in Firebase");
-            } catch (error) {
-                console.error("Error updating Firebase:", error);
-            }
-        }
-
-        async function savePointsToFirestore() {
-            const userDocRef = doc(db, "user_clicks", user.name);
-            try {
-                await updateDoc(userDocRef, { points: points });
-                console.log("Points successfully updated in Firestore");
-            } catch (error) {
-                console.error("Error updating points:", error);
-            }
-        }
-
-        function updatePointsDisplay() {
-            document.getElementById("points-game").textContent = points;
-        }
-
-        function endGame() {
-            saveCumulativePoints();
-            clearClickedCells();
-            alert("Game over! Your score has been saved.");
-            clearBoard();
-            updateGameStatus("idle");
-            points = 0;
-            localStorage.removeItem('pointsThisGame');
-            updatePointsDisplay();
-        }
-
-        async function saveCumulativePoints() {
-            try {
-                let currentPoints = parseInt(localStorage.getItem('pointsThisGame')) || 0;
-
-                if (currentPoints <= 0) {
-                    console.log("No points to save.");
-                    return;
-                }
-
-                const userDocRef = doc(db, "users", user.name);
-                const userDocSnap = await getDoc(userDocRef);
-
-                let cumulativePoints = 0;
-                if (userDocSnap.exists()) {
-                    cumulativePoints = userDocSnap.data().cumulativePoints || 0;
-                    console.log(`Current cumulative points: ${cumulativePoints}`);
-                }
-
-                cumulativePoints += currentPoints;
-                console.log(`New cumulative points: ${cumulativePoints}`);
-
-                await setDoc(userDocRef, { cumulativePoints: cumulativePoints }, { merge: true });
-                console.log("Cumulative points saved successfully!");
-
-                localStorage.removeItem('pointsThisGame');
-            } catch (error) {
-                console.error("Error saving cumulative points:", error);
-            }
-        }
-
-        async function updateGameStatus(status) {
-            try {
-                const gameStateRef = doc(db, "game_state", "current");
-                await setDoc(gameStateRef, { status: status }, { merge: true });
-                console.log(`Game status updated to: ${status}`);
-            } catch (error) {
-                console.error("Error updating game status:", error);
-            }
-        }
-
-        function clearBoard() {
-             bingoCells = document.querySelectorAll('.bingo-cell');
-            bingoCells.forEach(cell => {
-                cell.textContent = '';
-                cell.classList.remove('clicked');
+        // Add all phrases to the allPhrases array
+        if (data.phrase && data.phrase.trim() !== "") {
+            allPhrases.push({
+                id: doc.id,
+                phrase: data.phrase,
+                timesUsed: timesUsed, // Include timesUsed in the object
+                category: data.category
             });
-            document.querySelector('.bingo-grid').innerHTML = "<h3>No active game</h3>";
         }
 
-        async function loadPoints() {
-            const userDocRef = doc(db, "user_clicks", user.name);
-            const userDocSnap = await getDoc(userDocRef);
+        // Separate free spot phrases from the others
+        if (data.category === "Free Spot") {
+            freeSpotPhrases.push({
+                id: doc.id,
+                phrase: data.phrase,
+                timesUsed: timesUsed
+            });
+        }
+    });
 
-            if (userDocSnap.exists()) {
-                const userData = userDocSnap.data();
-                if (userData.points) {
-                    points = userData.points;
-                    console.log(`Loaded points from Firestore: ${points}`);
-                    updatePointsDisplay();
-                }
-            }
+    // Shuffle and select phrases logic here
+    const selectedPhrases = selectPhrases(allPhrases);
 
-            if (!points && localStorage.getItem('pointsThisGame')) {
-                points = parseInt(localStorage.getItem('pointsThisGame'), 10) || 0;
-                console.log(`Loaded points from LocalStorage: ${points}`);
-                updatePointsDisplay();
+    // Update timesUsed for new phrases
+    for (const phrase of selectedPhrases) {
+        await updateDoc(doc(db, "bingo_phrases", phrase.id), {
+            timesUsed: increment(1) // Increment timesUsed by 1
+        });
+    }
+
+    shuffle(selectedPhrases); // Shuffle the phrases for randomness
+
+    // Choose a random Free Spot phrase
+    const randomFreeSpot = freeSpotPhrases.length > 0
+        ? freeSpotPhrases[Math.floor(Math.random() * freeSpotPhrases.length)]
+        : { phrase: "Free Spot" }; // Fallback in case no free spot phrases are available
+
+    const bingoCells = [];
+    let phraseIndex = 0;
+
+    // Fill all cells, with free spot in the middle (cell index 7)
+    for (let i = 0; i < 15; i++) {
+        if (i === 7) {
+            bingoCells.push(randomFreeSpot.phrase); // Use the random Free Spot phrase
+        } else {
+            bingoCells.push(selectedPhrases[phraseIndex].phrase || '');
+            phraseIndex++;
+        }
+    }
+
+    console.log("Generated Bingo Cells:", bingoCells);
+
+    // Save the generated board in Firestore
+    await setDoc(doc(db, "game_state", "current"), { board: bingoCells }, { merge: true });
+
+    // Fill the grid with the new board
+    fillBingoGrid(bingoCells);
+}
+
+// Select phrases logic (You can adjust this logic as needed)
+function selectPhrases(allPhrases) {
+    // Sort by least used first
+    const sortedPhrases = allPhrases.sort((a, b) => a.timesUsed - b.timesUsed);
+
+    // Select the first 14 phrases (excluding the free spot)
+    return sortedPhrases.slice(0, 14);
+}
+
+// Shuffle function to randomize phrases
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+ // Populate the bingo grid
+        async function populateBingoGrid() {
+            const savedBoard = await fetchSavedBoard();
+            if (savedBoard) {
+                fillBingoGrid(savedBoard);
+               await  loadClickedCells(); // Load clicked cells for the current user
+                awardPoints(); // Award points after grid is populated and clicked cells are loaded
+            } else {
+                 clearGameMessage();
+                resetGameMessage();
+await generateAndSaveBingoBoard();
             }
         }
+let bingoCells; // Declare globally so it can be accessed from other functions
 
-        window.onload = async function() {
-            await loadClickedCells();
-            monitorGameState();
-        };
+// Function to fill the bingo grid with phrases or load from saved state
+async function fillBingoGrid(board) {
+    bingoCells = document.querySelectorAll('.bingo-cell'); // Initialize the global variable
+    const freeSpotPhrase = "Free Spot"; // Always set the free spot text
 
+    bingoCells.forEach((cell, index) => {
+        cell.textContent = board[index] || '';
+    });
+
+    // Add event listeners to cells for click actions
+    bingoCells.forEach((cell, index) => {
+        cell.addEventListener('click', async () => {
+            // Toggle clicked class and save the click to Firestore
+            if (cell.classList.contains('clicked')) {
+                cell.classList.remove('clicked');
+            } else {
+                cell.classList.add('clicked');
+            }
+            await saveClickedCell(index); // Save cell click state to Firestore after toggling
+        });
+    });
+}
+
+// Function to save clicked cells to Firestore
+async function saveClickedCell(cellIndex) {
+    const userDocRef = doc(db, "user_clicks", user.name);
+    const userDocSnap = await getDoc(userDocRef);
+
+    let clickedCells = [];
+    if (userDocSnap.exists()) {
+        clickedCells = userDocSnap.data().clickedCells || []; // Ensure it's always initialized as an array.
+    }
+
+    // Get current time in HH:MM (military time)
+    const now = new Date();
+    const currentTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }); // Military time
+
+    // Check if the cell was already clicked, if not, add it to the list with the time
+    const existingCellIndex = clickedCells.findIndex(cell => cell.cellIndex === cellIndex);
+    
+    if (existingCellIndex > -1) {
+        // Remove the cell if it was already clicked
+        clickedCells.splice(existingCellIndex, 1);
+    } else {
+        // Add the new clicked cell with time
+        clickedCells.push({
+            cellIndex: cellIndex,
+            timeClicked: currentTime
+        });
+    }
+
+    // Save the updated clicked cells to Firestore
+    await setDoc(userDocRef, { clickedCells: clickedCells }, { merge: true });
+
+    // Award points based on current clicks
+    awardPoints(clickedCells);
+}
+
+// Function to load clicked cells from Firestore
+async function loadClickedCells() {
+    const userDocRef = doc(db, "user_clicks", user.name);
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        const clickedCells = userData.clickedCells || []; // Initialize clickedCells as an empty array if undefined
+        let clickedIndices = clickedCells.map(cell => cell.cellIndex); // Extract just the indices
+
+        // Update UI to reflect clicked cells
+        updateClickedCells(clickedIndices);
+
+        // Award points based on loaded clicked cells
+        awardPoints(clickedCells);
+
+        // If points are saved in Firebase, load and display them
+        if (userData.points) {
+            points = userData.points;
+            updatePointsDisplay(); // Display points in UI
+        }
+    }
+}
+
+// Function to update the bingo grid to reflect clicked cells
+function updateClickedCells(clickedIndices) {
+    bingoCells.forEach((cell, index) => {
+        if (clickedIndices.includes(index)) {
+            cell.classList.add('clicked'); // Mark cell as clicked
+        } else {
+            cell.classList.remove('clicked'); // Remove clicked class if it's not in the clickedIndices
+        }
+    });
+}
+
+// Other necessary code, including awarding points and monitoring game state...
+
+window.onload = async function() {
+    await loadClickedCells(); // Ensure clicked cells are loaded first
+    await loadPoints();       // Ensure points are loaded first
+    monitorGameState();       // Then monitor game state and make further updates
+};
+
+
+// Award points based on clicked cells and check for bingos
+function awardPoints(clickedCells = []) {
+    if (!Array.isArray(clickedCells)) clickedCells = [];
+
+    // Extract just the cell indices from clickedCells
+    const cellIndices = clickedCells.map(cell => cell.cellIndex);
+
+    // Extract just the clicked times from clickedCells
+    const clickedTimes = clickedCells.map(cell => cell.timeClicked || "00:00"); // Ensure default time if missing
+
+    // Ensure we check for bingos and full card completion
+    const horizontalBingos = checkHorizontalBingo(cellIndices, clickedTimes);
+    const verticalBingos = checkVerticalBingo(cellIndices, clickedTimes); // Make sure to pass clickedTimes here
+    const fullBoard = checkFullBoard(cellIndices, clickedTimes); // Correctly define fullBoard
+    const letterI = checkLetterI(cellIndices);
+    const letterH = checkLetterH(cellIndices);
+
+    // Base points: 1 point per clicked cell
+    points = clickedCells.length;
+
+    // Bonus points for bingos
+    points += horizontalBingos * 2; // 2 points for each completed row
+    points += verticalBingos * 3;   // 3 points for each completed column
+    points += letterI ? 6 : 0; // Letter I = 6 points
+    points += letterH ? 8 : 0; // Letter H = 8 points
+
+    // Bonus for full board
+    if (fullBoard) {
+        points += 14;  // Full board bonus points
+    }
+
+    updatePointsDisplay(); // Update points display
+    localStorage.setItem('pointsThisGame', points); // Save points to localStorage
+
+    // Now update Firebase with completed rows or columns
+    updateCompletionStatusInFirebase(horizontalBingos, verticalBingos, fullBoard);
+
+     savePointsToFirestore(); // Save points to Firestore after updating
+}
+
+async function updateCompletionStatusInFirebase(horizontalBingos, verticalBingos, fullBoard) {
+    const userDocRef = doc(db, "user_clicks", user.name);
+    const now = new Date();
+    const timestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const completedData = {
+        completed: {}
+    };
+
+    // If rows are completed, log them to Firestore with the timestamp
+    if (horizontalBingos > 0) {
+        for (let i = 1; i <= horizontalBingos; i++) { // Assuming 'horizontalBingos' tells you how many rows are completed
+            completedData.completed[row.${i}] = timestamp;
+            console.log(Row ${i} completed at ${timestamp});
+        }
+    }
+
+    // If columns are completed, log them to Firestore with the timestamp
+    if (verticalBingos > 0) {
+        for (let i = 1; i <= verticalBingos; i++) { // Assuming 'verticalBingos' tells you how many columns are completed
+            completedData.completed[column.${i}] = timestamp;
+            console.log(Column ${i} completed at ${timestamp});
+        }
+    }
+
+    // If full board is completed, log it to Firestore
+    if (fullBoard) {
+        completedData.completed.full_board = timestamp;
+        console.log(Full board completed at ${timestamp});
+    }
+
+    // Update Firestore with the completed rows/columns/full_board data
+    try {
+        await setDoc(userDocRef, completedData, { merge: true });
+        console.log("Updated completion status in Firebase");
+    } catch (error) {
+        console.error("Error updating Firebase:", error);
+    }
+}
+
+        // Function to update points in Firestore after awarding
+async function savePointsToFirestore() {
+    const userDocRef = doc(db, "user_clicks", user.name);
+    
+    try {
+        // Update the cumulative points in Firestore
+        await updateDoc(userDocRef, { points: points });
+        console.log("Points successfully updated in Firestore");
+    } catch (error) {
+        console.error("Error updating points:", error);
+    }
+}
+
+
+
+// Check for horizontal bingo and return the number of bingos
+function checkHorizontalBingo(cells) {
+    if (!Array.isArray(cells)) return 0; // Return 0 if cells is not a valid array
+
+    const rows = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [9, 10, 11],
+        [12, 13, 14],
+    ];
+
+    let completedRows = 0;
+
+    rows.forEach((row) => {
+        if (row.every(cell => cells.includes(cell))) {
+            completedRows++; // Increment the count for each completed row
+        }
+    });
+
+    return completedRows; // Return the total number of completed rows
+}
+
+
+// Check for vertical bingo and return the number of bingos along with the completion time
+function checkVerticalBingo(cells, clickedTimes) {
+    const columns = [
+        [0, 3, 6, 9, 12],
+        [1, 4, 7, 10, 13],
+        [2, 5, 8, 11, 14],
+    ];
+
+    let completedColumns = 0;
+
+    columns.forEach((column, index) => {
+        if (column.every(cell => cells.includes(cell))) {
+            // Make sure clickedTimes is properly populated for each cell in the column
+            const columnTimes = column
+                .map(i => clickedTimes[i] ? new Date(1970-01-01T${clickedTimes[i]}:00).getTime() : 0)
+                .filter(time => time > 0); // Ensure valid times
+
+            if (columnTimes.length > 0) {
+                const lastTimeInColumn = new Date(Math.max(...columnTimes)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                // Save the completed column to Firestore
+                saveCompletionToFirestore('column', index + 1, lastTimeInColumn);
+
+                completedColumns++;
+            }
+        }
+    });
+
+    return completedColumns;
+}
+
+
+        // Check for "I" pattern
+        function checkLetterI(cells) {
+    // Ensure cells is an array before proceeding
+    if (!Array.isArray(cells)) return false;
+
+    const letterI = [0, 7, 14]; // The key parts of an "I"
+    return letterI.every(cell => cells.includes(cell)); // Check if all parts of "I" are included
+}
+
+
+        // Check for "H" pattern
+        function checkLetterH(cells) {
+                if (!Array.isArray(cells)) return false;
+            const letterH = [0, 2, 3, 5, 6, 7, 8, 9, 11, 12, 14]; // The  parts of an "H"
+            return letterH.every(cell => cells.includes(cell));
+        }
+
+        // Check for a full board and return whether the board is full and the completion time
+function checkFullBoard(cells, clickedTimes) {
+    if (cells.length !== 15) {
+        return false;  // Full board not completed
+    }
+
+    // Ensure clickedTimes has values for all 15 cells
+    const allTimes = clickedTimes.map(time => {
+        const dateTime = new Date(1970-01-01T${time}:00);
+        return !isNaN(dateTime.getTime()) ? dateTime.getTime() : null;
+    }).filter(time => time !== null); // Filter out invalid dates
+
+    // Check if we successfully extracted times
+    if (allTimes.length === 15) {
+        const lastClickedTime = new Date(Math.max(...allTimes));
+
+        // Save the completed full board to Firestore
+        saveCompletionToFirestore('full_board', 'completed', lastClickedTime);
+
+        return true;  // Full board completed
+    } else {
+        console.error("Some clickedTimes were invalid:", clickedTimes);
+        return false;  // Handle case where times are invalid
+    }
+}
+
+        // Update points display in the top-right corner
+function updatePointsDisplay() {
+    document.getElementById("points-game").textContent = points;
+}
+
+// Function to save points and end the game
+function endGame() {
+    saveCumulativePoints(); // Save cumulative points to Firestore
+    clearClickedCells(); // Clear clicked cells for the current user
+    alert("Game over! Your score has been saved.");
+    clearBoard(); // Clear the bingo board after the game ends
+    // Update the game status to 'idle'
+    updateGameStatus("idle");
+points = 0; // Reset points
+    localStorage.removeItem('pointsThisGame'); // Clear points from localStorage
+    updatePointsDisplay(); // Reset points display
+     }
+
+        // Function to update the game status in Firestore
+async function updateGameStatus(status) {
+    try {
+        const gameStateRef = doc(db, "game_state", "current");
+        await setDoc(gameStateRef, { status: status }, { merge: true });
+        console.log(Game status updated to: ${status});
+    } catch (error) {
+        console.error("Error updating game status:", error);
+    }
+}
+
+// Function to clear the bingo board and show no active game message
+function clearBoard() {
+    const bingoCells = document.querySelectorAll('.bingo-cell');
+    bingoCells.forEach(cell => {
+        cell.textContent = ''; // Clear text in each cell
+        cell.classList.remove('clicked'); // Remove the clicked class
+    });
+    document.querySelector('.bingo-grid').innerHTML = <h3>No active game</h3>;
+}
+
+// Function to save cumulative points to Firestore
+async function saveCumulativePoints() {
+    try {
+        // Retrieve the current points from localStorage
+        let currentPoints = parseInt(localStorage.getItem('pointsThisGame')) || 0;
+
+        if (currentPoints <= 0) {
+            console.log("No points to save.");
+            return; // No points to save
+        }
+    const userDocRef = doc(db, "users", user.name);
+    const userDocSnap = await getDoc(userDocRef);
+
+    let cumulativePoints = 0;
+    if (userDocSnap.exists()) {
+        cumulativePoints = userDocSnap.data().cumulativePoints || 0;
+console.log(Current cumulative points: ${cumulativePoints});
+        }
+
+    // Add current game points to the cumulative total
+    cumulativePoints += currentPoints;;
+console.log(New cumulative points: ${cumulativePoints});
+
+    // Save the updated cumulative points to Firestore
+    await setDoc(userDocRef, { cumulativePoints: cumulativePoints }, { merge: true });
+console.log("Cumulative points saved successfully!");
+
+    // Clear points for the next game
+    localStorage.removeItem('pointsThisGame');
+}catch (error) {
+        console.error("Error saving cumulative points:", error);
+    }
+}
+    // Function to clear the clicked cells for the current user
+async function clearClickedCells() {
+    try {
+        const userDocRef = doc(db, "user_clicks", user.name);
+        // Update the Firestore document to clear the clickedCells array
+        await setDoc(userDocRef, { clickedCells: [] }, { merge: true });
+    } catch (error) {
+        console.error("Error clearing clicked cells:", error);
+    }
+}
+        // Save completed stats to Firestore
+async function saveCompletionToFirestore(type, index, completedTime) {
+    const userDocRef = doc(db, "user_clicks", user.name);
+
+    // Ensure the completedTime is valid before writing
+    const formattedTime = completedTime instanceof Date ? completedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : completedTime;
+
+    const completionData = {
+        [Completed.${type}.${index}]: formattedTime, // Store completion time in Firestore
+    };
+
+    try {
+        await setDoc(userDocRef, completionData, { merge: true });
+        console.log(${type} ${index} completed at ${formattedTime});
+    } catch (error) {
+        console.error(Error saving ${type} completion:, error);
+    }
+}
+
+async function loadPoints() {
+    const userDocRef = doc(db, "user_clicks", user.name);
+    const userDocSnap = await getDoc(userDocRef);
+
+     if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+
+ // If points are saved in the "user_clicks" document, load and display them
+        if (userData.points) {
+           // points = userData.points;  // Load points from the user_clicks document
+            console.log("Loaded points from Firestore:", points);
+            updatePointsDisplay();  // Update points in the UI
+        } else {
+            console.log("No points data found in user_clicks for user.");
+        }
+        
+    } else {
+        console.log("No user_clicks document found for user.");
+    }
+     // Fallback: If no points are found in Firestore, load from LocalStorage as a backup
+    if (!points && localStorage.getItem('pointsThisGame')) {
+        points = parseInt(localStorage.getItem('pointsThisGame'), 10) || 0;
+        console.log("Loaded points from LocalStorage:", points);
+        updatePointsDisplay();
+    }
+}
+
+        // On page load, ensure that clicked cells and points are loaded
+window.onload = async function() {
+    await loadClickedCells(); // Ensure clicked cells are loaded first
+    await loadPoints();       // Ensure points are loaded first
+    monitorGameState();       // Then monitor game state and make further updates
+};
+
+
+// Start checking game status on load
         monitorGameState();
-
+        
         if (!user) {
-            window.location.href = 'index.html';
+            window.location.href = 'index.html'; // Redirect to login if not authenticated
         }
 
+        // Set the user button text
         document.getElementById('user-button').textContent = user.name;
+
     </script>
 </body>
 </html>
