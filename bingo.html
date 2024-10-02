@@ -629,8 +629,6 @@ function awardPoints(clickedCells = []) {
 
     // Now update Firebase with completed rows or columns
     updateCompletionStatusInFirebase(horizontalBingos, verticalBingos, fullBoard);
-
-     savePointsToFirestore(); // Save points to Firestore after updating
 }
 
 async function updateCompletionStatusInFirebase(horizontalBingos, verticalBingos, fullBoard) {
@@ -672,20 +670,6 @@ async function updateCompletionStatusInFirebase(horizontalBingos, verticalBingos
         console.error("Error updating Firebase:", error);
     }
 }
-
-        // Function to update points in Firestore after awarding
-async function savePointsToFirestore() {
-    const userDocRef = doc(db, "user_clicks", user.name);
-    
-    try {
-        // Update the cumulative points in Firestore
-        await updateDoc(userDocRef, { points: points });
-        console.log("Points successfully updated in Firestore");
-    } catch (error) {
-        console.error("Error updating points:", error);
-    }
-}
-
 
 
 // Check for horizontal bingo and return the number of bingos
@@ -888,30 +872,17 @@ async function saveCompletionToFirestore(type, index, completedTime) {
     }
 }
 
-async function loadPoints() {
+        async function loadPoints() {
     const userDocRef = doc(db, "user_clicks", user.name);
     const userDocSnap = await getDoc(userDocRef);
 
-     if (userDocSnap.exists()) {
+    if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
 
- // If points are saved in the "user_clicks" document, load and display them
         if (userData.points) {
-           // points = userData.points;  // Load points from the user_clicks document
-            console.log("Loaded points from Firestore:", points);
-            updatePointsDisplay();  // Update points in the UI
-        } else {
-            console.log("No points data found in user_clicks for user.");
+            points = userData.points;
+            updatePointsDisplay(); // Update points in the UI
         }
-        
-    } else {
-        console.log("No user_clicks document found for user.");
-    }
-     // Fallback: If no points are found in Firestore, load from LocalStorage as a backup
-    if (!points && localStorage.getItem('pointsThisGame')) {
-        points = parseInt(localStorage.getItem('pointsThisGame'), 10) || 0;
-        console.log("Loaded points from LocalStorage:", points);
-        updatePointsDisplay();
     }
 }
 
