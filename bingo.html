@@ -244,6 +244,8 @@
             startCountdown(startHours, startMinutes);
         }
 
+        let bingoCells; // Declare globally at the top of the script
+
         function startCountdown(startHours, startMinutes) {
             const countdownDisplay = document.getElementById("countdown-timer");
             clearInterval(countdownTimer);
@@ -371,6 +373,19 @@
             savePointsToFirestore();
         }
 
+         // Fetch the saved bingo board from Firestore
+        async function fetchSavedBoard() {
+            const boardDocRef = doc(db, "game_state", "current");
+            const boardDocSnap = await getDoc(boardDocRef);
+
+            if (boardDocSnap.exists()) {
+                const gameData = boardDocSnap.data();
+                return gameData.board || null;
+            }
+            return null;
+        }
+
+
         async function updateCompletionStatusInFirebase(horizontalBingos, verticalBingos, fullBoard) {
             const userDocRef = doc(db, "user_clicks", user.name);
             const now = new Date();
@@ -471,7 +486,7 @@
         }
 
         function clearBoard() {
-            const bingoCells = document.querySelectorAll('.bingo-cell');
+             bingoCells = document.querySelectorAll('.bingo-cell');
             bingoCells.forEach(cell => {
                 cell.textContent = '';
                 cell.classList.remove('clicked');
