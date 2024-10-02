@@ -475,8 +475,8 @@ function shuffle(array) {
     }
     return array;
 }
-
- // Populate the bingo grid
+let bingoCells = []; // Declare globally
+        // Populate the bingo grid
         async function populateBingoGrid() {
             const savedBoard = await fetchSavedBoard();
             if (savedBoard) {
@@ -559,15 +559,21 @@ async function loadClickedCells() {
         const clickedCells = userData.clickedCells || []; // Initialize clickedCells as an empty array if undefined
         let clickedIndices = clickedCells.map(cell => cell.cellIndex); // Extract just the indices
 
-        // Update UI to reflect clicked cells
-        updateClickedCells(clickedIndices);
-
+  // Ensure bingoCells is populated
+        if (bingoCells.length > 0) {
+            updateClickedCells(clickedIndices);
+        } else {
+            console.error("bingoCells is not initialized.");
+        }
+        
         // Award points based on loaded clicked cells
         awardPoints(clickedCells);
 
-      // We no longer need to load points separately, since awardPoints handles updating
-    } else {
-        console.log("No user_clicks document found for user.");
+    // If points are saved in Firebase, load and display them
+        if (userData.points) {
+            points = userData.points;
+            updatePointsDisplay(points); // Display points in UI
+        }
     }
 }
 
@@ -904,12 +910,12 @@ async function loadPoints() {
     }
 }
 
-        // On page load, ensure that clicked cells and points are loaded
 window.onload = async function() {
-    await loadClickedCells(); // Ensure clicked cells are loaded first
-    //await loadPoints();       // Ensure points are loaded first
+    await populateBingoGrid(); // Ensure bingoCells are initialized
+    await loadClickedCells(); // Load clicked cells after the grid is populated
     monitorGameState();       // Then monitor game state and make further updates
 };
+
 
 
 // Start checking game status on load
