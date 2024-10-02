@@ -436,7 +436,7 @@ async function generateAndSaveBingoBoard() {
         ? freeSpotPhrases[Math.floor(Math.random() * freeSpotPhrases.length)]
         : { phrase: "Free Spot" }; // Fallback in case no free spot phrases are available
 
-    const bingoCells = [];
+    
     let phraseIndex = 0;
 
     // Fill all cells, with free spot in the middle (cell index 7)
@@ -489,8 +489,8 @@ let bingoCells = []; // Declare globally
 await generateAndSaveBingoBoard();
             }
         }
-let bingoCells; // Declare globally so it can be accessed from other functions
-
+const bingoCells = [];
+        
 // Function to fill the bingo grid with phrases or load from saved state
 async function fillBingoGrid(board) {
     bingoCells = document.querySelectorAll('.bingo-cell'); // Initialize the global variable
