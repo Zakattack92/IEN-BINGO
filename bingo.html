@@ -244,15 +244,15 @@ const startTimeFormatted = new Date(startTime).toLocaleTimeString([], { hour: '2
 const endTimeFormatted = new Date(endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     
-    // Update the game message
-    document.getElementById("game-message").innerHTML = 
-        <p>Next Game Starts:</p> 
-        <p> ${startTimeFormatted}</p>
-        <p>Game Ends:</p>
-        <p>${endTimeFormatted}</p>
-        <p>Game Duration:</p>
-        <p>${totalDurationHours} Hours</p>
-    ;
+document.getElementById("game-message").innerHTML = `
+    <p>Next Game Starts:</p> 
+    <p>${startTimeFormatted}</p>
+    <p>Game Ends:</p>
+    <p>${endTimeFormatted}</p>
+    <p>Game Duration:</p>
+    <p>${totalDurationHours} Hours</p>
+`;
+
 
     // Extract the hours and minutes from startTimeFormatted (12-hour time) and convert to military time
     let [timeString, ampm] = startTimeFormatted.split(" ");
