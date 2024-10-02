@@ -265,7 +265,8 @@ document.getElementById("game-message").innerHTML = `
         startHours = 0; // Handle 12 AM as 0 hours
     }
 
-    console.log(Game Start Time (military): ${startHours}:${startMinutes});
+   console.log(`Game Start Time (military): ${startHours}:${startMinutes}`);
+
 startMinutes -= 1;
 
     // Pass the military time values to startCountdown
