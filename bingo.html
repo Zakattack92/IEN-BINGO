@@ -892,6 +892,9 @@ async function loadPoints() {
     const userDocRef = doc(db, "user_clicks", user.name);
     const userDocSnap = await getDoc(userDocRef);
 
+     if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+
  // If points are saved in the "user_clicks" document, load and display them
         if (userData.points) {
             points = userData.points;  // Load points from the user_clicks document
