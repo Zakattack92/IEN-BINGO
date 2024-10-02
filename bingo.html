@@ -245,14 +245,14 @@ const endTimeFormatted = new Date(endTime).toLocaleTimeString([], { hour: '2-dig
 
     
     // Update the game message
-    document.getElementById("game-message").innerHTML = `
+    document.getElementById("game-message").innerHTML = 
         <p>Next Game Starts:</p> 
         <p> ${startTimeFormatted}</p>
         <p>Game Ends:</p>
         <p>${endTimeFormatted}</p>
         <p>Game Duration:</p>
         <p>${totalDurationHours} Hours</p>
-    `;
+    ;
 
     // Extract the hours and minutes from startTimeFormatted (12-hour time) and convert to military time
     let [timeString, ampm] = startTimeFormatted.split(" ");
@@ -265,7 +265,7 @@ const endTimeFormatted = new Date(endTime).toLocaleTimeString([], { hour: '2-dig
         startHours = 0; // Handle 12 AM as 0 hours
     }
 
-    console.log(`Game Start Time (military): ${startHours}:${startMinutes}`);
+    console.log(Game Start Time (military): ${startHours}:${startMinutes});
 startMinutes -= 1;
 
     // Pass the military time values to startCountdown
@@ -287,7 +287,7 @@ function startCountdown(startHours, startMinutes) {
         const currentHours = now.getHours();
         const currentMinutes = now.getMinutes();
         const currentSeconds = now.getSeconds();
-console.log(`current Time: ${currentHours}:${currentMinutes}:${currentSeconds}`);
+console.log(current Time: ${currentHours}:${currentMinutes}:${currentSeconds});
         // Calculate remaining time
         let remainingHours = startHours - currentHours;
         let remainingMinutes = startMinutes - currentMinutes;
@@ -313,11 +313,11 @@ if (remainingMinutes < 0) {
         const displayHours = remainingHours % 12 || 12; // Convert 0 hours to 12 for display purposes
         const ampm = remainingHours >= 12 ? 'PM' : 'AM';
         // Adjust display format when hours or minutes are 0
-        let timeString = `${pad(remainingHours)}:${pad(remainingMinutes)}:${pad(remainingSeconds)}`;
+        let timeString = ${pad(remainingHours)}:${pad(remainingMinutes)}:${pad(remainingSeconds)};
         
         // Update the countdown display
-        countdownDisplay.innerHTML = `GAME BEGINS IN: ${timeString}`;
-        console.log(`Remaining Time - Hours: ${remainingHours}, Minutes: ${remainingMinutes}, Seconds: ${remainingSeconds}`);
+        countdownDisplay.innerHTML = GAME BEGINS IN: ${timeString};
+        console.log(Remaining Time - Hours: ${remainingHours}, Minutes: ${remainingMinutes}, Seconds: ${remainingSeconds});
 
         // Stop countdown when time runs out
         if (remainingHours <= 0 && remainingMinutes <= 0 && remainingSeconds <= 0) {
@@ -333,7 +333,7 @@ if (remainingMinutes < 0) {
 }
 
         function resetGameMessage() {
-    document.getElementById("game-message").innerHTML = `<h1>I.E.N. Bingo</h1>`;
+    document.getElementById("game-message").innerHTML = <h1>I.E.N. Bingo</h1>;
 }
         
 // Utility function to pad single digits with leading zeros
@@ -436,7 +436,7 @@ async function generateAndSaveBingoBoard() {
         ? freeSpotPhrases[Math.floor(Math.random() * freeSpotPhrases.length)]
         : { phrase: "Free Spot" }; // Fallback in case no free spot phrases are available
 
-    
+    const bingoCells = [];
     let phraseIndex = 0;
 
     // Fill all cells, with free spot in the middle (cell index 7)
@@ -476,7 +476,7 @@ function shuffle(array) {
     return array;
 }
 
-        // Populate the bingo grid
+ // Populate the bingo grid
         async function populateBingoGrid() {
             const savedBoard = await fetchSavedBoard();
             if (savedBoard) {
@@ -489,8 +489,8 @@ function shuffle(array) {
 await generateAndSaveBingoBoard();
             }
         }
-const bingoCells = [];
-        
+let bingoCells; // Declare globally so it can be accessed from other functions
+
 // Function to fill the bingo grid with phrases or load from saved state
 async function fillBingoGrid(board) {
     bingoCells = document.querySelectorAll('.bingo-cell'); // Initialize the global variable
@@ -559,21 +559,17 @@ async function loadClickedCells() {
         const clickedCells = userData.clickedCells || []; // Initialize clickedCells as an empty array if undefined
         let clickedIndices = clickedCells.map(cell => cell.cellIndex); // Extract just the indices
 
-  // Ensure bingoCells is populated
-        if (bingoCells.length > 0) {
-            updateClickedCells(clickedIndices);
-        } else {
-            console.error("bingoCells is not initialized.");
-        }
-        
+        // Update UI to reflect clicked cells
+        updateClickedCells(clickedIndices);
+
         // Award points based on loaded clicked cells
         awardPoints(clickedCells);
 
-    // If points are saved in Firebase, load and display them
-        if (userData.points) {
-            points = userData.points;
-            updatePointsDisplay(points); // Display points in UI
-        }
+        // If points are saved in Firebase, load and display them
+       // if (userData.points) {
+            //points = userData.points;
+           // updatePointsDisplay(); // Display points in UI
+        //}
     }
 }
 
@@ -619,7 +615,7 @@ function awardPoints(clickedCells = []) {
         points += 14;  // Full board bonus points
     }
 
-    updatePointsDisplay(points); // Update points display
+    updatePointsDisplay(); // Update points display
     localStorage.setItem('pointsThisGame', points); // Save points to localStorage
 
     // Now update Firebase with completed rows or columns
@@ -640,23 +636,23 @@ async function updateCompletionStatusInFirebase(horizontalBingos, verticalBingos
     // If rows are completed, log them to Firestore with the timestamp
     if (horizontalBingos > 0) {
         for (let i = 1; i <= horizontalBingos; i++) { // Assuming 'horizontalBingos' tells you how many rows are completed
-            completedData.completed[`row.${i}`] = timestamp;
-            console.log(`Row ${i} completed at ${timestamp}`);
+            completedData.completed[row.${i}] = timestamp;
+            console.log(Row ${i} completed at ${timestamp});
         }
     }
 
     // If columns are completed, log them to Firestore with the timestamp
     if (verticalBingos > 0) {
         for (let i = 1; i <= verticalBingos; i++) { // Assuming 'verticalBingos' tells you how many columns are completed
-            completedData.completed[`column.${i}`] = timestamp;
-            console.log(`Column ${i} completed at ${timestamp}`);
+            completedData.completed[column.${i}] = timestamp;
+            console.log(Column ${i} completed at ${timestamp});
         }
     }
 
     // If full board is completed, log it to Firestore
     if (fullBoard) {
         completedData.completed.full_board = timestamp;
-        console.log(`Full board completed at ${timestamp}`);
+        console.log(Full board completed at ${timestamp});
     }
 
     // Update Firestore with the completed rows/columns/full_board data
@@ -719,9 +715,9 @@ function checkVerticalBingo(cells, clickedTimes) {
 
     columns.forEach((column, index) => {
         if (column.every(cell => cells.includes(cell))) {
-            // Make sure `clickedTimes` is properly populated for each cell in the column
+            // Make sure clickedTimes is properly populated for each cell in the column
             const columnTimes = column
-                .map(i => clickedTimes[i] ? new Date(`1970-01-01T${clickedTimes[i]}:00`).getTime() : 0)
+                .map(i => clickedTimes[i] ? new Date(1970-01-01T${clickedTimes[i]}:00).getTime() : 0)
                 .filter(time => time > 0); // Ensure valid times
 
             if (columnTimes.length > 0) {
@@ -764,7 +760,7 @@ function checkFullBoard(cells, clickedTimes) {
 
     // Ensure clickedTimes has values for all 15 cells
     const allTimes = clickedTimes.map(time => {
-        const dateTime = new Date(`1970-01-01T${time}:00`);
+        const dateTime = new Date(1970-01-01T${time}:00);
         return !isNaN(dateTime.getTime()) ? dateTime.getTime() : null;
     }).filter(time => time !== null); // Filter out invalid dates
 
@@ -783,7 +779,7 @@ function checkFullBoard(cells, clickedTimes) {
 }
 
         // Update points display in the top-right corner
-function updatePointsDisplay(points) {
+function updatePointsDisplay() {
     document.getElementById("points-game").textContent = points;
 }
 
@@ -805,7 +801,7 @@ async function updateGameStatus(status) {
     try {
         const gameStateRef = doc(db, "game_state", "current");
         await setDoc(gameStateRef, { status: status }, { merge: true });
-        console.log(`Game status updated to: ${status}`);
+        console.log(Game status updated to: ${status});
     } catch (error) {
         console.error("Error updating game status:", error);
     }
@@ -813,12 +809,12 @@ async function updateGameStatus(status) {
 
 // Function to clear the bingo board and show no active game message
 function clearBoard() {
-    bingoCells = document.querySelectorAll('.bingo-cell');
+    const bingoCells = document.querySelectorAll('.bingo-cell');
     bingoCells.forEach(cell => {
         cell.textContent = ''; // Clear text in each cell
         cell.classList.remove('clicked'); // Remove the clicked class
     });
-    document.querySelector('.bingo-grid').innerHTML = `<h3>No active game</h3>`;
+    document.querySelector('.bingo-grid').innerHTML = <h3>No active game</h3>;
 }
 
 // Function to save cumulative points to Firestore
@@ -837,12 +833,12 @@ async function saveCumulativePoints() {
     let cumulativePoints = 0;
     if (userDocSnap.exists()) {
         cumulativePoints = userDocSnap.data().cumulativePoints || 0;
-console.log(`Current cumulative points: ${cumulativePoints}`);
+console.log(Current cumulative points: ${cumulativePoints});
         }
 
     // Add current game points to the cumulative total
     cumulativePoints += currentPoints;;
-console.log(`New cumulative points: ${cumulativePoints}`);
+console.log(New cumulative points: ${cumulativePoints});
 
     // Save the updated cumulative points to Firestore
     await setDoc(userDocRef, { cumulativePoints: cumulativePoints }, { merge: true });
@@ -872,14 +868,14 @@ async function saveCompletionToFirestore(type, index, completedTime) {
     const formattedTime = completedTime instanceof Date ? completedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : completedTime;
 
     const completionData = {
-        [`Completed.${type}.${index}`]: formattedTime, // Store completion time in Firestore
+        [Completed.${type}.${index}]: formattedTime, // Store completion time in Firestore
     };
 
     try {
         await setDoc(userDocRef, completionData, { merge: true });
-        console.log(`${type} ${index} completed at ${formattedTime}`);
+        console.log(${type} ${index} completed at ${formattedTime});
     } catch (error) {
-        console.error(`Error saving ${type} completion:`, error);
+        console.error(Error saving ${type} completion:, error);
     }
 }
 
@@ -910,12 +906,12 @@ async function loadPoints() {
     }
 }
 
+        // On page load, ensure that clicked cells and points are loaded
 window.onload = async function() {
-    await populateBingoGrid(); // Ensure bingoCells are initialized
-    await loadClickedCells(); // Load clicked cells after the grid is populated
+    await loadClickedCells(); // Ensure clicked cells are loaded first
+    //await loadPoints();       // Ensure points are loaded first
     monitorGameState();       // Then monitor game state and make further updates
 };
-
 
 
 // Start checking game status on load
