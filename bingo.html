@@ -584,15 +584,6 @@ function updateClickedCells(clickedIndices) {
     });
 }
 
-// Other necessary code, including awarding points and monitoring game state...
-
-window.onload = async function() {
-    await loadClickedCells(); // Ensure clicked cells are loaded first
-    await loadPoints();       // Ensure points are loaded first
-    monitorGameState();       // Then monitor game state and make further updates
-};
-
-
 // Award points based on clicked cells and check for bingos
 function awardPoints(clickedCells = []) {
     if (!Array.isArray(clickedCells)) clickedCells = [];
@@ -918,7 +909,7 @@ async function loadPoints() {
         // On page load, ensure that clicked cells and points are loaded
 window.onload = async function() {
     await loadClickedCells(); // Ensure clicked cells are loaded first
-    await loadPoints();       // Ensure points are loaded first
+    //await loadPoints();       // Ensure points are loaded first
     monitorGameState();       // Then monitor game state and make further updates
 };
 
