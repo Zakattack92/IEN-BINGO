@@ -897,7 +897,7 @@ async function loadPoints() {
 
  // If points are saved in the "user_clicks" document, load and display them
         if (userData.points) {
-           // points = userData.points;  // Load points from the user_clicks document
+            points = userData.points;  // Load points from the user_clicks document
             console.log("Loaded points from Firestore:", points);
             updatePointsDisplay();  // Update points in the UI
         } else {
