@@ -813,7 +813,7 @@ async function updateGameStatus(status) {
 
 // Function to clear the bingo board and show no active game message
 function clearBoard() {
-    const bingoCells = document.querySelectorAll('.bingo-cell');
+    bingoCells = document.querySelectorAll('.bingo-cell');
     bingoCells.forEach(cell => {
         cell.textContent = ''; // Clear text in each cell
         cell.classList.remove('clicked'); // Remove the clicked class
