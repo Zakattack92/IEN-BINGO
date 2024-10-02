@@ -629,6 +629,8 @@ function awardPoints(clickedCells = []) {
 
     // Now update Firebase with completed rows or columns
     updateCompletionStatusInFirebase(horizontalBingos, verticalBingos, fullBoard);
+
+     savePointsToFirestore(); // Save points to Firestore after updating
 }
 
 async function updateCompletionStatusInFirebase(horizontalBingos, verticalBingos, fullBoard) {
@@ -670,6 +672,20 @@ async function updateCompletionStatusInFirebase(horizontalBingos, verticalBingos
         console.error("Error updating Firebase:", error);
     }
 }
+
+        // Function to update points in Firestore after awarding
+async function savePointsToFirestore() {
+    const userDocRef = doc(db, "user_clicks", user.name);
+    
+    try {
+        // Update the cumulative points in Firestore
+        await updateDoc(userDocRef, { points: points });
+        console.log("Points successfully updated in Firestore");
+    } catch (error) {
+        console.error("Error updating points:", error);
+    }
+}
+
 
 
 // Check for horizontal bingo and return the number of bingos
@@ -872,17 +888,20 @@ async function saveCompletionToFirestore(type, index, completedTime) {
     }
 }
 
-        async function loadPoints() {
+async function loadPoints() {
     const userDocRef = doc(db, "user_clicks", user.name);
     const userDocSnap = await getDoc(userDocRef);
 
     if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
 
-        if (userData.points) {
-            points = userData.points;
+        // If points are saved in Firebase, load and display them
+        if (userData.cumulativePoints) {  // Ensure the points field is correctly referenced
+            points = userData.cumulativePoints;  // Load cumulative points instead of session points
             updatePointsDisplay(); // Update points in the UI
         }
+    } else {
+        console.log("No points data found for user.");
     }
 }
 
