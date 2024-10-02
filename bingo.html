@@ -892,16 +892,16 @@ async function loadPoints() {
     const userDocRef = doc(db, "user_clicks", user.name);
     const userDocSnap = await getDoc(userDocRef);
 
-    if (userDocSnap.exists()) {
-        const userData = userDocSnap.data();
-
-        // If points are saved in Firebase, load and display them
-        if (userData.cumulativePoints) {  // Ensure the points field is correctly referenced
-            points = userData.cumulativePoints;  // Load cumulative points instead of session points
-            updatePointsDisplay(); // Update points in the UI
+ // If points are saved in the "user_clicks" document, load and display them
+        if (userData.points) {
+            points = userData.points;  // Load points from the user_clicks document
+            console.log("Loaded points from Firestore:", points);
+            updatePointsDisplay();  // Update points in the UI
+        } else {
+            console.log("No points data found in user_clicks for user.");
         }
     } else {
-        console.log("No points data found for user.");
+        console.log("No user_clicks document found for user.");
     }
      // Fallback: If no points are found in Firestore, load from LocalStorage as a backup
     if (!points && localStorage.getItem('pointsThisGame')) {
