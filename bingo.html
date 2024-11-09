@@ -905,12 +905,29 @@ async function loadPoints() {
     }
 }
 
-        // On page load, ensure that clicked cells and points are loaded
+   // Function to set user button text based on nickname or name
+async function setUserButtonText() {
+    const userDocRef = doc(db, "users", user.name); // Assumes user name is used as document ID
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        // Check if a nickname is saved; if not, use the user's name
+        const displayName = userData.nickname ? userData.nickname : user.name;
+        document.getElementById('user-button').textContent = displayName;
+    } else {
+        // If the user document does not exist, default to using the user's name
+        document.getElementById('user-button').textContent = user.name;
+    }
+}
+
 window.onload = async function() {
-    await loadClickedCells(); // Ensure clicked cells are loaded first
-    await loadPoints();       // Ensure points are loaded first
-    monitorGameState();       // Then monitor game state and make further updates
+    await setUserButtonText(); // Set the user button text based on nickname or name
+    await loadClickedCells();   // Ensure clicked cells are loaded first
+    await loadPoints();         // Ensure points are loaded first
+    monitorGameState();         // Then monitor game state and make further updates
 };
+
 
 
 // Start checking game status on load
